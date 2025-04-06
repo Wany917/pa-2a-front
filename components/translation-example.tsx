@@ -10,7 +10,7 @@ export default function TranslationExample() {
       <h2 className="text-lg font-bold mb-2">
         {t("common.currentLanguage")}: {language}
       </h2>
-      <p>{t("dashboard.welcome")}</p>
+      <p>{t("app_client.welcome")}</p>
       <p>{t("auth.pleaseEnterEmailPassword")}</p>
       <button className="mt-2 px-4 py-2 bg-green-50 text-white rounded-md">{t("common.login")}</button>
     </div>

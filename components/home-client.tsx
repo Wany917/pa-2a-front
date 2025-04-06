@@ -43,7 +43,7 @@ export default function HomeClient() {
         {/* Hero Section */}
         <section className="container mx-auto text-center py-8 sm:py-16 px-4">
           <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-gray-800 max-w-2xl mx-auto">
-            {t("dashboard.welcome")}
+            {t("app_client.welcome")}
           </h1>
         </section>
 

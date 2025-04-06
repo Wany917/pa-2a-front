@@ -77,7 +77,7 @@ export default function CreateComplaintClient() {
       await new Promise((resolve) => setTimeout(resolve, 1500))
 
       // Redirect to complaints page
-      router.push("/dashboard/complaint")
+      router.push("/app_client/complaint")
     } catch (error) {
       console.error("Error submitting complaint:", error)
     } finally {
@@ -91,7 +91,7 @@ export default function CreateComplaintClient() {
       <header className="bg-white shadow-sm">
         <div className="container mx-auto px-4 py-3 flex items-center justify-between">
           <div className="flex items-center">
-            <Link href="/dashboard">
+            <Link href="/app_client">
               <Image
                 src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Logo-NEF7Y3VVan4gaPKz0Ke4Q9FTKCgie4.png"
                 alt="EcoDeli Logo"
@@ -103,16 +103,16 @@ export default function CreateComplaintClient() {
           </div>
 
           <nav className="hidden md:flex items-center space-x-6">
-            <Link href="/dashboard/announcements" className="text-gray-700 hover:text-green-500">
+            <Link href="/app_client/announcements" className="text-gray-700 hover:text-green-500">
               {t("navigation.myAnnouncements")}
             </Link>
-            <Link href="/dashboard/payments" className="text-gray-700 hover:text-green-500">
+            <Link href="/app_client/payments" className="text-gray-700 hover:text-green-500">
               {t("navigation.myPayments")}
             </Link>
-            <Link href="/dashboard/messages" className="text-gray-700 hover:text-green-500">
+            <Link href="/app_client/messages" className="text-gray-700 hover:text-green-500">
               {t("navigation.messages")}
             </Link>
-            <Link href="/dashboard/complaint" className="text-green-500 font-medium border-b-2 border-green-500">
+            <Link href="/app_client/complaint" className="text-green-500 font-medium border-b-2 border-green-500">
               {t("navigation.makeComplaint")}
             </Link>
           </nav>
@@ -134,7 +134,7 @@ export default function CreateComplaintClient() {
               {isUserMenuOpen && (
                 <div className="absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-lg z-10 py-2 border border-gray-100">
                   <Link
-                    href="/dashboard/edit-account"
+                    href="/app_client/edit-account"
                     className="flex items-center px-4 py-2 text-gray-700 hover:bg-gray-100"
                   >
                     <Edit className="h-4 w-4 mr-2" />
@@ -173,7 +173,7 @@ export default function CreateComplaintClient() {
       {/* Main Content */}
       <main className="container mx-auto px-4 py-8">
         <div className="mb-6">
-          <Link href="/dashboard/complaint" className="text-green-500 hover:underline flex items-center">
+          <Link href="/app_client/complaint" className="text-green-500 hover:underline flex items-center">
             <ChevronDown className="h-4 w-4 mr-1 rotate-90" />
             {t("navigation.backToComplaints")}
           </Link>
@@ -291,7 +291,7 @@ export default function CreateComplaintClient() {
 
               <div className="flex justify-end space-x-3 pt-4">
                 <Link
-                  href="/dashboard/complaint"
+                  href="/app_client/complaint"
                   className="px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
                 >
                   {t("common.cancel")}

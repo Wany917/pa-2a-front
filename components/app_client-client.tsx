@@ -14,7 +14,7 @@ const sansitaOne = Sansita_One({
   display: "swap",
 })
 
-export default function DashboardClient() {
+export default function app_clientClient() {
   const { t } = useLanguage()
   const [searchQuery, setSearchQuery] = useState("")
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false)
@@ -68,7 +68,7 @@ export default function DashboardClient() {
       <header className="bg-white shadow-sm">
         <div className="container mx-auto px-4 py-3 flex items-center justify-between">
           <div className="flex items-center">
-            <Link href="/dashboard">
+            <Link href="/app_client">
               <Image
                 src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Logo-NEF7Y3VVan4gaPKz0Ke4Q9FTKCgie4.png"
                 alt="EcoDeli Logo"
@@ -98,16 +98,16 @@ export default function DashboardClient() {
           </button>
 
           <nav className="hidden md:flex items-center space-x-6">
-            <Link href="/dashboard/announcements" className="text-gray-700 hover:text-green-50">
+            <Link href="/app_client/announcements" className="text-gray-700 hover:text-green-50">
               {t("navigation.myAnnouncements")}
             </Link>
-            <Link href="/dashboard/payments" className="text-gray-700 hover:text-green-50">
+            <Link href="/app_client/payments" className="text-gray-700 hover:text-green-50">
               {t("navigation.myPayments")}
             </Link>
-            <Link href="/dashboard/messages" className="text-gray-700 hover:text-green-50">
+            <Link href="/app_client/messages" className="text-gray-700 hover:text-green-50">
               {t("navigation.messages")}
             </Link>
-            <Link href="/dashboard/complaint" className="text-gray-700 hover:text-green-50">
+            <Link href="/app_client/complaint" className="text-gray-700 hover:text-green-50">
               {t("navigation.makeComplaint")}
             </Link>
           </nav>
@@ -129,7 +129,7 @@ export default function DashboardClient() {
               {isUserMenuOpen && (
                 <div className="absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-lg z-10 py-2 border border-gray-100">
                   <Link
-                    href="/dashboard/edit-account"
+                    href="/app_client/edit-account"
                     className="flex items-center px-4 py-2 text-gray-700 hover:bg-gray-100"
                   >
                     <Edit className="h-4 w-4 mr-2" />
@@ -168,16 +168,16 @@ export default function DashboardClient() {
         {isMobileMenuOpen && (
           <div className="md:hidden bg-white border-t border-gray-100 py-2">
             <div className="container mx-auto px-4">
-              <Link href="/dashboard/announcements" className="block py-2 text-gray-700 hover:text-green-50">
+              <Link href="/app_client/announcements" className="block py-2 text-gray-700 hover:text-green-50">
                 {t("navigation.myAnnouncements")}
               </Link>
-              <Link href="/dashboard/payments" className="block py-2 text-gray-700 hover:text-green-50">
+              <Link href="/app_client/payments" className="block py-2 text-gray-700 hover:text-green-50">
                 {t("navigation.myPayments")}
               </Link>
-              <Link href="/dashboard/messages" className="block py-2 text-gray-700 hover:text-green-50">
+              <Link href="/app_client/messages" className="block py-2 text-gray-700 hover:text-green-50">
                 {t("navigation.messages")}
               </Link>
-              <Link href="/dashboard/complaint" className="block py-2 text-gray-700 hover:text-green-50">
+              <Link href="/app_client/complaint" className="block py-2 text-gray-700 hover:text-green-50">
                 {t("navigation.makeComplaint")}
               </Link>
             </div>
@@ -188,7 +188,7 @@ export default function DashboardClient() {
       {/* Main Content */}
       <main className="container mx-auto px-4 py-8">
         <h1 className={`text-2xl sm:text-3xl text-center text-green-50 mb-8 ${sansitaOne.className}`}>
-          {t("dashboard.welcome")}
+          {t("app_client.welcome")}
         </h1>
 
         {/* Search Bar */}
@@ -196,7 +196,7 @@ export default function DashboardClient() {
           <div className="relative">
             <input
               type="text"
-              placeholder={t("dashboard.searchServices")}
+              placeholder={t("app_client.searchServices")}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full py-3 px-12 rounded-full border border-gray-200 focus:outline-none focus:ring-2 focus:ring-green-50"
@@ -207,7 +207,7 @@ export default function DashboardClient() {
 
         {/* Featured Services */}
         <h2 className={`text-xl sm:text-2xl text-center text-green-50 mb-8 ${sansitaOne.className}`}>
-          {t("dashboard.featuredServices")}
+          {t("app_client.featuredServices")}
         </h2>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8 mt-8">
@@ -236,7 +236,7 @@ export default function DashboardClient() {
                     href={`/service/${service.id}`}
                     className="bg-green-50 text-white rounded-full px-6 py-1 hover:bg-green-400 transition-colors"
                   >
-                    {t("dashboard.details")}
+                    {t("app_client.details")}
                   </Link>
                 </div>
               </div>

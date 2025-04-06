@@ -30,7 +30,7 @@ export default function ResponsiveHeader({ activePage }: HeaderProps) {
     <header className="bg-white shadow-sm">
       <div className="container mx-auto px-4 py-3 flex items-center justify-between">
         <div className="flex items-center">
-          <Link href="/dashboard">
+          <Link href="/app_client">
             <Image
               src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Logo-NEF7Y3VVan4gaPKz0Ke4Q9FTKCgie4.png"
               alt="EcoDeli Logo"
@@ -56,25 +56,25 @@ export default function ResponsiveHeader({ activePage }: HeaderProps) {
         <TabletUp>
           <nav className="flex items-center space-x-6">
             <Link
-              href="/dashboard/announcements"
+              href="/app_client/announcements"
               className={`${activePage === "announcements" ? "text-green-500 font-medium border-b-2 border-green-500" : "text-gray-700 hover:text-green-500"}`}
             >
               {t("navigation.myAnnouncements")}
             </Link>
             <Link
-              href="/dashboard/payments"
+              href="/app_client/payments"
               className={`${activePage === "payments" ? "text-green-500 font-medium border-b-2 border-green-500" : "text-gray-700 hover:text-green-500"}`}
             >
               {t("navigation.myPayments")}
             </Link>
             <Link
-              href="/dashboard/messages"
+              href="/app_client/messages"
               className={`${activePage === "messages" ? "text-green-500 font-medium border-b-2 border-green-500" : "text-gray-700 hover:text-green-500"}`}
             >
               {t("navigation.messages")}
             </Link>
             <Link
-              href="/dashboard/complaint"
+              href="/app_client/complaint"
               className={`${activePage === "complaint" ? "text-green-500 font-medium border-b-2 border-green-500" : "text-gray-700 hover:text-green-500"}`}
             >
               {t("navigation.makeComplaint")}
@@ -99,7 +99,7 @@ export default function ResponsiveHeader({ activePage }: HeaderProps) {
             {isUserMenuOpen && (
               <div className="absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-lg z-20 py-2 border border-gray-100">
                 <Link
-                  href="/dashboard/edit-account"
+                  href="/app_client/edit-account"
                   className="flex items-center px-4 py-2 text-gray-700 hover:bg-gray-100"
                   onClick={() => setIsUserMenuOpen(false)}
                 >
@@ -157,7 +157,7 @@ export default function ResponsiveHeader({ activePage }: HeaderProps) {
           <ul className="space-y-4">
             <li>
               <Link
-                href="/dashboard/announcements"
+                href="/app_client/announcements"
                 className={`block py-2 ${activePage === "announcements" ? "text-green-500 font-medium" : "text-gray-700"}`}
                 onClick={() => setIsMenuOpen(false)}
               >
@@ -166,7 +166,7 @@ export default function ResponsiveHeader({ activePage }: HeaderProps) {
             </li>
             <li>
               <Link
-                href="/dashboard/payments"
+                href="/app_client/payments"
                 className={`block py-2 ${activePage === "payments" ? "text-green-500 font-medium" : "text-gray-700"}`}
                 onClick={() => setIsMenuOpen(false)}
               >
@@ -175,7 +175,7 @@ export default function ResponsiveHeader({ activePage }: HeaderProps) {
             </li>
             <li>
               <Link
-                href="/dashboard/messages"
+                href="/app_client/messages"
                 className={`block py-2 ${activePage === "messages" ? "text-green-500 font-medium" : "text-gray-700"}`}
                 onClick={() => setIsMenuOpen(false)}
               >
@@ -184,7 +184,7 @@ export default function ResponsiveHeader({ activePage }: HeaderProps) {
             </li>
             <li>
               <Link
-                href="/dashboard/complaint"
+                href="/app_client/complaint"
                 className={`block py-2 ${activePage === "complaint" ? "text-green-500 font-medium" : "text-gray-700"}`}
                 onClick={() => setIsMenuOpen(false)}
               >

@@ -3,11 +3,17 @@
 import { useState, useEffect } from "react"
 import Image from "next/image"
 import Link from "next/link"
-import { ChevronLeft, ChevronRight, Star, User } from "lucide-react"
+import { ChevronLeft, Star, User, Clock, CalendarIcon } from "lucide-react"
+import { format } from "date-fns"
+import { fr, enUS, es } from "date-fns/locale"
+import { Calendar } from "@/components/ui/calendar"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent } from "@/components/ui/card"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { cn } from "@/lib/utils"
 import LanguageSelector from "@/components/language-selector"
 import { useLanguage } from "@/components/language-context"
 
-// Type pour les services
 interface Service {
   id: number
   title: string
@@ -18,20 +24,36 @@ interface Service {
   provider: string
 }
 
+interface TimeSlot {
+  id: string
+  time: string
+  available: boolean
+}
+
 export default function ServiceDetailClient({ id }: { id: string }) {
-  const { t } = useLanguage()
+  const { t, language } = useLanguage()
   const serviceId = id
   const [service, setService] = useState<Service | null>(null)
   const [loading, setLoading] = useState(true)
+  const [date, setDate] = useState<Date | undefined>(undefined)
+  const [selectedTimeSlot, setSelectedTimeSlot] = useState<string | null>(null)
+  const [availableTimeSlots, setAvailableTimeSlots] = useState<TimeSlot[]>([])
+  const [availableDates, setAvailableDates] = useState<Date[]>([])
 
-  const [selectedDate, setSelectedDate] = useState<string | null>(null)
-  const [currentMonth, setCurrentMonth] = useState(new Date(2025, 9, 1)) // Octobre 2025
-  const [view, setView] = useState<"day" | "week" | "month">("month")
-  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false)
+  const getLocale = () => {
+    switch (language as string) {
+      case "fr":
+        return fr
+      case "en":
+        return enUS
+      case "es":
+        return es
+      default:
+        return enUS
+    }
+  }
 
-  // Simuler le chargement des données du service
   useEffect(() => {
-    // Données fictives des services
     const services: Service[] = [
       {
         id: 1,
@@ -62,103 +84,74 @@ export default function ServiceDetailClient({ id }: { id: string }) {
       },
     ]
 
-    // Trouver le service correspondant à l'ID
     const foundService = services.find((s) => s.id.toString() === serviceId)
 
-    // Simuler un délai de chargement
     setTimeout(() => {
       setService(foundService || null)
       setLoading(false)
+
+      const today = new Date()
+      const dates: Date[] = []
+
+      for (let i = 1; i <= 30; i++) {
+        if (i % 2 === 0 || i % 3 === 0) {
+          const date = new Date(today)
+          date.setDate(today.getDate() + i)
+          dates.push(date)
+        }
+      }
+
+      setAvailableDates(dates)
     }, 500)
   }, [serviceId, t])
 
-  // Fonction pour générer les jours du mois
-  const getDaysInMonth = (year: number, month: number) => {
-    const date = new Date(year, month, 1)
-    const days = []
-
-    // Ajouter les jours du mois précédent pour compléter la première semaine
-    const firstDay = date.getDay() || 7 // 0 = dimanche, 1 = lundi, etc. Convertir 0 en 7 pour lundi comme premier jour
-    const prevMonthDays = firstDay - 1
-
-    const prevMonth = month === 0 ? 11 : month - 1
-    const prevMonthYear = month === 0 ? year - 1 : year
-    const daysInPrevMonth = new Date(prevMonthYear, prevMonth + 1, 0).getDate()
-
-    for (let i = daysInPrevMonth - prevMonthDays + 1; i <= daysInPrevMonth; i++) {
-      days.push({
-        date: new Date(prevMonthYear, prevMonth, i),
-        isCurrentMonth: false,
-        events: [],
-      })
+  useEffect(() => {
+    if (!date) {
+      setAvailableTimeSlots([])
+      return
     }
 
-    // Ajouter les jours du mois actuel
-    const daysInMonth = new Date(year, month + 1, 0).getDate()
-    for (let i = 1; i <= daysInMonth; i++) {
-      days.push({
-        date: new Date(year, month, i),
-        isCurrentMonth: true,
-        events: getEventsForDate(new Date(year, month, i)),
+    const dayOfWeek = date.getDay()
+    const slots: TimeSlot[] = []
+
+    const startHour = dayOfWeek === 0 || dayOfWeek === 6 ? 10 : 9
+    const endHour = dayOfWeek === 5 || dayOfWeek === 6 ? 18 : 17
+
+    for (let hour = startHour; hour <= endHour; hour++) {
+      slots.push({
+        id: `slot-${hour}`,
+        time: `${hour}:00`,
+        available: Math.random() > 0.3,
       })
+
+      if (hour < endHour && Math.random() > 0.5) {
+        slots.push({
+          id: `slot-${hour}-30`,
+          time: `${hour}:30`,
+          available: Math.random() > 0.3,
+        })
+      }
     }
 
-    // Ajouter les jours du mois suivant pour compléter la dernière semaine
-    const lastDay = new Date(year, month, daysInMonth).getDay() || 7
-    const nextMonthDays = 7 - lastDay
+    setAvailableTimeSlots(slots)
+    setSelectedTimeSlot(null)
+  }, [date])
 
-    const nextMonth = month === 11 ? 0 : month + 1
-    const nextMonthYear = month === 11 ? year + 1 : year
-
-    for (let i = 1; i <= nextMonthDays; i++) {
-      days.push({
-        date: new Date(nextMonthYear, nextMonth, i),
-        isCurrentMonth: false,
-        events: [],
-      })
-    }
-
-    return days
-  }
-
-  // Fonction pour obtenir les événements pour une date donnée
-  const getEventsForDate = (date: Date) => {
-    const events = [
-      { id: 1, name: "Design Conference", date: new Date(2025, 9, 3), color: "bg-blue-200" },
-      { id: 2, name: "Weekend Festival", date: new Date(2025, 9, 23), color: "bg-pink-200" },
-      { id: 3, name: "Glastonbury Festival", date: new Date(2025, 9, 27), color: "bg-orange-200" },
-      { id: 4, name: "Glastonbury Festival", date: new Date(2025, 9, 31), color: "bg-blue-200" },
-    ]
-
-    return events.filter(
-      (event) =>
-        event.date.getDate() === date.getDate() &&
-        event.date.getMonth() === date.getMonth() &&
-        event.date.getFullYear() === date.getFullYear(),
+  const isDateAvailable = (date: Date) => {
+    return availableDates.some(
+      (availableDate) =>
+        availableDate.getDate() === date.getDate() &&
+        availableDate.getMonth() === date.getMonth() &&
+        availableDate.getFullYear() === date.getFullYear(),
     )
   }
 
-  // Fonction pour naviguer entre les mois
-  const navigateMonth = (direction: "prev" | "next") => {
-    const newMonth = new Date(currentMonth)
-    if (direction === "prev") {
-      newMonth.setMonth(newMonth.getMonth() - 1)
-    } else {
-      newMonth.setMonth(newMonth.getMonth() + 1)
-    }
-    setCurrentMonth(newMonth)
+  const handleBooking = () => {
+    if (!date || !selectedTimeSlot) return
+
+    alert(`Réservation confirmée pour le ${format(date, "dd/MM/yyyy")} à ${selectedTimeSlot}`)
   }
 
-  // Obtenir les jours du mois actuel
-  const days = getDaysInMonth(currentMonth.getFullYear(), currentMonth.getMonth())
-
-  // Formater le mois et l'année pour l'affichage
-  const monthYearFormat = new Intl.DateTimeFormat("en-US", { month: "long", year: "numeric" }).format(currentMonth)
-
-  // Jours de la semaine
-  const weekdays = ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"]
-
-  // Afficher un état de chargement
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -167,16 +160,15 @@ export default function ServiceDetailClient({ id }: { id: string }) {
     )
   }
 
-  // Afficher un message si le service n'est pas trouvé
   if (!service) {
     return (
       <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-4">
         <h1 className="text-2xl font-bold mb-4">{t("services.serviceNotFound")}</h1>
         <Link
-          href="/dashboard"
+          href="/app_client"
           className="bg-green-50 text-white px-6 py-2 rounded-md hover:bg-green-600 transition-colors"
         >
-          {t("navigation.backToDashboard")}
+          {t("navigation.backToApp_Client")}
         </Link>
       </div>
     )
@@ -184,11 +176,10 @@ export default function ServiceDetailClient({ id }: { id: string }) {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
       <header className="bg-white shadow-sm">
         <div className="container mx-auto px-4 py-3 flex items-center justify-between">
           <div className="flex items-center">
-            <Link href="/dashboard">
+            <Link href="/app_client">
               <Image
                 src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Logo-NEF7Y3VVan4gaPKz0Ke4Q9FTKCgie4.png"
                 alt="EcoDeli Logo"
@@ -200,25 +191,24 @@ export default function ServiceDetailClient({ id }: { id: string }) {
           </div>
 
           <nav className="hidden md:flex items-center space-x-6">
-            <Link href="/dashboard/announcements" className="text-gray-700 hover:text-green-500">
+            <Link href="/app_client/announcements" className="text-gray-700 hover:text-green-500">
               {t("navigation.myAnnouncements")}
             </Link>
-            <Link href="/dashboard/payments" className="text-gray-700 hover:text-green-500">
+            <Link href="/app_client/payments" className="text-gray-700 hover:text-green-500">
               {t("navigation.myPayments")}
             </Link>
-            <Link href="/dashboard/messages" className="text-gray-700 hover:text-green-500">
+            <Link href="/app_client/messages" className="text-gray-700 hover:text-green-500">
               {t("navigation.messages")}
             </Link>
-            <Link href="/dashboard/complaint" className="text-gray-700 hover:text-green-500">
+            <Link href="/app_client/complaint" className="text-gray-700 hover:text-green-500">
               {t("navigation.makeComplaint")}
             </Link>
           </nav>
 
           <div className="flex items-center space-x-4">
             <LanguageSelector />
-
             <Link
-              href="/dashboard"
+              href="/app_client"
               className="flex items-center bg-green-200 text-green-800 rounded-full px-4 py-1 hover:bg-green-300 transition-colors"
             >
               <User className="h-5 w-5 mr-2" />
@@ -228,17 +218,15 @@ export default function ServiceDetailClient({ id }: { id: string }) {
         </div>
       </header>
 
-      {/* Main Content */}
       <main className="container mx-auto px-4 py-8">
         <div className="mb-6">
-          <Link href="/dashboard" className="inline-flex items-center text-gray-600 hover:text-green-500">
+          <Link href="/app_client" className="inline-flex items-center text-gray-600 hover:text-green-500">
             <ChevronLeft className="h-4 w-4 mr-1" />
-            {t("navigation.backToDashboard")}
+            {t("navigation.backToApp_Client")}
           </Link>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          {/* Service Details */}
           <div className="md:col-span-1">
             <div className="bg-white rounded-lg shadow-md overflow-hidden">
               <div className="relative h-64">
@@ -249,110 +237,122 @@ export default function ServiceDetailClient({ id }: { id: string }) {
                   className="object-cover"
                 />
               </div>
-
               <div className="p-6">
                 <h1 className="text-2xl font-bold mb-2">{service.title}</h1>
                 <h2 className="text-xl mb-2">{service.provider}</h2>
-
                 <div className="flex mb-4">
                   {[...Array(service.rating)].map((_, i) => (
                     <Star key={i} className="h-5 w-5 fill-current text-yellow-400" />
                   ))}
                 </div>
-
                 <p className="text-gray-600 mb-6">{service.description}</p>
-
                 <ul className="space-y-2 mb-6">
                   <li className="flex items-start">
                     <span className="font-semibold mr-2">{t("services.price")} :</span>
                     <span>{service.price}</span>
                   </li>
                 </ul>
-
-                <div className="space-y-3">
-                  <button className="w-full py-3 bg-white border border-gray-300 rounded-md hover:bg-gray-50 transition-colors">
-                    {t("services.selectDate")}
-                  </button>
-
-                  <button className="w-full py-3 bg-green-50 text-white rounded-md hover:bg-green-600 transition-colors">
-                    {t("services.payNow")}
-                  </button>
-                </div>
               </div>
             </div>
           </div>
 
-          {/* Calendar */}
           <div className="md:col-span-2">
-            <div className="bg-white rounded-lg shadow-md p-4 sm:p-6">
-              <div className="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
-                <div className="text-sm text-gray-500">{t("services.today")}</div>
+            <Card>
+              <CardContent className="pt-6">
+                <h2 className="text-xl font-semibold mb-4">{t("services.book")} {service.title}</h2>
 
-                <div className="flex items-center space-x-2">
-                  <button onClick={() => navigateMonth("prev")} className="p-1 rounded-full hover:bg-gray-100">
-                    <ChevronLeft className="h-5 w-5" />
-                  </button>
-
-                  <h2 className="text-lg font-semibold">{monthYearFormat}</h2>
-
-                  <button onClick={() => navigateMonth("next")} className="p-1 rounded-full hover:bg-gray-100">
-                    <ChevronRight className="h-5 w-5" />
-                  </button>
-                </div>
-
-                <div className="flex space-x-2 bg-gray-100 rounded-lg p-1">
-                  <button
-                    onClick={() => setView("day")}
-                    className={`px-3 py-1 text-sm rounded-md ${view === "day" ? "bg-green-200 text-green-800" : ""}`}
-                  >
-                    {t("services.day")}
-                  </button>
-                  <button
-                    onClick={() => setView("week")}
-                    className={`px-3 py-1 text-sm rounded-md ${view === "week" ? "bg-green-200 text-green-800" : ""}`}
-                  >
-                    {t("services.week")}
-                  </button>
-                  <button
-                    onClick={() => setView("month")}
-                    className={`px-3 py-1 text-sm rounded-md ${view === "month" ? "bg-green-200 text-green-800" : ""}`}
-                  >
-                    {t("services.month")}
-                  </button>
-                </div>
-              </div>
-
-              {/* Calendar Grid */}
-              <div className="grid grid-cols-7 gap-px bg-gray-200">
-                {/* Weekday Headers */}
-                {weekdays.map((day, index) => (
-                  <div key={index} className="bg-white p-2 text-center text-sm font-medium">
-                    {day}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <h3 className="text-sm font-medium mb-2">{t("services.selectDate")}</h3>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          className={cn("w-full justify-start text-left font-normal", !date && "text-muted-foreground")}
+                        >
+                          <CalendarIcon className="mr-2 h-4 w-4" />
+                          {date ? format(date, "PPP", { locale: getLocale() }) : <span>{t("services.selectADate")}</span>}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar
+                          mode="single"
+                          selected={date}
+                          onSelect={setDate}
+                          locale={getLocale()}
+                          disabled={(date) => {
+                            const today = new Date()
+                            today.setHours(0, 0, 0, 0)
+                            return date < today || !isDateAvailable(date)
+                          }}
+                          modifiers={{
+                            available: isDateAvailable,
+                          }}
+                          modifiersClassNames={{
+                            available: "font-bold text-green-500",
+                          }}
+                          initialFocus
+                        />
+                      </PopoverContent>
+                    </Popover>
                   </div>
-                ))}
 
-                {/* Calendar Days */}
-                {days.map((day, index) => (
-                  <div
-                    key={index}
-                    className={`bg-white p-2 min-h-[60px] sm:min-h-[80px] ${!day.isCurrentMonth ? "text-gray-400" : ""}`}
-                  >
-                    <div className="text-right">{day.date.getDate()}</div>
+                  <div>
+                    <h3 className="text-sm font-medium mb-2">
+                      {date
+                        ? `${t("services.slotsAvailableOn")} ${format(date, "dd MMMM yyyy", { locale: getLocale() })}`
+                        : t("services.selectADateFirst")}
+                    </h3>
 
-                    {/* Events */}
-                    {day.events.map((event) => (
-                      <div key={event.id} className={`${event.color} p-1 text-xs mt-1 truncate rounded`}>
-                        {event.name}
+                    {date ? (
+                      availableTimeSlots.length > 0 ? (
+                        <div className="grid grid-cols-3 gap-2">
+                          {availableTimeSlots.map((slot) => (
+                            <Button
+                              key={slot.id}
+                              variant={selectedTimeSlot === slot.time ? "default" : "outline"}
+                              size="sm"
+                              onClick={() => setSelectedTimeSlot(slot.time)}
+                              disabled={!slot.available}
+                              className="h-10"
+                            >
+                              {slot.time}
+                            </Button>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="text-sm text-muted-foreground">{t("services.noAvailableSlots")}</p>
+                      )
+                    ) : (
+                      <div className="border rounded-md p-4 text-center text-muted-foreground">
+                        {t("services.availableTimeSlots")}
                       </div>
-                    ))}
+                    )}
                   </div>
-                ))}
-              </div>
-            </div>
+                </div>
+
+                {date && selectedTimeSlot && (
+                  <div className="mt-6 p-4 bg-green-50 rounded-md">
+                    <h3 className="font-medium mb-2">{t("services.summary")}</h3>
+                    <div className="flex items-center mb-2">
+                      <CalendarIcon className="h-4 w-4 mr-2 text-green-500" />
+                      <span>{format(date, "EEEE d MMMM yyyy", { locale: getLocale() })}</span>
+                    </div>
+                    <div className="flex items-center mb-4">
+                      <Clock className="h-4 w-4 mr-2 text-green-500" />
+                      <span>{selectedTimeSlot}</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <div className="text-xl font-bold">{service.price}</div>
+                      <Button onClick={handleBooking}>{t("services.bookNow")}</Button>
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
           </div>
         </div>
       </main>
     </div>
   )
 }
-

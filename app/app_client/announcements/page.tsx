@@ -49,7 +49,7 @@ export default function AnnouncementsPage() {
           <h1 className="text-2xl font-semibold text-center text-green-400">{t("announcements.yourAnnouncements")}</h1>
 
           <Link
-            href="/dashboard/announcements/create"
+            href="/app_client/announcements/create"
             className="bg-green-400 text-white px-4 py-2 rounded-full flex items-center hover:bg-green-500 transition-colors"
           >
             <Plus className="h-4 w-4 mr-1" />
@@ -94,7 +94,7 @@ export default function AnnouncementsPage() {
 
                 <div className="flex flex-wrap gap-2">
                   <Link
-                    href={`/dashboard/announcements/edit/${announcement.id}`}
+                    href={`/app_client/announcements/edit/${announcement.id}`}
                     className="bg-gray-100 text-gray-700 px-3 py-1 rounded-md text-sm hover:bg-gray-200 transition-colors inline-block"
                   >
                     {t("announcements.edit")}
@@ -118,7 +118,7 @@ export default function AnnouncementsPage() {
           <div className="text-center py-12">
             <p className="text-gray-500 mb-4">{t("announcements.noAnnouncements")}</p>
             <Link
-              href="/dashboard/announcements/create"
+              href="/app_client/announcements/create"
               className="bg-green-400 text-white px-4 py-2 rounded-full flex items-center mx-auto hover:bg-green-500 transition-colors"
             >
               <Plus className="h-4 w-4 mr-1" />

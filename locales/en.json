@@ -27,15 +27,15 @@
     "selectYourPackageSize": "Select your package's size"
   },
   "navigation": {
-    "dashboard": "Dashboard",
+    "app_client": "App",
     "myAnnouncements": "My announcements",
     "myPayments": "My payments",
     "messages": "Messages",
     "makeComplaint": "Make a complaint",
-    "backToDashboard": "Back to Dashboard",
+    "backToApp_Client": "Back to the App",
     "backToComplaints": "Back to complaints"
   },
-  "dashboard": {
+  "app_client": {
     "welcome": "Discover what EcoDeli and its partners have to offer to you",
     "searchServices": "Search for services",
     "featuredServices": "Featured services",
@@ -95,11 +95,20 @@
     "serviceNotFound": "Service not found",
     "price": "Price",
     "selectDate": "Select a date on the calendar",
+    "selectADate": "Select a date",
+    "selectADateFirst": "Select a date first",
+    "availableTimeSlots": "Available slots will be displayed here",
+    "noAvailableSlots": "No available slots for this date",
+    "slotsAvailableOn": "Slots available on",
+    "summary": "Summary of your reservation",
     "payNow": "Pay now",
     "today": "Today",
     "day": "Day",
     "week": "Week",
-    "month": "Month"
+    "month": "Month",
+    "book" : "Book",
+    "bookNow": "Book now"
+
   },
   "announcements": {
     "yourAnnouncements": "Your announcements",
@@ -213,17 +222,27 @@
     "trackYourPackage": "Track Your Package",
     "trackingId": "Tracking ID",
     "enterTrackingId": "Enter your tracking ID",
+    "pleaseEnterTrackingId": "Please enter a tracking ID",
     "trackPackage": "Track Package",
     "recentlyTracked": "Recently Tracked",
     "inTransit": "In Transit",
     "delivered": "Delivered",
+    "pending": "Pending",
+    "exception": "Exception",
     "from": "From",
     "to": "To",
     "estimatedDelivery": "Estimated Delivery",
     "status": "Status",
     "trackingDetails": "Tracking Details",
     "downloadInvoice": "Download Invoice",
-    "reportIssue": "Report an Issue"
+    "reportIssue": "Report an Issue",
+    "backToTracking": "Back to tracking",
+    "packageNotFound": "Package not found",
+    "invalidTrackingId": "The tracking ID you entered is invalid or the package does not exist",
+    "packageInfo": "Package Information",
+    "sender": "Sender",
+    "recipient": "Recipient",
+    "shipmentProgress": "Shipment Progress"
   },
   "auth": {
     "createAccount": "Create an Account",

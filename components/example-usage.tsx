@@ -7,7 +7,7 @@ export default function ExampleComponent() {
 
   return (
     <div>
-      <h1>{t("dashboard.welcome")}</h1>
+      <h1>{t("app_client.welcome")}</h1>
       <p>{t("auth.pleaseEnterEmailPassword")}</p>
       <button>{t("common.login")}</button>
     </div>

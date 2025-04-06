@@ -93,4 +93,3 @@ export const EmailTemplate: React.FC<EmailTemplateProps> = ({
     </div>
   )
 }
-
