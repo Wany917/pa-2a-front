@@ -296,7 +296,53 @@
     "currentPassword": "Current Password",
     "newPassword": "New Password",
     "confirmNewPassword": "Confirm New Password",
-    "editMembership": "Edit your membership"
+    "editMembership": "Edit your membership",
+    "editJustificative": "Edit your justificative pieces"
+  },
+  "errors": {
+    "somethingWentWrong": "Something went wrong!",
+    "errorDescription": "We're sorry, but we encountered an error while processing your request. Please try again or go back to the home page.",
+    "tryAgain": "Try Again",
+    "goBack": "Go Back",
+    "pageNotFound": "Page not found",
+    "pageNotFoundDescription": "The page you are looking for doesn't exist or has been moved."
+  },
+  "deliveryman": {
+    "dashboard": "Dashboard",
+    "announcements": "Announcements",
+    "deliveries": "Deliveries",
+    "calendar": "Calendar",
+    "notifications": "Notifications",
+    "payments": "Payments",
+    "settings": "Settings",
+    "logout": "Logout",
+    "profile": "Profile",
+    "search": "Search...",
+    "totalClients": "Total Clients",
+    "deliveriesThisWeek": "Deliveries this week",
+    "totalPendingDeliveries": "Total Pending Deliveries",
+    "fromYesterday": "from yesterday",
+    "deliveriesThisMonth": "Deliveries this month",
+    "recentDeliveries": "Recent Deliveries",
+    "viewAll": "View all",
+    "orderId": "Order ID",
+    "customer": "Customer",
+    "address": "Address",
+    "status": "Status",
+    "date": "Date",
+    "editJustificative": {
+      "editYourJustificativePieces": "Edit your justificative pieces",
+      "yourLicence": "Your licence",
+      "yourID": "Your ID",
+      "download": "Download",
+      "upload": "Upload",
+      "uploadNewLicence": "Upload your new licence in .pdf",
+      "uploadNewID": "Upload your new ID in .pdf",
+      "confirm": "Confirm",
+      "quit": "Quit",
+      "goBackToEcoDeli": "Go back to EcoDeli",
+      "dailyDelivery": "Daily Delivery"
+    }
   }
 }
 

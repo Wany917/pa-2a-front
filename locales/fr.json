@@ -295,7 +295,53 @@
     "currentPassword": "Mot de passe actuel",
     "newPassword": "Nouveau mot de passe",
     "confirmNewPassword": "Confirmer le nouveau mot de passe",
-    "editMembership": "Modifier votre abonnement"
+    "editMembership": "Modifier votre abonnement",
+    "editJustificative": "Modifier vos pièces justificatives"
+  },
+  "errors": {
+    "somethingWentWrong": "Une erreur est survenue !",
+    "errorDescription": "Nous sommes désolés, mais nous avons rencontré une erreur lors du traitement de votre demande. Veuillez réessayer ou retourner à la page d'accueil.",
+    "tryAgain": "Réessayer",
+    "goBack": "Retour à la page précédente",
+    "pageNotFound": "Page non trouvée",
+    "pageNotFoundDescription": "La page que vous recherchez n'existe pas ou a été déplacée."
+  },
+  "deliveryman": {
+    "dashboard": "Tableau de bord",
+    "announcements": "Annonces",
+    "deliveries": "Livraisons",
+    "calendar": "Calendrier",
+    "notifications": "Notifications",
+    "payments": "Paiements",
+    "settings": "Paramètres",
+    "logout": "Déconnexion",
+    "profile": "Profil",
+    "search": "Rechercher...",
+    "totalClients": "Total Clients",
+    "deliveriesThisWeek": "Livraisons cette semaine",
+    "totalPendingDeliveries": "Total des livraisons en attente",
+    "fromYesterday": "depuis hier",
+    "deliveriesThisMonth": "Livraisons ce mois",
+    "recentDeliveries": "Livraisons récentes",
+    "viewAll": "Voir tout",
+    "orderId": "ID Commande",
+    "customer": "Client",
+    "address": "Adresse",
+    "status": "Statut",
+    "date": "Date",
+    "editJustificative": {
+      "editYourJustificativePieces": "Modifier vos pièces justificatives",
+      "yourLicence": "Votre permis",
+      "yourID": "Votre pièce d'identité",
+      "download": "Télécharger",
+      "upload": "Importer",
+      "uploadNewLicence": "Importez votre nouveau permis en .pdf",
+      "uploadNewID": "Importez votre nouvelle pièce d'identité en .pdf",
+      "confirm": "Confirmer",
+      "quit": "Quitter",
+      "goBackToEcoDeli": "Retour à EcoDeli",
+      "dailyDelivery": "Livraison Quotidienne"
+    }
   }
 }
 

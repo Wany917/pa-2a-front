@@ -107,7 +107,7 @@ export default function TrackingClient() {
               {recentlyTracked.map((item) => (
                 <Link
                   key={item.id}
-                  href={`/tracking/${item.id}`}
+                  href={`/app_client/tracking/${item.id}`}
                   className="block border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors"
                 >
                   <div className="flex items-center justify-between">

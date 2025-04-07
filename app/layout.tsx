@@ -9,7 +9,7 @@ const inter = Inter({ subsets: ["latin"] })
 export const metadata: Metadata = {
   title: "EcoDeli - World First Ecologic Delivery Website",
   description: "EcoDeli is the world's first ecological delivery service",
-    generator: 'v0.dev'
+    generator: 'killian_bx'
 }
 
 export default function RootLayout({

@@ -233,7 +233,7 @@ export default function app_clientClient() {
                   <div className="bg-green-100 text-green-50 rounded-full px-4 py-1">{service.price}</div>
 
                   <Link
-                    href={`/service/${service.id}`}
+                    href={`/app_client/service/${service.id}`}
                     className="bg-green-50 text-white rounded-full px-6 py-1 hover:bg-green-400 transition-colors"
                   >
                     {t("app_client.details")}

@@ -296,7 +296,53 @@
     "currentPassword": "Contraseña actual",
     "newPassword": "Nueva contraseña",
     "confirmNewPassword": "Confirmar nueva contraseña",
-    "editMembership": "Editar tu membresía"
+    "editMembership": "Editar tu membresía",
+    "editJustificative": "Editar sus documentos de respaldo"
+  },
+  "errors": {
+    "somethingWentWrong": "¡Algo salió mal!",
+    "errorDescription": "Lo sentimos, pero encontramos un error al procesar su solicitud. Inténtelo de nuevo o vuelva a la página de inicio.",
+    "tryAgain": "Intentar de nuevo",
+    "goBack": "Ir a la página anterior",
+    "pageNotFound": "Página no encontrada",
+    "pageNotFoundDescription": "La página que está buscando no existe o ha sido movida."
+  },
+  "deliveryman": {
+    "dashboard": "Panel de control",
+    "announcements": "Anuncios",
+    "deliveries": "Entregas",
+    "calendar": "Calendario",
+    "notifications": "Notificaciones",
+    "payments": "Pagos",
+    "settings": "Configuración",
+    "logout": "Cerrar sesión",
+    "profile": "Perfil",
+    "search": "Buscar...",
+    "totalClients": "Total de Clientes",
+    "deliveriesThisWeek": "Entregas esta semana",
+    "totalPendingDeliveries": "Total de Entregas Pendientes",
+    "fromYesterday": "desde ayer",
+    "deliveriesThisMonth": "Entregas este mes",
+    "recentDeliveries": "Entregas Recientes",
+    "viewAll": "Ver todo",
+    "orderId": "ID de Pedido",
+    "customer": "Cliente",
+    "address": "Dirección",
+    "status": "Estado",
+    "date": "Fecha",
+    "editJustificative": {
+      "editYourJustificativePieces": "Editar sus documentos justificativos",
+      "yourLicence": "Su licencia",
+      "yourID": "Su identificación",
+      "download": "Descargar",
+      "upload": "Subir",
+      "uploadNewLicence": "Suba su nueva licencia en .pdf",
+      "uploadNewID": "Suba su nueva identificación en .pdf",
+      "confirm": "Confirmar",
+      "quit": "Salir",
+      "goBackToEcoDeli": "Volver a EcoDeli",
+      "dailyDelivery": "Entrega Diaria"
+    }
   }
 }
 
