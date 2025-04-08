@@ -153,7 +153,6 @@
     "serviceName": "Nombre del servicio",
     "serviceProvider": "Proveedor de servicios",
     "date": "Fecha",
-    "serviceProvider": "Proveedor de servicios",
     "rateHimHer": "Valorar",
     "payFirstToRate": "Paga primero para valorar",
     "rateNow": "Valorar ahora",
@@ -307,6 +306,17 @@
     "pageNotFound": "Página no encontrada",
     "pageNotFoundDescription": "La página que está buscando no existe o ha sido movida."
   },
+  "calendar": {
+  "mon": "LUN",
+  "tue": "MAR",
+  "wed": "MIÉ",
+  "thu": "JUE",
+  "fri": "VIE",
+  "sat": "SÁB",
+  "sun": "DOM",
+  "noEvents": "No hay entregas programadas para este día",
+  "viewDelivery": "Ver detalles de la entrega"
+},
   "deliveryman": {
     "dashboard": "Panel de control",
     "announcements": "Anuncios",
@@ -330,6 +340,28 @@
     "address": "Dirección",
     "status": "Estado",
     "date": "Fecha",
+    "priority": "Prioritario",
+    "priorityFee": "Tarifa prioritaria",
+    "by": "Por",
+    "deliveryAddress": "Dirección de entrega",
+    "accept": "Aceptar",
+    "reject": "Rechazar",
+    "notificationsDescription": "Te notificamos porque estos paquetes están en tu ruta durante tu próxima entrega",
+    "noNotifications": "No hay nuevas notificaciones",
+    "deliveriess": {
+      "image": "Imagen",
+      "announceName": "Nombre del anuncio",
+      "whereTo": "Destino",
+      "price": "Precio",
+      "amount": "Cantidad",
+      "deliveryDate": "Fecha de entrega",
+      "status": "Estado",
+      "paid": "Pagado",
+      "inTransit": "En tránsito",
+      "delivered": "Entregado",
+      "pending": "Pendiente",
+      "noDeliveriesFound": "No se encontraron entregas"
+    },
     "editJustificative": {
       "editYourJustificativePieces": "Editar sus documentos justificativos",
       "yourLicence": "Su licencia",
@@ -342,7 +374,10 @@
       "quit": "Salir",
       "goBackToEcoDeli": "Volver a EcoDeli",
       "dailyDelivery": "Entrega Diaria"
-    }
+    },
+    "acceptThisDelivery": "Aceptar esta entrega",
+    "noAnnouncementsAvailable": "No hay anuncios disponibles",
+    "checkBackLater": "Vuelva más tarde para nuevas oportunidades de entrega",
+    "switchToClientAccount": "Cambiar a cuenta de cliente"
   }
 }
-

@@ -35,6 +35,11 @@ export function useLanguage() {
   return context
 }
 
+// Export the useTranslation hook
+export function useTranslation() {
+  return useLanguage()
+}
+
 // Fonction pour obtenir la langue initiale
 const getInitialLanguage = (): Language => {
   if (typeof window !== "undefined") {
@@ -120,7 +125,7 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
       }
     }
 
-    return value as string
+    return typeof value === "string" ? value : key
   }
 
   // Ne pas rendre le contexte tant que le composant n'est pas monté
@@ -131,4 +136,3 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
 
   return <LanguageContext.Provider value={{ language, setLanguage, t }}>{children}</LanguageContext.Provider>
 }
-

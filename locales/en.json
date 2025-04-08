@@ -106,9 +106,8 @@
     "day": "Day",
     "week": "Week",
     "month": "Month",
-    "book" : "Book",
+    "book": "Book",
     "bookNow": "Book now"
-
   },
   "announcements": {
     "yourAnnouncements": "Your announcements",
@@ -307,11 +306,22 @@
     "pageNotFound": "Page not found",
     "pageNotFoundDescription": "The page you are looking for doesn't exist or has been moved."
   },
+  "calendar": {
+    "mon": "MON",
+    "tue": "TUE",
+    "wed": "WED",
+    "thu": "THU",
+    "fri": "FRI",
+    "sat": "SAT",
+    "sun": "SUN",
+    "noEvents": "No deliveries scheduled for this day",
+    "viewDelivery": "View delivery details"
+  },
   "deliveryman": {
     "dashboard": "Dashboard",
     "announcements": "Announcements",
     "deliveries": "Deliveries",
-    "calendar": "Calendar",
+    "calendare": "Calendar",
     "notifications": "Notifications",
     "payments": "Payments",
     "settings": "Settings",
@@ -330,6 +340,28 @@
     "address": "Address",
     "status": "Status",
     "date": "Date",
+    "priority": "Priority",
+    "priorityFee": "Priority fee",
+    "by": "By",
+    "deliveryAddress": "Delivery address",
+    "accept": "Accept",
+    "reject": "Reject",
+    "notificationsDescription": "We notified you because those packages are on your way during your next delivery",
+    "noNotifications": "No new notifications",
+    "deliveriess": {
+      "image": "Image",
+      "announceName": "Announce Name",
+      "whereTo": "Where to",
+      "price": "Price",
+      "amount": "Amount",
+      "deliveryDate": "Delivery date",
+      "status": "Status",
+      "paid": "Paid",
+      "inTransit": "In Transit",
+      "delivered": "Delivered",
+      "pending": "Pending",
+      "noDeliveriesFound": "No deliveries found"
+    },
     "editJustificative": {
       "editYourJustificativePieces": "Edit your justificative pieces",
       "yourLicence": "Your licence",
@@ -340,9 +372,12 @@
       "uploadNewID": "Upload your new ID in .pdf",
       "confirm": "Confirm",
       "quit": "Quit",
-      "goBackToEcoDeli": "Go back to EcoDeli",
-      "dailyDelivery": "Daily Delivery"
-    }
+      "goBackToEcoDeli": "Go back to EcoDeli"
+    },
+    "acceptThisDelivery": "Accept this delivery",
+    "noAnnouncementsAvailable": "No announcements available",
+    "checkBackLater": "Check back later for new delivery opportunities",
+    "switchToClientAccount": "Switch to client account"
   }
 }
 

@@ -306,6 +306,17 @@
     "pageNotFound": "Page non trouvée",
     "pageNotFoundDescription": "La page que vous recherchez n'existe pas ou a été déplacée."
   },
+  "calendar": {
+  "mon": "LUN",
+  "tue": "MAR",
+  "wed": "MER",
+  "thu": "JEU",
+  "fri": "VEN",
+  "sat": "SAM",
+  "sun": "DIM",
+  "noEvents": "Aucune livraison prévue ce jour",
+  "viewDelivery": "Voir les détails de la livraison"
+},
   "deliveryman": {
     "dashboard": "Tableau de bord",
     "announcements": "Annonces",
@@ -329,6 +340,30 @@
     "address": "Adresse",
     "status": "Statut",
     "date": "Date",
+    "priority": "Prioritaire",
+    "priorityFee": "Frais prioritaires",
+    "acceptThisDelivery": "Accepter cette livraison",
+    "noAnnouncementsAvailable": "Aucune annonce disponible",
+    "checkBackLater": "Revenez plus tard pour de nouvelles opportunités de livraison",
+    "switchToClientAccount": "Passer au compte client",
+    "by": "Par",
+      "deliveryAddress": "Adresse de livraison",
+      "priceForDelivery": "Prix de livraison",
+      "storageBox": "Box de stockage",
+      "packageInMailbox": "Le colis est dans la boîte aux lettres",    
+      "deliveriess": {
+      "image": "Image",
+      "announceName": "Nom de l'annonce",
+      "whereTo": "Destination",
+      "price": "Prix",
+      "amount": "Quantité",
+      "deliveryDate": "Date de livraison",
+      "status": "Statut",
+      "paid": "Payé",
+      "inTransit": "En transit",
+      "delivered": "Livré",
+      "pending": "En attente",
+      "noDeliveriesFound": "Aucune livraison trouvée",
     "editJustificative": {
       "editYourJustificativePieces": "Modifier vos pièces justificatives",
       "yourLicence": "Votre permis",
@@ -344,4 +379,4 @@
     }
   }
 }
-
+}
