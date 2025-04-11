@@ -8,16 +8,16 @@ import LanguageSelector from "@/components/language-selector"
 import Link from "next/link"
 import {
   BarChart3,
-  Calendar,
   ChevronDown,
   LogOut,
   Menu,
   MessageSquare,
   Package,
   Edit,
-  Bell,
+  BellRing,
   CreditCard,
   User,
+  PartyPopper,
 } from "lucide-react"
 
 // Mock data for notifications
@@ -104,7 +104,7 @@ export default function NotificationsClient() {
                   href="/app_deliveryman/announcements"
                   className="flex items-center rounded-md px-4 py-3 text-gray-700 hover:bg-gray-100"
                 >
-                  <MessageSquare className="mr-3 h-5 w-5" />
+                  <PartyPopper className="mr-3 h-5 w-5" />
                   <span>{t("deliveryman.announcements")}</span>
                 </Link>
               </li>
@@ -119,20 +119,20 @@ export default function NotificationsClient() {
               </li>
               <li>
                 <Link
-                  href="/app_deliveryman/calendar"
-                  className="flex items-center rounded-md px-4 py-3 text-gray-700 hover:bg-gray-100"
+                  href="/app_deliveryman/notifications"
+                  className="flex items-center rounded-md bg-green-50 px-4 py-3 text-white"
                 >
-                  <Calendar className="mr-3 h-5 w-5" />
-                  <span>{t("deliveryman.calendar")}</span>
+                  <BellRing className="mr-3 h-5 w-5" />
+                  <span>{t("deliveryman.notifications")}</span>
                 </Link>
               </li>
               <li>
                 <Link
-                  href="/app_deliveryman/notifications"
-                  className="flex items-center rounded-md bg-green-50 px-4 py-3 text-white"
+                  href="/app_deliveryman/messages"
+                  className="flex items-center rounded-md px-4 py-3 text-gray-700 hover:bg-gray-100"
                 >
-                  <Bell className="mr-3 h-5 w-5" />
-                  <span>{t("deliveryman.notifications")}</span>
+                  <MessageSquare className="mr-3 h-5 w-5" />
+                  <span>{t("deliveryman.messages")}</span>
                 </Link>
               </li>
               <li>

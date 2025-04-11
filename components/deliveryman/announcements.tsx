@@ -5,17 +5,16 @@ import Image from "next/image"
 import Link from "next/link"
 import {
   BarChart3,
-  Calendar,
   ChevronDown,
   LogOut,
   Menu,
   MessageSquare,
   Package,
   Edit,
-  Bell,
+  BellRing,
   CreditCard,
   User,
-  Settings,
+  PartyPopper,
 } from "lucide-react"
 import { useLanguage } from "@/components/language-context"
 import LanguageSelector from "@/components/language-selector"
@@ -121,7 +120,7 @@ export default function DeliverymanAnnouncements() {
                   href="/app_deliveryman/announcements"
                   className="flex items-center rounded-md bg-green-50 px-4 py-3 text-white"
                 >
-                  <MessageSquare className="mr-3 h-5 w-5" />
+                  <PartyPopper className="mr-3 h-5 w-5" />
                   <span>{t("deliveryman.announcements")}</span>
                 </Link>
               </li>
@@ -136,20 +135,20 @@ export default function DeliverymanAnnouncements() {
               </li>
               <li>
                 <Link
-                  href="/app_deliveryman/calendar"
+                  href="/app_deliveryman/notifications"
                   className="flex items-center rounded-md px-4 py-3 text-gray-700 hover:bg-gray-100"
                 >
-                  <Calendar className="mr-3 h-5 w-5" />
-                  <span>{t("deliveryman.calendar")}</span>
+                  <BellRing className="mr-3 h-5 w-5" />
+                  <span>{t("deliveryman.notifications")}</span>
                 </Link>
               </li>
               <li>
                 <Link
-                  href="/app_deliveryman/notifications"
+                  href="/app_deliveryman/messages"
                   className="flex items-center rounded-md px-4 py-3 text-gray-700 hover:bg-gray-100"
                 >
-                  <Bell className="mr-3 h-5 w-5" />
-                  <span>{t("deliveryman.notifications")}</span>
+                  <MessageSquare className="mr-3 h-5 w-5" />
+                  <span>{t("deliveryman.messages")}</span>
                 </Link>
               </li>
               <li>

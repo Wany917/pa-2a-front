@@ -7,17 +7,17 @@ import Link from "next/link"
 import Image from "next/image"
 import {
   BarChart3,
-  Calendar,
   ChevronDown,
   LogOut,
   Menu,
   MessageSquare,
   Package,
   Edit,
-  Bell,
   CreditCard,
   ChevronRight,
   ArrowUp,
+  BellRing,
+  PartyPopper,
 } from "lucide-react"
 import { useLanguage } from "@/components/language-context"
 import LanguageSelector from "@/components/language-selector"
@@ -88,7 +88,7 @@ export default function DeliverymanDashboard() {
                   href="/app_deliveryman/announcements"
                   className="flex items-center rounded-md px-4 py-3 text-gray-700 hover:bg-gray-100"
                 >
-                  <MessageSquare className="mr-3 h-5 w-5" />
+                  <PartyPopper className="mr-3 h-5 w-5" />
                   <span>{t("deliveryman.announcements")}</span>
                 </Link>
               </li>
@@ -103,20 +103,20 @@ export default function DeliverymanDashboard() {
               </li>
               <li>
                 <Link
-                  href="/app_deliveryman/calendar"
+                  href="/app_deliveryman/notifications"
                   className="flex items-center rounded-md px-4 py-3 text-gray-700 hover:bg-gray-100"
                 >
-                  <Calendar className="mr-3 h-5 w-5" />
-                  <span>{t("deliveryman.calendar")}</span>
+                  <BellRing className="mr-3 h-5 w-5" />
+                  <span>{t("deliveryman.notifications")}</span>
                 </Link>
               </li>
               <li>
                 <Link
-                  href="/app_deliveryman/notifications"
+                  href="/app_deliveryman/messages"
                   className="flex items-center rounded-md px-4 py-3 text-gray-700 hover:bg-gray-100"
                 >
-                  <Bell className="mr-3 h-5 w-5" />
-                  <span>{t("deliveryman.notifications")}</span>
+                  <MessageSquare className="mr-3 h-5 w-5" />
+                  <span>{t("deliveryman.messages")}</span>
                 </Link>
               </li>
               <li>
@@ -252,7 +252,7 @@ export default function DeliverymanDashboard() {
             <div className="flex items-center justify-between p-6">
               <h2 className="text-lg font-medium text-gray-900">{t("deliveryman.recentDeliveries")}</h2>
               <Link
-                href="/deliveryman/deliveries"
+                href="/app_deliveryman/deliveries"
                 className="flex items-center text-sm font-medium text-green-600 hover:text-green-500"
               >
                 {t("deliveryman.viewAll")}
