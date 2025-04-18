@@ -17,6 +17,7 @@ interface DeliveryItem {
   amount: number
   deliveryDate: string
   status: "paid" | "unpaid"
+  rating: number // Ajouter cette propriété
 }
 
 interface ServiceItem {
@@ -50,6 +51,7 @@ export default function PaymentsPage() {
       amount: 1,
       deliveryDate: "26th May",
       status: "paid",
+      rating: 0, // Ajouter cette propriété
     },
     {
       id: "d2",
@@ -60,6 +62,7 @@ export default function PaymentsPage() {
       amount: 1,
       deliveryDate: "3rd June",
       status: "unpaid",
+      rating: 0, // Ajouter cette propriété
     },
   ])
 
@@ -129,8 +132,12 @@ export default function PaymentsPage() {
   }
 
   // Handle rating
-  const handleRating = (id: string, rating: number) => {
-    setServices((prev) => prev.map((item) => (item.id === id ? { ...item, rating } : item)))
+  const handleRating = (type: "delivery" | "service", id: string, rating: number) => {
+    if (type === "delivery") {
+      setDeliveries((prev) => prev.map((item) => (item.id === id ? { ...item, rating } : item)))
+    } else {
+      setServices((prev) => prev.map((item) => (item.id === id ? { ...item, rating } : item)))
+    }
     setShowRatingModal(null)
     setTempRating(0)
   }
@@ -210,7 +217,7 @@ export default function PaymentsPage() {
               {isUserMenuOpen && (
                 <div className="absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-lg z-10 py-2 border border-gray-100">
                   <Link
-                    href="/app_client/edit-account"
+                    href="/dashboard/edit-account"
                     className="flex items-center px-4 py-2 text-gray-700 hover:bg-gray-100"
                   >
                     <Edit className="h-4 w-4 mr-2" />
@@ -301,6 +308,9 @@ export default function PaymentsPage() {
                     <th className="py-3 px-2 text-left text-sm font-medium text-gray-500">
                       {t("payments.deliveryDate")}
                     </th>
+                    <th className="py-3 px-2 text-left text-sm font-medium text-gray-500">
+                      {t("payments.rateDelivery")}
+                    </th>
                     <th className="py-3 px-2 text-left text-sm font-medium text-gray-500">{t("payments.status")}</th>
                     <th className="py-3 px-2 text-left text-sm font-medium text-gray-500">{t("payments.action")}</th>
                   </tr>
@@ -325,6 +335,25 @@ export default function PaymentsPage() {
                         <td className="py-3 px-2 font-medium">{item.price}</td>
                         <td className="py-3 px-2 text-center">{item.amount}</td>
                         <td className="py-3 px-2">{item.deliveryDate}</td>
+                        <td className="py-3 px-2">
+                          {item.status === "paid" ? (
+                            item.rating > 0 ? (
+                              renderStars(item.rating, item.id)
+                            ) : (
+                              <button
+                                onClick={() => {
+                                  setShowRatingModal(`delivery-${item.id}`)
+                                  setTempRating(0)
+                                }}
+                                className="text-sm text-green-500 hover:underline"
+                              >
+                                {t("payments.rateNow")}
+                              </button>
+                            )
+                          ) : (
+                            <span className="text-sm text-gray-400">{t("payments.payFirstToRate")}</span>
+                          )}
+                        </td>
                         <td className="py-3 px-2">
                           <span
                             className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
@@ -534,18 +563,30 @@ export default function PaymentsPage() {
       {showRatingModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-lg shadow-lg max-w-md w-full p-6">
-            <h3 className="text-xl font-semibold mb-4">{t("payments.rateThisService")}</h3>
+            <h3 className="text-xl font-semibold mb-4">
+              {showRatingModal.startsWith("delivery") ? t("payments.rateThisDelivery") : t("payments.rateThisService")}
+            </h3>
 
             <p className="mb-6">
               {t("payments.howWouldYouRate")}{" "}
               <span className="font-medium">
-                {services.find((item) => item.id === showRatingModal)?.name} {t("payments.by")}{" "}
-                {services.find((item) => item.id === showRatingModal)?.provider}
+                {showRatingModal.startsWith("delivery")
+                  ? deliveries.find((item) => item.id === showRatingModal.replace("delivery-", ""))?.name
+                  : services.find((item) => item.id === showRatingModal.replace("service-", ""))?.name}
+                {!showRatingModal.startsWith("delivery") && (
+                  <>
+                    {" "}
+                    {t("payments.by")}{" "}
+                    {services.find((item) => item.id === showRatingModal.replace("service-", ""))?.provider}
+                  </>
+                )}
               </span>
               ?
             </p>
 
-            <div className="flex justify-center mb-6">{renderStars(tempRating, showRatingModal, true)}</div>
+            <div className="flex justify-center mb-6">
+              {renderStars(tempRating, showRatingModal.includes("-") ? showRatingModal.split("-")[1] : "", true)}
+            </div>
 
             <div className="flex justify-end space-x-3">
               <button
@@ -558,7 +599,13 @@ export default function PaymentsPage() {
                 {t("common.cancel")}
               </button>
               <button
-                onClick={() => handleRating(showRatingModal, tempRating)}
+                onClick={() =>
+                  handleRating(
+                    showRatingModal.startsWith("delivery") ? "delivery" : "service",
+                    showRatingModal.replace(showRatingModal.startsWith("delivery") ? "delivery-" : "service-", ""),
+                    tempRating,
+                  )
+                }
                 disabled={tempRating === 0}
                 className="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 transition-colors disabled:opacity-50"
               >
@@ -571,4 +618,3 @@ export default function PaymentsPage() {
     </div>
   )
 }
-

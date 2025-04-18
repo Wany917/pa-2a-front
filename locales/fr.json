@@ -24,7 +24,10 @@
     "saving": "Enregistrement...",
     "submitting": "Envoi en cours...",
     "selectYourStorageBox": "Sélectionnez votre box de stockage",
-    "selectYourPackageSize": "Sélectionnez la taille de votre colis"
+    "selectYourPackageSize": "Sélectionnez la taille de votre colis",
+    "previous": "Précédent",
+    "next": "Suivant",
+    "getStarted": "Commencer"
   },
   "navigation": {
     "app_client": "Tableau de bord",
@@ -119,9 +122,10 @@
     "makeFirstAnnouncement": "Faire votre première annonce",
     "createNewAnnouncement": "Créer une nouvelle annonce",
     "editYourAnnouncement": "Modifier votre annonce",
-    "announceName": "Nom de l'annonce",
+    "packageName": "Nom du colis",
     "whereTo": "Destination",
-    "price": "Prix",
+    "startingPoint": "Adresse de départ",
+    "price": "Prix du colis",
     "deliveryDate": "Date de livraison",
     "amount": "Quantité",
     "storageBox": "Box de stockage",
@@ -133,7 +137,19 @@
     "confirm": "Confirmer",
     "confirmDelete": "Êtes-vous sûr de vouloir supprimer cette annonce ?",
     "deliveryAddress": "Adresse de livraison",
-    "priceForDelivery": "Prix de livraison"
+    "priceForDelivery": "Prix de livraison",
+    "selectPackageCount": "Sélectionner le nombre de colis",
+    "packages": "Colis",
+    "continueToDetails": "Continuer vers les détails",
+    "packageDetails": "Détails du colis",
+    "addPhoto": "Ajouter une photo (format .jpg)",
+    "noImage": "Aucune image",
+    "editPhoto": "Modifier la photo",
+    "goBackToAnnouncements": "Retour aux annonces",
+    "continueToAddresses": "Continuer vers les adresses",
+    "enterAddresses": "Entrez l'adresse de départ et de livraison",
+    "enterStartingAddress": "Entrez l'adresse de départ",
+    "enterDestinationAddress": "Entrez l'adresse de livraison"
   },
   "payments": {
     "yourPayments": "Vos paiements",
@@ -166,7 +182,8 @@
     "by": "par",
     "submitRating": "Soumettre l'évaluation",
     "noDeliveriesFound": "Aucune livraison trouvée",
-    "noServicesFound": "Aucun service trouvé"
+    "noServicesFound": "Aucun service trouvé",
+    "rateDelivery": "Évaluer"
   },
   "complaints": {
     "yourComplaints": "Vos réclamations",
@@ -244,6 +261,20 @@
     "sender": "Expéditeur",
     "recipient": "Destinataire",
     "shipmentProgress": "Progression de l'expédition"
+  },
+  "onboarding": {
+    "welcome": "Bienvenue sur EcoDeli !",
+    "welcomeDescription": "Faisons un tour rapide pour vous aider à démarrer avec notre plateforme. Nous vous montrerons les principales fonctionnalités pour rendre votre expérience fluide et agréable.",
+    "announcements": "Annonces",
+    "announcementsDescription": "Créez et gérez vos annonces de livraison. Publiez ce que vous avez besoin de faire livrer et connectez-vous avec des livreurs.",
+    "payments": "Paiements",
+    "paymentsDescription": "Suivez tous vos paiements en un seul endroit. Consultez les livraisons et services payés et non payés.",
+    "messages": "Messages",
+    "messagesDescription": "Communiquez directement avec les livreurs et les prestataires de services via notre système de messagerie.",
+    "complaints": "Réclamations",
+    "complaintsDescription": "Faites une réclamation si vous avez des problèmes avec une livraison ou un service. Notre équipe de support est là pour vous aider.",
+    "profile": "Votre Profil",
+    "profileDescription": "Accédez aux paramètres de votre compte, modifiez votre profil ou inscrivez-vous en tant que livreur ou prestataire de services."
   },
   "auth": {
     "createAccount": "Créer un compte",

@@ -24,7 +24,9 @@
     "saving": "Guardando...",
     "submitting": "Enviando...",
     "selectYourStorageBox": "Selecciona tu caja de almacenamiento",
-    "selectYourPackageSize": "Selecciona el tamaño de tu paquete"
+    "selectYourPackageSize": "Selecciona el tamaño de tu paquete",
+    "previous": "Anterior",
+    "next": "Siguiente"
   },
   "navigation": {
     "app_client": "Panel de control",

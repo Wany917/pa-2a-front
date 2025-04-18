@@ -5,15 +5,11 @@ import { createContext, useContext, useState, useEffect, type ReactNode } from "
 // Types pour nos traductions
 type Language = "FR" | "EN" | "ES"
 
-// Importation directe des fichiers de traduction depuis leur nouvel emplacement
-import frTranslations from "@/locales/fr.json"
-import enTranslations from "@/locales/en.json"
-import esTranslations from "@/locales/es.json"
-
 interface LanguageContextType {
   language: Language
   setLanguage: (lang: Language) => void
   t: (key: string) => string
+  isLoading: boolean
 }
 
 // Créer le contexte avec des valeurs par défaut
@@ -21,6 +17,7 @@ const defaultContextValue: LanguageContextType = {
   language: "EN",
   setLanguage: () => {},
   t: (key) => key,
+  isLoading: true,
 }
 
 // Créer le contexte
@@ -64,9 +61,30 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
   // État pour stocker la langue actuelle, initialisé avec une fonction pour éviter les problèmes SSR
   const [language, setLanguageState] = useState<Language>("EN")
   // État pour stocker les traductions
-  const [translations, setTranslations] = useState<Record<string, any>>(enTranslations)
+  const [translations, setTranslations] = useState<Record<string, any>>({})
   // État pour suivre si le composant est monté
   const [isMounted, setIsMounted] = useState(false)
+  // État pour suivre si les traductions sont en cours de chargement
+  const [isLoading, setIsLoading] = useState(true)
+
+  // Fonction pour charger les traductions depuis l'API
+  const fetchTranslations = async (locale: string) => {
+    setIsLoading(true)
+    try {
+      const response = await fetch(`/api/translations/${locale.toLowerCase()}`)
+      if (!response.ok) {
+        throw new Error(`Failed to fetch translations: ${response.status}`)
+      }
+      const data = await response.json()
+      setTranslations(data)
+    } catch (error) {
+      console.error("Error loading translations:", error)
+      // Fallback to empty translations
+      setTranslations({})
+    } finally {
+      setIsLoading(false)
+    }
+  }
 
   // Effet pour initialiser la langue après le montage du composant
   useEffect(() => {
@@ -74,17 +92,8 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
     const initialLang = getInitialLanguage()
     setLanguageState(initialLang)
 
-    // Charger les traductions correspondantes
-    switch (initialLang) {
-      case "FR":
-        setTranslations(frTranslations)
-        break
-      case "ES":
-        setTranslations(esTranslations)
-        break
-      default:
-        setTranslations(enTranslations)
-    }
+    // Charger les traductions depuis l'API
+    fetchTranslations(initialLang)
   }, [])
 
   // Fonction pour changer la langue
@@ -96,21 +105,15 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
       localStorage.setItem(STORAGE_KEY, lang)
     }
 
-    // Charger les traductions correspondantes
-    switch (lang) {
-      case "FR":
-        setTranslations(frTranslations)
-        break
-      case "ES":
-        setTranslations(esTranslations)
-        break
-      default:
-        setTranslations(enTranslations)
-    }
+    // Charger les traductions depuis l'API
+    fetchTranslations(lang)
   }
 
   // Fonction pour obtenir une traduction par clé
   const t = (key: string) => {
+    // Si les traductions sont en cours de chargement, retourner la clé
+    if (isLoading) return key
+
     // Diviser la clé par des points pour accéder aux objets imbriqués
     const keys = key.split(".")
     let value = translations
@@ -134,5 +137,5 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
     return <>{children}</>
   }
 
-  return <LanguageContext.Provider value={{ language, setLanguage, t }}>{children}</LanguageContext.Provider>
+  return <LanguageContext.Provider value={{ language, setLanguage, t, isLoading }}>{children}</LanguageContext.Provider>
 }

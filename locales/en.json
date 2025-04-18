@@ -24,7 +24,9 @@
     "saving": "Saving...",
     "submitting": "Submitting...",
     "selectYourStorageBox": "Select your storage box",
-    "selectYourPackageSize": "Select your package's size"
+    "selectYourPackageSize": "Select your package's size",
+    "previous": "Previous",
+    "next": "Next"
   },
   "navigation": {
     "app_client": "App",

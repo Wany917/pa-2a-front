@@ -7,6 +7,7 @@ import { Search, Star, User, LogOut, Edit, ChevronDown } from "lucide-react"
 import { Cantata_One as Sansita_One } from "next/font/google"
 import LanguageSelector from "@/components/language-selector"
 import { useLanguage } from "@/components/language-context"
+import OnboardingOverlay from "@/components/onboarding-overlay"
 
 const sansitaOne = Sansita_One({
   weight: "400",
@@ -19,6 +20,7 @@ export default function app_clientClient() {
   const [searchQuery, setSearchQuery] = useState("")
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+  const [showOnboarding, setShowOnboarding] = useState(false)
   const userMenuRef = useRef<HTMLDivElement>(null)
 
   // Fermer le menu quand on clique en dehors
@@ -32,6 +34,14 @@ export default function app_clientClient() {
     document.addEventListener("mousedown", handleClickOutside)
     return () => {
       document.removeEventListener("mousedown", handleClickOutside)
+    }
+  }, [])
+
+  // Affichage de l'overlay si première connexion
+  useEffect(() => {
+    const hasCompletedOnboarding = localStorage.getItem("ecodeli-onboarding-completed")
+    if (!hasCompletedOnboarding) {
+      setShowOnboarding(true)
     }
   }, [])
 
@@ -64,13 +74,23 @@ export default function app_clientClient() {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      {/* Onboarding overlay */}
+      {showOnboarding && (
+        <OnboardingOverlay
+          onComplete={() => {
+            localStorage.setItem("ecodeli-onboarding-completed", "true")
+            setShowOnboarding(false)
+          }}
+        />
+      )}
+
       {/* Header */}
       <header className="bg-white shadow-sm">
         <div className="container mx-auto px-4 py-3 flex items-center justify-between">
           <div className="flex items-center">
             <Link href="/app_client">
               <Image
-                src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Logo-NEF7Y3VVan4gaPKz0Ke4Q9FTKCgie4.png"
+                src="/logo.png"
                 alt="EcoDeli Logo"
                 width={120}
                 height={40}
@@ -247,4 +267,3 @@ export default function app_clientClient() {
     </div>
   )
 }
-

@@ -5,7 +5,16 @@ import type React from "react"
 import { useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { ChevronDownIcon } from "lucide-react"
+import { ChevronDownIcon, CheckIcon } from "lucide-react"
+
+// Types de comptes disponibles
+type AccountType = "Client" | "Delivery" | "Provider" | "Merchant"
+
+interface AccountOption {
+  id: AccountType
+  label: string
+  requiresDocuments: boolean
+}
 
 export default function SignupPage() {
   const router = useRouter()
@@ -15,7 +24,6 @@ export default function SignupPage() {
     email: "",
     phone: "",
     dateOfBirth: "",
-    accountType: "User",
     password: "",
     confirmPassword: "",
     address: "",
@@ -23,11 +31,23 @@ export default function SignupPage() {
     postalCode: "",
     country: "",
   })
-  const [isSubmitting, setIsSubmitting] = useState(false)
 
+  // État pour les types de comptes sélectionnés
+  const [selectedAccounts, setSelectedAccounts] = useState<AccountType[]>(["Client"])
+
+  const [isSubmitting, setIsSubmitting] = useState(false)
   const [showCountryDropdown, setShowCountryDropdown] = useState(false)
+  const [showAccountDropdown, setShowAccountDropdown] = useState(false)
 
   const countries = ["France", "United Kingdom", "Germany", "Spain", "Italy", "Belgium", "Netherlands", "Switzerland"]
+
+  // Options de comptes avec leurs propriétés
+  const accountOptions: AccountOption[] = [
+    { id: "Client", label: "Client", requiresDocuments: false },
+    { id: "Delivery", label: "Delivery Man", requiresDocuments: true },
+    { id: "Provider", label: "Service Provider", requiresDocuments: true },
+    { id: "Merchant", label: "Merchant", requiresDocuments: true },
+  ]
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
@@ -39,17 +59,45 @@ export default function SignupPage() {
     setShowCountryDropdown(false)
   }
 
+  // Gestion de la sélection/déselection des types de comptes
+  const toggleAccountType = (accountType: AccountType) => {
+    setSelectedAccounts((prev) => {
+      // Si Client est toujours requis, on s'assure qu'il reste sélectionné
+      if (accountType === "Client" && prev.includes("Client")) {
+        return prev
+      }
+
+      // Si le type est déjà sélectionné, on le retire (sauf Client qui est obligatoire)
+      if (prev.includes(accountType)) {
+        return prev.filter((type) => type !== accountType)
+      }
+
+      // Sinon on l'ajoute
+      return [...prev, accountType]
+    })
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsSubmitting(true)
 
     try {
-      // Simuler l'envoi des données d'inscription (à remplacer par votre logique réelle)
+      // Simuler l'envoi des données d'inscription
       await new Promise((resolve) => setTimeout(resolve, 1500))
 
-      // Rediriger vers la page de vérification d'email
-      console.log("Signup attempt with:", formData)
-      router.push("/verify-email")
+      console.log("Signup attempt with:", { ...formData, accountTypes: selectedAccounts })
+
+      // Vérifier si des documents sont requis pour les comptes sélectionnés
+      const requiresDocuments = selectedAccounts.some(
+        (accountType) => accountOptions.find((opt) => opt.id === accountType)?.requiresDocuments,
+      )
+
+      // Redirection conditionnelle
+      if (requiresDocuments) {
+        router.push("/documents-verification")
+      } else {
+        router.push("/verify-email")
+      }
     } catch (error) {
       console.error("Signup error:", error)
     } finally {
@@ -120,19 +168,43 @@ export default function SignupPage() {
                 </div>
               </div>
               <div>
-                <label htmlFor="accountType" className="block text-gray-700 mb-2">
-                  Type of account
-                </label>
+                <label className="block text-gray-700 mb-2">Account Types</label>
                 <div className="relative">
-                  <input
-                    id="accountType"
-                    name="accountType"
-                    type="text"
-                    value="Client"
-                    className="w-full px-4 py-3 rounded-md bg-gray-50 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-green-50 text-gray-500"
-                    disabled
-                  />
+                  <button
+                    type="button"
+                    className="w-full px-4 py-3 rounded-md bg-gray-50 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-green-50 text-left flex justify-between items-center"
+                    onClick={() => setShowAccountDropdown(!showAccountDropdown)}
+                  >
+                    <span>
+                      {selectedAccounts.length === 1
+                        ? accountOptions.find((opt) => opt.id === selectedAccounts[0])?.label
+                        : `${selectedAccounts.length} account types selected`}
+                    </span>
+                    <ChevronDownIcon className="h-5 w-5 text-gray-400" />
+                  </button>
+
+                  {showAccountDropdown && (
+                    <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-y-auto">
+                      {accountOptions.map((option) => (
+                        <button
+                          key={option.id}
+                          type="button"
+                          className="flex w-full text-left px-4 py-2 hover:bg-gray-100 justify-between items-center"
+                          onClick={() => toggleAccountType(option.id)}
+                          disabled={option.id === "Client"} // Client est toujours sélectionné
+                        >
+                          <span>{option.label}</span>
+                          {selectedAccounts.includes(option.id) && <CheckIcon className="h-4 w-4 text-green-500" />}
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </div>
+                {selectedAccounts.some((type) => type !== "Client") && (
+                  <p className="text-sm text-amber-600 mt-2">
+                    Note: Additional documents will be required for the selected professional accounts.
+                  </p>
+                )}
               </div>
             </div>
 
