@@ -6,17 +6,65 @@ import { useState } from "react"
 import Link from "next/link"
 import LanguageSelector from "@/components/language-selector"
 import { useLanguage } from "@/components/language-context"
+import { useRouter } from "next/navigation"
+import { useEffect } from "react"
+
 
 export default function LoginClient() {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [rememberPassword, setRememberPassword] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const router = useRouter()
   const { t } = useLanguage()
 
-  const handleSubmit = (e: React.FormEvent) => {
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const token =
+        localStorage.getItem("authToken") ||
+        sessionStorage.getItem("authToken")
+      if (token) {
+        router.push("/app_client")
+      }
+    }
+  }, [router])
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    // Ici vous pouvez ajouter la logique d'authentification
-    console.log("Login attempt with:", { email, password, rememberPassword })
+    setError(null)
+  
+    try {
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/auth/login`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ email, password, confirm_password : password }),
+          credentials: "include",
+        }
+      )
+  
+      const payload = await res.json()
+      if (!res.ok) {
+        setError(payload.message || t("auth.loginFailed"))
+        return
+      }
+  
+      const token = payload.token
+      // 2. Sauvegarde côté client en fonction de rememberPassword
+      if (rememberPassword) {
+        localStorage.setItem("authToken", token)
+      } else {
+        sessionStorage.setItem("authToken", token)
+      }
+  
+      router.push("/app_client")
+    } catch (err) {
+      console.error(err)
+      setError(t("auth.unexpectedError"))
+    }
   }
 
   return (

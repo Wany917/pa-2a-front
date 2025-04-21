@@ -170,7 +170,7 @@ export default function CreateAnnouncementPage() {
     // Simuler une soumission
     setTimeout(() => {
       setIsSubmitting(false)
-      window.location.href = "/dashboard/announcements"
+      window.location.href = "/app_client/announcements"
     }, 1500)
   }
 

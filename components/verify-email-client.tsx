@@ -126,7 +126,7 @@ export default function VerifyEmailClient() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-green-50">
-      <div className="absolute top-4 right-4">
+      <div className="absolute top-4 right-4 mr-8">
         <LanguageSelector />
       </div>
 

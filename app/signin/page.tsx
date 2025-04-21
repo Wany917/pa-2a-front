@@ -1,13 +1,11 @@
 "use client"
 
 import type React from "react"
-
 import { useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { ChevronDownIcon, CheckIcon } from "lucide-react"
 
-// Types de comptes disponibles
 type AccountType = "Client" | "Delivery" | "Provider" | "Merchant"
 
 interface AccountOption {
@@ -18,6 +16,7 @@ interface AccountOption {
 
 export default function SignupPage() {
   const router = useRouter()
+
   const [formData, setFormData] = useState({
     name: "",
     firstname: "",
@@ -32,16 +31,13 @@ export default function SignupPage() {
     country: "",
   })
 
-  // État pour les types de comptes sélectionnés
   const [selectedAccounts, setSelectedAccounts] = useState<AccountType[]>(["Client"])
-
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [showCountryDropdown, setShowCountryDropdown] = useState(false)
   const [showAccountDropdown, setShowAccountDropdown] = useState(false)
 
   const countries = ["France", "United Kingdom", "Germany", "Spain", "Italy", "Belgium", "Netherlands", "Switzerland"]
 
-  // Options de comptes avec leurs propriétés
   const accountOptions: AccountOption[] = [
     { id: "Client", label: "Client", requiresDocuments: false },
     { id: "Delivery", label: "Delivery Man", requiresDocuments: true },
@@ -59,47 +55,53 @@ export default function SignupPage() {
     setShowCountryDropdown(false)
   }
 
-  // Gestion de la sélection/déselection des types de comptes
   const toggleAccountType = (accountType: AccountType) => {
     setSelectedAccounts((prev) => {
-      // Si Client est toujours requis, on s'assure qu'il reste sélectionné
-      if (accountType === "Client" && prev.includes("Client")) {
-        return prev
-      }
-
-      // Si le type est déjà sélectionné, on le retire (sauf Client qui est obligatoire)
-      if (prev.includes(accountType)) {
-        return prev.filter((type) => type !== accountType)
-      }
-
-      // Sinon on l'ajoute
+      if (accountType === "Client" && prev.includes("Client")) return prev
+      if (prev.includes(accountType)) return prev.filter((type) => type !== accountType)
       return [...prev, accountType]
     })
+  }
+
+  const generateVerificationCode = () => {
+    return Math.floor(100000 + Math.random() * 900000).toString()
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsSubmitting(true)
 
+    const verificationCode = generateVerificationCode()
+
     try {
-      // Simuler l'envoi des données d'inscription
-      await new Promise((resolve) => setTimeout(resolve, 1500))
+      await fetch("/api/send-email", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          to: formData.email,
+          subject: "Your EcoDeli Verification Code",
+          html: `
+            <h2>Welcome to EcoDeli 👋</h2>
+            <p>Thank you for signing up, ${formData.firstname}!</p>
+            <p>Your verification code is:</p>
+            <h3 style="font-size: 24px; color: #10B981;">${verificationCode}</h3>
+            <p>Please enter this code to verify your account.</p>
+          `,
+        }),
+      })
 
-      console.log("Signup attempt with:", { ...formData, accountTypes: selectedAccounts })
-
-      // Vérifier si des documents sont requis pour les comptes sélectionnés
       const requiresDocuments = selectedAccounts.some(
-        (accountType) => accountOptions.find((opt) => opt.id === accountType)?.requiresDocuments,
+        (type) => accountOptions.find((opt) => opt.id === type)?.requiresDocuments,
       )
 
-      // Redirection conditionnelle
+      // Redirection
       if (requiresDocuments) {
         router.push("/documents-verification")
       } else {
         router.push("/verify-email")
       }
     } catch (error) {
-      console.error("Signup error:", error)
+      console.error("Error sending email:", error)
     } finally {
       setIsSubmitting(false)
     }
@@ -364,6 +366,7 @@ export default function SignupPage() {
               disabled={isSubmitting}
               className="px-12 py-3 bg-green-50 text-white rounded-md hover:bg-green-400 transition-colors disabled:opacity-70"
             >
+              <Link href="/verify-email" className="text-white"></Link>
               {isSubmitting ? "Creating Account..." : "Sign Up"}
             </button>
 
