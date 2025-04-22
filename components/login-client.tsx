@@ -53,7 +53,7 @@ export default function LoginClient() {
       }
   
       const token = payload.token
-      // 2. Sauvegarde côté client en fonction de rememberPassword
+
       if (rememberPassword) {
         localStorage.setItem("authToken", token)
       } else {

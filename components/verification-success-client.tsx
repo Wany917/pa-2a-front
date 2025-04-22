@@ -12,11 +12,12 @@ export default function VerificationSuccessClient() {
   const router = useRouter()
   const { t } = useLanguage()
 
-  // Rediriger automatiquement vers la page d'accueil après 5 secondes
   useEffect(() => {
+    sessionStorage.removeItem("signupInfo")
+
     const timer = setTimeout(() => {
-      router.push("/")
-    }, 5000)
+      router.push("/app_client")
+    }, 1500)
 
     return () => clearTimeout(timer)
   }, [router])

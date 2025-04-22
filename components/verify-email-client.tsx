@@ -20,12 +20,10 @@ export default function VerifyEmailClient() {
 
   const inputRefs = useRef<(HTMLInputElement | null)[]>([])
 
-  // Initialiser les refs pour les 6 champs de saisie
   useEffect(() => {
     inputRefs.current = inputRefs.current.slice(0, 6)
   }, [])
 
-  // Gérer le compte à rebours pour le renvoi du code
   useEffect(() => {
     if (countdown > 0 && !canResend) {
       const timer = setTimeout(() => setCountdown(countdown - 1), 1000)
@@ -36,22 +34,18 @@ export default function VerifyEmailClient() {
   }, [countdown, canResend])
 
   const handleChange = (index: number, value: string) => {
-    // Vérifier que l'entrée est un chiffre
     if (value && !/^\d*$/.test(value)) return
 
-    // Mettre à jour le code
     const newCode = [...code]
     newCode[index] = value
     setCode(newCode)
 
-    // Passer au champ suivant si un chiffre est entré
     if (value && index < 5) {
       inputRefs.current[index + 1]?.focus()
     }
   }
 
   const handleKeyDown = (index: number, e: React.KeyboardEvent<HTMLInputElement>) => {
-    // Passer au champ précédent si la touche Backspace est pressée et que le champ est vide
     if (e.key === "Backspace" && !code[index] && index > 0) {
       inputRefs.current[index - 1]?.focus()
     }
@@ -61,18 +55,15 @@ export default function VerifyEmailClient() {
     e.preventDefault()
     const pastedData = e.clipboardData.getData("text/plain").trim()
 
-    // Vérifier que les données collées sont des chiffres et de la bonne longueur
     if (/^\d{1,6}$/.test(pastedData)) {
       const newCode = [...code]
 
-      // Remplir les champs avec les chiffres collés
       for (let i = 0; i < Math.min(pastedData.length, 6); i++) {
         newCode[i] = pastedData[i]
       }
 
       setCode(newCode)
 
-      // Mettre le focus sur le dernier champ rempli ou le suivant
       const focusIndex = Math.min(pastedData.length, 5)
       inputRefs.current[focusIndex]?.focus()
     }
@@ -84,19 +75,56 @@ export default function VerifyEmailClient() {
     setError("")
 
     const verificationCode = code.join("")
+    const stored = sessionStorage.getItem("signupInfo")
 
-    // Vérifier que le code est complet
+    if (!stored) {
+      setError("No signup data found")
+      setIsSubmitting(false)
+      return
+    }
+
+    const { formData, verificationCode: storedCode } = JSON.parse(stored)
+
     if (verificationCode.length !== 6) {
       setError(t("auth.pleaseEnterCompleteCode"))
       setIsSubmitting(false)
       return
     }
 
-    try {
-      // Simuler une vérification du code (à remplacer par votre logique réelle)
-      await new Promise((resolve) => setTimeout(resolve, 1500))
+    if (verificationCode !== storedCode) {
+      setError(t("auth.invalidVerificationCode"))
+      setIsSubmitting(false)
+      return
+    }
 
-      // Si le code est correct, rediriger vers la page d'accueil ou le tableau de bord
+    try {
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/auth/register`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            first_name: formData.firstname,
+            last_name: formData.name,
+            email: formData.email,
+            address: formData.address + ", " + formData.postalCode + " " + formData.city,
+            password: formData.password,
+            confirm_password: formData.confirmPassword,
+            phone_number: formData.phone,
+          }),
+          credentials: "include",
+        }
+      )
+    
+      const data = await res.json()
+
+      if (!res.ok) {
+        const msg = (data as any).error_message || t("auth.invalidVerificationCode")
+        throw new Error(msg)
+      }
+      
+      sessionStorage.setItem("authToken", data.token)
+
       console.log("Code verified:", verificationCode)
       router.push("/verification-success")
     } catch (err) {
@@ -112,10 +140,8 @@ export default function VerifyEmailClient() {
     setCanResend(false)
 
     try {
-      // Simuler l'envoi d'un nouveau code (à remplacer par votre logique réelle)
       await new Promise((resolve) => setTimeout(resolve, 1000))
 
-      // Réinitialiser le compte à rebours
       setCountdown(60)
       console.log("Code resent")
     } catch (err) {
