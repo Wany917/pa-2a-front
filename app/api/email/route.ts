@@ -8,10 +8,10 @@ export async function POST(request: Request) {
 
     try {
         const data = await resend.emails.send({
-        from: process.env.RESEND_FROM_EMAIL || "noreplyecodeli@gmail.com",
-        to,
-        subject,
-        html,
+            from: process.env.RESEND_FROM_EMAIL || "noreplyecodeli@gmail.com",
+            to,
+            subject,
+            html,
         })
         return NextResponse.json({ success: true, data })
     } catch (error) {
