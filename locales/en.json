@@ -26,7 +26,8 @@
     "selectYourStorageBox": "Select your storage box",
     "selectYourPackageSize": "Select your package's size",
     "previous": "Previous",
-    "next": "Next"
+    "next": "Next",
+    "backToReview": "Back to review"
   },
   "navigation": {
     "app_client": "App",
@@ -79,6 +80,20 @@
     "permanentReductionPremium": "Permanent reduction : 10% on all packages",
     "stayTuned": "Stay tuned !",
     "newsletterDesc": "Follow the newsletter to get notify of any updates on EcoDeli"
+  },
+  "onboarding": {
+    "welcome": "Welcome to EcoDeli",
+    "welcomeDescription": "EcoDeli is a platform that connects clients with deliverymen and service providers. We aim to make your life easier by providing fast and reliable services.",
+    "announcements": "Announcements",
+    "announcementsDescription": "Create and manage your announcements. You can track the status of your deliveries and services in real-time.",
+    "payments": "Payments",
+    "paymentsDescription": "Manage your payments and view your transaction history. We offer secure payment options for your convenience.",
+    "messages": "Messages",
+    "messagesDescription": "Communicate directly with delivery drivers and service providers through our messaging system.",
+    "complaints": "Complaints",
+    "complaintsDescription": "Submit and track your complaints. We take customer feedback seriously and strive to resolve any issues promptly.",
+    "profile": "Profile",
+    "profileDescription": "Manage your account settings and personal information. Keep your profile up to date for a better experience."
   },
   "footer": {
     "legalNotice": "Legal notice",
@@ -383,6 +398,30 @@
     "noAnnouncementsAvailable": "No announcements available",
     "checkBackLater": "Check back later for new delivery opportunities",
     "switchToClientAccount": "Switch to client account"
+  },
+  "serviceProvider": {
+    "dashboard": "Dashboard",
+    "review": "Reviews",
+    "services": "Services",
+    "calendar": "Calendar",
+    "interventions": "Interventions",
+    "messages": "Messages",
+    "payments": "Payments",
+    "settings": "Settings",
+    "logout": "Logout",
+    "profile": "Profile",
+    "search": "Search...",
+    "totalClients": "Total Clients",
+    "deliveriesThisWeek": "Deliveries This Week",
+    "totalPendingDeliveries": "Total Pending Deliveries",
+    "fromYesterday": "Since Yesterday",
+    "deliveriesThisMonth": "Deliveries This Month",
+    "recentDeliveries": "Recent Deliveries",
+    "viewAll": "View All",
+    "upcomingInterventions": "Upcoming Interventions",
+    "grade": "Grade",
+    "client": "Client",
+    "serviceName": "Service Name"
   }
 }
 

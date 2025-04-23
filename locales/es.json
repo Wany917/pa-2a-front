@@ -26,7 +26,8 @@
     "selectYourStorageBox": "Selecciona tu caja de almacenamiento",
     "selectYourPackageSize": "Selecciona el tamaño de tu paquete",
     "previous": "Anterior",
-    "next": "Siguiente"
+    "next": "Siguiente",
+    "backToReview": "Volver a reseñas"
   },
   "navigation": {
     "app_client": "Panel de control",
@@ -321,6 +322,20 @@
   "noEvents": "No hay entregas programadas para este día",
   "viewDelivery": "Ver detalles de la entrega"
 },
+"onboarding": {
+    "welcome": "Bienvenido a EcoDeli",
+    "welcomeDescription": "Descubre la forma más fácil de enviar y recibir paquetes. Conéctate con nuestros repartidores y proveedores de servicios para obtener la mejor experiencia.",
+    "announcements": "Anuncios",
+    "announcementsDescription": "Publica anuncios para tus paquetes y servicios. Encuentra repartidores y proveedores de servicios disponibles en tu área.",
+    "payments": "Pagos",
+    "paymentsDescription": "Realice un seguimiento de todos sus pagos en un solo lugar. Ver entregas y servicios pagados y no pagados.",
+    "messages": "Mensajes",
+    "messagesDescription": "Comuníquese con nuestros repartidores y proveedores de servicios a través de nuestro sistema de mensajería. Manténgase en contacto y resuelva cualquier problema rápidamente.",
+    "complaints": "Reclamaciones",
+    "complaintsDescription": "Realice reclamaciones sobre entregas o servicios. Proporcione detalles y documentos justificativos para resolver cualquier problema.",
+    "profile": "Perfil",
+    "profileDescription": "Administre su perfil y cuenta. Actualice su información personal, preferencias y configuración de cuenta."
+  },
   "deliveryman": {
     "dashboard": "Panel de control",
     "announcements": "Anuncios",
@@ -384,5 +399,29 @@
     "noAnnouncementsAvailable": "No hay anuncios disponibles",
     "checkBackLater": "Vuelva más tarde para nuevas oportunidades de entrega",
     "switchToClientAccount": "Cambiar a cuenta de cliente"
+  },
+  "serviceProvider": {
+    "dashboard": "Panel de control",
+    "review": "Opiniones",
+    "services": "Servicios",
+    "calendar": "Calendario",
+    "interventions": "Intervenciones",
+    "messages": "Mensajes",
+    "payments": "Pagos",
+    "settings": "Configuración",
+    "logout": "Cerrar sesión",
+    "profile": "Perfil",
+    "search": "Buscar...",
+    "totalClients": "Total de clientes",
+    "deliveriesThisWeek": "Entregas esta semana",
+    "totalPendingDeliveries": "Total de entregas pendientes",
+    "fromYesterday": "desde ayer",
+    "deliveriesThisMonth": "Entregas este mes",
+    "recentDeliveries": "Entregas recientes",
+    "viewAll": "Ver todo",
+    "upcomingInterventions": "Intervenciones próximas",
+    "grade": "Grado",
+    "client": "Cliente",
+    "serviceName": "Nombre del servicio"
   }
 }

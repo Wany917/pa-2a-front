@@ -27,7 +27,8 @@
     "selectYourPackageSize": "Sélectionnez la taille de votre colis",
     "previous": "Précédent",
     "next": "Suivant",
-    "getStarted": "Commencer"
+    "getStarted": "Commencer",
+    "backToReview": "Retour aux avis"
   },
   "navigation": {
     "app_client": "Tableau de bord",
@@ -385,7 +386,7 @@
       "priceForDelivery": "Prix de livraison",
       "storageBox": "Box de stockage",
       "packageInMailbox": "Le colis est dans la boîte aux lettres",    
-      "deliveriess": {
+    "deliveriess": {
       "image": "Image",
       "announceName": "Nom de l'annonce",
       "whereTo": "Destination",
@@ -397,8 +398,9 @@
       "inTransit": "En transit",
       "delivered": "Livré",
       "pending": "En attente",
-      "noDeliveriesFound": "Aucune livraison trouvée",
-    "editJustificative": {
+      "noDeliveriesFound": "Aucune livraison trouvée"
+  },
+  "editJustificative": {
       "editYourJustificativePieces": "Modifier vos pièces justificatives",
       "yourLicence": "Votre permis",
       "yourID": "Votre pièce d'identité",
@@ -411,6 +413,29 @@
       "goBackToEcoDeli": "Retour à EcoDeli",
       "dailyDelivery": "Livraison Quotidienne"
     }
+},
+"serviceProvider": {
+    "dashboard": "Tableau de bord",
+    "review": "Avis",
+    "services": "Services",
+    "calendar": "Calendrier",
+    "interventions": "Interventions",
+    "messages": "Messages",
+    "payments": "Paiements",
+    "settings": "Paramètres",
+    "logout": "Déconnexion",
+    "profile": "Profil",
+    "search": "Rechercher...",
+    "totalClients": "Total Clients",
+    "deliveriesThisWeek": "Livraisons cette semaine",
+    "totalPendingDeliveries": "Total des livraisons en attente",
+    "fromYesterday": "depuis hier",
+    "deliveriesThisMonth": "Livraisons ce mois",
+    "recentDeliveries": "Livraisons récentes",
+    "viewAll": "Voir tout",
+    "upcomingInterventions": "Interventions à venir",
+    "grade": "Note",
+    "client": "Client",
+    "serviceName": "Nom du service"
   }
-}
 }
