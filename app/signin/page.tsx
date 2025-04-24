@@ -63,18 +63,18 @@ export default function SignupPage() {
     })
   }
 
-  const generateVerificationCode = () => {
-    return Math.floor(100000 + Math.random() * 900000).toString()
-  }
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsSubmitting(true)
 
-    const verificationCode = generateVerificationCode()
-
     try {
-      await fetch("/api/email", {
+      const verificationCode = await fetch(process.env.NEXT_PUBLIC_API_URL + "/codes-temporaire/generate-code", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ user_info: JSON.stringify(formData) }),
+      })
+      
+      await fetch(process.env.NEXT_PUBLIC_API_URL + "/send-email", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -94,13 +94,12 @@ export default function SignupPage() {
         (type) => accountOptions.find((opt) => opt.id === type)?.requiresDocuments,
       )
 
-      // Redirection
       if (requiresDocuments) {
         router.push("/documents-verification")
       } else {
         sessionStorage.setItem(
           "signupInfo",
-          JSON.stringify({ formData, verificationCode })
+          JSON.stringify({ formData })
         )
         router.push("/verify-email")
       }

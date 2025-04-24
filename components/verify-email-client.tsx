@@ -83,7 +83,7 @@ export default function VerifyEmailClient() {
       return
     }
 
-    const { formData, verificationCode: storedCode } = JSON.parse(stored)
+    const { formData } = JSON.parse(stored)
 
     if (verificationCode.length !== 6) {
       setError(t("auth.pleaseEnterCompleteCode"))
@@ -91,7 +91,15 @@ export default function VerifyEmailClient() {
       return
     }
 
-    if (verificationCode !== storedCode) {
+    const code_valid = await fetch(
+      `${process.env.NEXT_PUBLIC_API_URL}/codes-temporaire/check_code`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ user_info: sessionStorage.getItem("signupInfo"), code: verificationCode }),
+        credentials: "include",
+      })
+
+    if (!code_valid.ok) {
       setError(t("auth.invalidVerificationCode"))
       setIsSubmitting(false)
       return
@@ -137,10 +145,44 @@ export default function VerifyEmailClient() {
   const handleResendCode = async () => {
     if (!canResend) return
 
+    const signupInfoStr = sessionStorage.getItem("signupInfo")
+    if (!signupInfoStr) {
+      setError(t("auth.noSignupDataFound"))
+      return
+    }
+    const formData = JSON.parse(signupInfoStr)
+
     setCanResend(false)
 
     try {
-      await new Promise((resolve) => setTimeout(resolve, 1000))
+      const resetRes = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/codes-temporaire/reset_code`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ user_info: formData }),
+          credentials: "include",
+        }
+      )
+      if (!resetRes.ok) throw new Error("Failed to reset code")
+      const { code: verificationCode } = await resetRes.json()
+
+      const emailRes = await fetch(process.env.NEXT_PUBLIC_API_URL + "/send-email", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          to: formData.email,
+          subject: "Your EcoDeli Verification Code",
+          html: `
+            <h2>Welcome to EcoDeli 👋</h2>
+            <p>Thank you for signing up, ${formData.firstname}!</p>
+            <p>Your verification code is:</p>
+            <h3 style="font-size: 24px; color: #10B981;">${verificationCode}</h3>
+            <p>Please enter this code to verify your account.</p>
+          `,
+        }),
+      })
+      if (!emailRes.ok) throw new Error("Failed to send email")
 
       setCountdown(60)
       console.log("Code resent")
