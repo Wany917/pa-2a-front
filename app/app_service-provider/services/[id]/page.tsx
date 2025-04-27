@@ -2,7 +2,7 @@
 
 import type React from "react"
 import { useState, useEffect } from "react"
-import { useRouter } from "next/navigation"
+import { useRouter, useParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -26,7 +26,7 @@ interface EditServiceContentProps {
 }
 
 export default function ServiceProviderEditPage({ params }: EditServiceContentProps) {
-  const { id } = params
+  const { id } = useParams()
   const router = useRouter()
   const { t } = useLanguage()
 
@@ -128,7 +128,7 @@ export default function ServiceProviderEditPage({ params }: EditServiceContentPr
       setIsLoading(true)
       setTimeout(() => {
         setIsLoading(false)
-        router.push("/provider/services")
+        router.push("/app_service-provider/services")
       }, 1000)
     }
   }
@@ -149,12 +149,12 @@ export default function ServiceProviderEditPage({ params }: EditServiceContentPr
           <Button
             variant="ghost"
             className="text-green-50 hover:bg-green-50/10 p-2 h-auto"
-            onClick={() => router.push("/provider/services")}
+            onClick={() => router.push("/app_service-provider/services")}
           >
             <ArrowLeft className="h-5 w-5" />
           </Button>
           <h1 className="text-2xl font-bold">
-            {t("service.edit")} {service.name}
+            {t("common.back")} 
           </h1>
         </div>
         <div className="flex items-center gap-4">
@@ -163,7 +163,7 @@ export default function ServiceProviderEditPage({ params }: EditServiceContentPr
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Aperçu (plus petit) */}
+        {/* Aperçu */}
         <Card className="overflow-hidden border-none shadow-lg rounded-xl lg:col-span-1">
           <div className="relative h-48 w-full overflow-hidden">
             {imagePreview ? (
@@ -188,15 +188,15 @@ export default function ServiceProviderEditPage({ params }: EditServiceContentPr
           </CardContent>
         </Card>
 
-        {/* Formulaire (plus grand) */}
+        {/* Formulaire */}
         <Card className="border-none shadow-lg rounded-xl lg:col-span-2">
           <CardContent className="p-6">
-            <h2 className="text-xl font-semibold mb-6">{t("service.serviceDetails")}</h2>
+            <h2 className="text-xl font-semibold mb-6">{t("serviceProvider.serviceDetails")}</h2>
             <form onSubmit={handleSubmit} className="space-y-6">
               {/* Prix */}
               <div className="space-y-2">
                 <Label htmlFor="price" className="text-base font-medium">
-                  {t("service.price")}
+                  {t("serviceProvider.price")}
                 </Label>
                 <div className="flex items-center">
                   <div className="relative flex-1 max-w-[200px]">
@@ -215,7 +215,7 @@ export default function ServiceProviderEditPage({ params }: EditServiceContentPr
               {/* Description */}
               <div className="space-y-2">
                 <Label htmlFor="description" className="text-base font-medium">
-                  {t("service.description")}
+                  {t("serviceProvider.description")}
                 </Label>
                 <Textarea
                   id="description"
@@ -230,7 +230,7 @@ export default function ServiceProviderEditPage({ params }: EditServiceContentPr
               {/* Upload d'image */}
               <div className="space-y-3">
                 <Label htmlFor="image" className="text-base font-medium">
-                  {t("service.image")}
+                  {t("serviceProvider.image")}
                 </Label>
 
                 <div
@@ -299,29 +299,30 @@ export default function ServiceProviderEditPage({ params }: EditServiceContentPr
                   disabled={isLoading}
                 >
                   <Trash2 className="h-4 w-4" />
-                  {t("service.delete")}
+                  {t("common.delete")}
                 </Button>
                 <div className="flex gap-3">
                   <Button
                     type="button"
                     variant="outline"
-                    onClick={() => router.push("/provider/services")}
+                    onClick={() => router.push("/app_service-provider/services")}
                     disabled={isLoading}
                   >
-                    {t("service.cancel")}
+                    {t("common.cancel")}
                   </Button>
                   <Button
                     type="submit"
-                    className="bg-[#8CD790] hover:bg-[#7ac57e] text-white px-6"
+                    className="bg-green-50 hover:bg-green-50 text-white px-6"
+                    onClick={() => router.push("/app_service-provider/services")}
                     disabled={isLoading}
                   >
                     {isLoading ? (
                       <>
                         <div className="animate-spin mr-2 h-4 w-4 border-2 border-white border-t-transparent rounded-full"></div>
-                        {t("service.saving")}
+                        {t("serviceProvider.saving")}
                       </>
                     ) : (
-                      t("service.save")
+                      t("common.save")
                     )}
                   </Button>
                 </div>

@@ -185,9 +185,11 @@ export default function ServiceProviderPage() {
         {/* Page content */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 mt-6 mr-6">
           <h1 className="text-2xl font-bold ml-6">{t("serviceProvider.services")}</h1>
-          <Button className="bg-green-50 hover:bg-green-50 text-white">
-            {t("serviceProvider.addService")}
-          </Button>
+          <Link href="/app_service-provider/services/add" className="hidden sm:block">
+            <Button className="bg-green-50 hover:bg-green-50 text-white">
+              {t("serviceProvider.addService")}
+            </Button>
+          </Link>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 ml-6">
