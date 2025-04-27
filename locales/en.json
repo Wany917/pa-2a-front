@@ -27,7 +27,8 @@
     "selectYourPackageSize": "Select your package's size",
     "previous": "Previous",
     "next": "Next",
-    "backToReview": "Back to review"
+    "backToReview": "Back to review",
+    "edit": "Edit"
   },
   "navigation": {
     "app_client": "App",
@@ -421,7 +422,8 @@
     "upcomingInterventions": "Upcoming Interventions",
     "grade": "Grade",
     "client": "Client",
-    "serviceName": "Service Name"
+    "serviceName": "Service Name",
+    "addService": "Add Service"
   }
 }
 

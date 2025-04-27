@@ -27,7 +27,8 @@
     "selectYourPackageSize": "Selecciona el tamaño de tu paquete",
     "previous": "Anterior",
     "next": "Siguiente",
-    "backToReview": "Volver a reseñas"
+    "backToReview": "Volver a reseñas",
+    "edit": "Editar"
   },
   "navigation": {
     "app_client": "Panel de control",
@@ -422,6 +423,7 @@
     "upcomingInterventions": "Intervenciones próximas",
     "grade": "Grado",
     "client": "Cliente",
-    "serviceName": "Nombre del servicio"
+    "serviceName": "Nombre del servicio",
+    "addService": "Agregar servicio"
   }
 }

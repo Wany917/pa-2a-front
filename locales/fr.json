@@ -28,7 +28,8 @@
     "previous": "Précédent",
     "next": "Suivant",
     "getStarted": "Commencer",
-    "backToReview": "Retour aux avis"
+    "backToReview": "Retour aux avis",
+    "edit" : "Modifier"
   },
   "navigation": {
     "app_client": "Tableau de bord",
@@ -436,6 +437,7 @@
     "upcomingInterventions": "Interventions à venir",
     "grade": "Note",
     "client": "Client",
-    "serviceName": "Nom du service"
+    "serviceName": "Nom du service",
+    "addService": "Ajouter un service"
   }
 }
