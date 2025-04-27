@@ -14,7 +14,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [userRole, setUserRole] = useState<"client" | "admin" | "shopkeeper" | "service_provider" | "delivery_man" | "guest">("guest")
 
   useEffect(() => {
-    // Simuler une vérification d'auth depuis localStorage ou API
     const stored = localStorage.getItem("userRole")
     if (stored === "client") {
       setIsAuthenticated(true)

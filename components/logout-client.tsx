@@ -10,13 +10,16 @@ export default function LogoutClient() {
   const { t } = useLanguage()
 
   useEffect(() => {
-    // Simuler une déconnexion (à remplacer par votre logique réelle)
     const logout = async () => {
       try {
-        // Ici, vous pourriez appeler une API pour invalider la session
+        if (sessionStorage.getItem("authToken")) {
+          sessionStorage.removeItem("authToken")
+        } else {
+          localStorage.removeItem("authToken")
+        }
+
         await new Promise((resolve) => setTimeout(resolve, 1000))
 
-        // Rediriger vers la page d'accueil après déconnexion
         router.push("/")
       } catch (error) {
         console.error("Logout error:", error)

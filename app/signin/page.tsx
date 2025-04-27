@@ -63,18 +63,18 @@ export default function SignupPage() {
     })
   }
 
-  const generateVerificationCode = () => {
-    return Math.floor(100000 + Math.random() * 900000).toString()
-  }
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsSubmitting(true)
 
-    const verificationCode = generateVerificationCode()
-
     try {
-      await fetch("/api/send-email", {
+      const verificationCode = await fetch(process.env.NEXT_PUBLIC_API_URL + "/codes-temporaire/generate-code", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ user_info: JSON.stringify(formData) }),
+      })
+      
+      await fetch(process.env.NEXT_PUBLIC_API_URL + "/send-email", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -94,10 +94,13 @@ export default function SignupPage() {
         (type) => accountOptions.find((opt) => opt.id === type)?.requiresDocuments,
       )
 
-      // Redirection
       if (requiresDocuments) {
         router.push("/documents-verification")
       } else {
+        sessionStorage.setItem(
+          "signupInfo",
+          JSON.stringify({ formData })
+        )
         router.push("/verify-email")
       }
     } catch (error) {
@@ -193,7 +196,7 @@ export default function SignupPage() {
                           type="button"
                           className="flex w-full text-left px-4 py-2 hover:bg-gray-100 justify-between items-center"
                           onClick={() => toggleAccountType(option.id)}
-                          disabled={option.id === "Client"} // Client est toujours sélectionné
+                          disabled={option.id === "Client"}
                         >
                           <span>{option.label}</span>
                           {selectedAccounts.includes(option.id) && <CheckIcon className="h-4 w-4 text-green-500" />}
@@ -277,7 +280,6 @@ export default function SignupPage() {
               </div>
             </div>
 
-            {/* Troisième colonne */}
             <div className="space-y-6">
               <div>
                 <label htmlFor="address" className="block text-gray-700 mb-2">
@@ -366,7 +368,6 @@ export default function SignupPage() {
               disabled={isSubmitting}
               className="px-12 py-3 bg-green-50 text-white rounded-md hover:bg-green-400 transition-colors disabled:opacity-70"
             >
-              <Link href="/verify-email" className="text-white"></Link>
               {isSubmitting ? "Creating Account..." : "Sign Up"}
             </button>
 
