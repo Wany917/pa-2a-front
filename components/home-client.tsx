@@ -3,11 +3,40 @@
 import Image from "next/image"
 import Link from "next/link"
 import { CheckIcon } from "lucide-react"
+import { useEffect } from "react"
+import { useRouter } from "next/navigation"
 import LanguageSelector from "@/components/language-selector"
 import { useLanguage } from "@/components/language-context"
 
 export default function HomeClient() {
   const { t } = useLanguage()
+  const router = useRouter()
+
+  useEffect(() => {
+    const token =
+      sessionStorage.getItem("authToken") ||
+      localStorage.getItem("authToken")
+    if (!token) return ;(async () => {
+      try {
+        const res = await fetch(
+          `${process.env.NEXT_PUBLIC_API_URL}/auth/me`,
+          {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+            credentials: "include",
+          }
+        )
+        if (res.ok) {
+          router.push("/app_client")
+        }
+      } catch (err) {
+        console.error("Auth check failed", err)
+      }
+    })()
+  }, [router])
 
   return (
     <div className="flex flex-col min-h-screen">

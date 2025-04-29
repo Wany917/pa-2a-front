@@ -68,11 +68,21 @@ export default function SignupPage() {
     setIsSubmitting(true)
 
     try {
-      const verificationCode = await fetch(process.env.NEXT_PUBLIC_API_URL + "/codes-temporaire/generate-code", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ user_info: JSON.stringify(formData) }),
-      })
+      const genRes = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/codes-temporaire/generate-code`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            user_info: JSON.stringify(formData)
+          }),
+        }
+      )
+      if (!genRes.ok) {
+        console.log(JSON.stringify({ user_info: JSON.stringify(formData) }))
+        throw new Error("failed to generate code")
+      }
+      const { code: verificationCode } = await genRes.json()
       
       await fetch(process.env.NEXT_PUBLIC_API_URL + "/send-email", {
         method: "POST",
@@ -80,7 +90,7 @@ export default function SignupPage() {
         body: JSON.stringify({
           to: formData.email,
           subject: "Your EcoDeli Verification Code",
-          html: `
+          body: `
             <h2>Welcome to EcoDeli 👋</h2>
             <p>Thank you for signing up, ${formData.firstname}!</p>
             <p>Your verification code is:</p>
