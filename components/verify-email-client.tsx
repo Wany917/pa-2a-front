@@ -99,7 +99,6 @@ export default function VerifyEmailClient() {
         body: JSON.stringify({ user_info: JSON.stringify(formData), code: verificationCode }),
         credentials: "include",
       })
-    console.log(code_valid)
 
     if (!code_valid.ok) {
       setError(t("auth.invalidVerificationCode"))
@@ -117,7 +116,10 @@ export default function VerifyEmailClient() {
             first_name: formData.firstname,
             last_name: formData.name,
             email: formData.email,
-            address: formData.address + ", " + formData.postalCode + " " + formData.city,
+            address: formData.address,
+            city: formData.city,
+            postalCode: formData.postalCode,
+            country: formData.country,
             password: formData.password,
             confirm_password: formData.confirmPassword,
             phone_number: formData.phone,
@@ -136,7 +138,6 @@ export default function VerifyEmailClient() {
       
       sessionStorage.setItem("authToken", data.token)
 
-      console.log("Code verified:", verificationCode)
       router.push("/verification-success")
     } catch (err) {
       setError(t("auth.invalidVerificationCode"))

@@ -1,8 +1,6 @@
 "use client"
 
-import type React from "react"
-
-import { useState } from "react"
+import React, { useState, useEffect } from "react"
 import Image from "next/image"
 import Link from "next/link"
 import { User, ChevronDown, Edit, LogOut, Save } from "lucide-react"
@@ -13,19 +11,64 @@ export default function EditAccountClient() {
   const { t } = useLanguage()
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
-
+  const [userName, setUserName] = useState("")
+  const [userId, setUserId] = useState("")
   const [formData, setFormData] = useState({
-    firstName: "Killian",
-    lastName: "Mbappe",
-    email: "killian@example.com",
-    phone: "+33 6 12 34 56 78",
-    address: "123 Rue de Paris",
-    city: "Paris",
-    postalCode: "75001",
-    country: "France",
+    first_name: "",
+    last_name: "",
+    email: "",
+    phone_number: "",
+    address: "",
+    city: "",
+    postal_code: "",
+    country: "",
   })
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+  // Fetch current user on mount
+  useEffect(() => {
+    const token =
+      sessionStorage.getItem("authToken") ||
+      localStorage.getItem("authToken")
+    if (!token) return
+
+    ;(async () => {
+      try {
+        fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/me`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+          credentials: 'include',
+        })
+          .then((res) => {
+            if (!res.ok) throw new Error('Unauthorized');
+            return res.json();
+          })
+          .then((data) => {
+            setUserId(data.id);
+            setUserName(data.firstName);
+            setFormData({
+              first_name:  data.firstName    || "",
+              last_name:   data.lastName     || "",
+              email:      data.email         || "",
+              phone_number:      data.phoneNumber  || "",
+              address:    data.address       || "",
+              city:       data.city          || "",
+              postal_code: data.postalCode   || "",
+              country:    data.country       || "",
+            })
+          })
+          .catch((err) => console.error('Auth/me failed:', err));
+      } catch (err) {
+        console.error("⚠️ auth/me error:", err)
+      }
+    })()
+  }, [])
+
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+  ) => {
     const { name, value } = e.target
     setFormData((prev) => ({ ...prev, [name]: value }))
   }
@@ -35,9 +78,29 @@ export default function EditAccountClient() {
     setIsSubmitting(true)
 
     try {
-      // Simuler une mise à jour
-      await new Promise((resolve) => setTimeout(resolve, 1500))
-      console.log("Account updated:", formData)
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/utilisateurs/${userId}`,
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(formData),
+          credentials: "include",
+        }
+      )
+      if (!res.ok) throw new Error("Failed to update account")
+      const { user } = await res.json()
+
+      setUserName(user.firstName)
+      setFormData({
+        first_name:  user.firstName    || "",
+        last_name:   user.lastName     || "",
+        email:      user.email         || "",
+        phone_number:      user.phoneNumber  || "",
+        address:    user.address       || "",
+        city:       user.city          || "",
+        postal_code: user.postalCode   || "",
+        country:    user.country       || "",
+      })
     } catch (error) {
       console.error("Error updating account:", error)
     } finally {
@@ -87,7 +150,7 @@ export default function EditAccountClient() {
                 onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
               >
                 <User className="h-5 w-5 mr-2" />
-                <span className="hidden sm:inline">Killian</span>
+                <span className="hidden sm:inline">{userName}</span>
                 <ChevronDown className="h-4 w-4 ml-1" />
               </button>
 
@@ -108,11 +171,9 @@ export default function EditAccountClient() {
                   <Link href="/register/delivery-man" className="block px-4 py-2 text-gray-700 hover:bg-gray-100">
                     {t("common.deliveryMan")}
                   </Link>
-
                   <Link href="/register/shopkeeper" className="block px-4 py-2 text-gray-700 hover:bg-gray-100">
                     {t("common.shopkeeper")}
                   </Link>
-
                   <Link href="/register/service-provider" className="block px-4 py-2 text-gray-700 hover:bg-gray-100">
                     {t("common.serviceProvider")}
                   </Link>
@@ -145,36 +206,39 @@ export default function EditAccountClient() {
           <div className="bg-white rounded-lg shadow-md p-6">
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* First Name */}
                 <div>
-                  <label htmlFor="firstName" className="block text-sm font-medium text-gray-700 mb-1">
+                  <label htmlFor="first_name" className="block text-sm font-medium text-gray-700 mb-1">
                     {t("auth.firstName")}
                   </label>
                   <input
                     type="text"
-                    id="firstName"
-                    name="firstName"
-                    value={formData.firstName}
+                    id="first_name"
+                    name="first_name"
+                    value={formData.first_name}
                     onChange={handleChange}
                     className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
                     required
                   />
                 </div>
 
+                {/* Last Name */}
                 <div>
-                  <label htmlFor="lastName" className="block text-sm font-medium text-gray-700 mb-1">
+                  <label htmlFor="last_name" className="block text-sm font-medium text-gray-700 mb-1">
                     {t("auth.name")}
                   </label>
                   <input
                     type="text"
-                    id="lastName"
-                    name="lastName"
-                    value={formData.lastName}
+                    id="last_name"
+                    name="last_name"
+                    value={formData.last_name}
                     onChange={handleChange}
                     className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
                     required
                   />
                 </div>
 
+                {/* Email */}
                 <div>
                   <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
                     {t("auth.emailAddress")}
@@ -190,21 +254,23 @@ export default function EditAccountClient() {
                   />
                 </div>
 
+                {/* Phone */}
                 <div>
-                  <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-1">
+                  <label htmlFor="phone_number" className="block text-sm font-medium text-gray-700 mb-1">
                     {t("auth.phoneNumber")}
                   </label>
                   <input
                     type="tel"
-                    id="phone"
-                    name="phone"
-                    value={formData.phone}
+                    id="phone_number"
+                    name="phone_number"
+                    value={formData.phone_number}
                     onChange={handleChange}
                     className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
                     required
                   />
                 </div>
 
+                {/* Address */}
                 <div>
                   <label htmlFor="address" className="block text-sm font-medium text-gray-700 mb-1">
                     {t("auth.address")}
@@ -220,6 +286,7 @@ export default function EditAccountClient() {
                   />
                 </div>
 
+                {/* City */}
                 <div>
                   <label htmlFor="city" className="block text-sm font-medium text-gray-700 mb-1">
                     {t("auth.city")}
@@ -235,21 +302,23 @@ export default function EditAccountClient() {
                   />
                 </div>
 
+                {/* Postal Code */}
                 <div>
-                  <label htmlFor="postalCode" className="block text-sm font-medium text-gray-700 mb-1">
+                  <label htmlFor="postal_code" className="block text-sm font-medium text-gray-700 mb-1">
                     {t("auth.postalCode")}
                   </label>
                   <input
                     type="text"
-                    id="postalCode"
-                    name="postalCode"
-                    value={formData.postalCode}
+                    id="postal_code"
+                    name="postal_code"
+                    value={formData.postal_code}
                     onChange={handleChange}
                     className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
                     required
                   />
                 </div>
 
+                {/* Country */}
                 <div>
                   <label htmlFor="country" className="block text-sm font-medium text-gray-700 mb-1">
                     {t("auth.country")}

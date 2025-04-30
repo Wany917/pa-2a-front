@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Image from "next/image"
 import Link from "next/link"
 import { User, ChevronDown, Edit, LogOut, Save, Lock } from "lucide-react"
@@ -15,12 +15,47 @@ export default function ChangePasswordPage() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState("")
   const [success, setSuccess] = useState("")
+  const [first_name, setFirstName] = useState("")
+  const [email, setEmail] = useState("")
+  const [userId, setUserId] = useState("")
 
   const [formData, setFormData] = useState({
     currentPassword: "",
     newPassword: "",
     confirmNewPassword: "",
   })
+
+  useEffect(() => {
+      const token =
+        sessionStorage.getItem("authToken") ||
+        localStorage.getItem("authToken")
+      if (!token) return
+  
+      ;(async () => {
+        try {
+          fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/me`, {
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${token}`,
+            },
+            credentials: 'include',
+          })
+            .then((res) => {
+              if (!res.ok) throw new Error('Unauthorized');
+              return res.json();
+            })
+            .then((data) => {
+              setUserId(data.id)
+              setFirstName(data.firstName)
+              setEmail(data.email)
+            })
+            .catch((err) => console.error('Auth/me failed:', err));
+        } catch (err) {
+          console.error("⚠️ auth/me error:", err)
+        }
+      })()
+    }, [])
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
@@ -34,22 +69,52 @@ export default function ChangePasswordPage() {
     setError("")
     setSuccess("")
 
-    // Validation simple
-    if (formData.newPassword !== formData.confirmNewPassword) {
+    const { currentPassword, newPassword, confirmNewPassword } = formData
+
+    const passwordCheck = await fetch(
+      `${process.env.NEXT_PUBLIC_API_URL}/utilisateurs/check-password`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: email, password: currentPassword }),
+        credentials: "include",
+      }
+    )
+
+    if (!passwordCheck.ok) {
+      setError(t("auth.invalidCurrentPassword"))
+      setIsSubmitting(false)
+      return
+    }
+
+    if (currentPassword === newPassword) {
+      setError(t("auth.newPasswordSameAsCurrent"))
+      setIsSubmitting(false)
+      return
+    }
+
+    if (newPassword !== confirmNewPassword) {
       setError(t("auth.passwordsDoNotMatch"))
       setIsSubmitting(false)
       return
     }
 
-    if (formData.newPassword.length < 8) {
+    if (newPassword.length < 8) {
       setError(t("auth.passwordTooShort"))
       setIsSubmitting(false)
       return
     }
 
     try {
-      // Simuler une mise à jour
-      await new Promise((resolve) => setTimeout(resolve, 1500))
+      await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/utilisateurs/${userId}`,
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ password: newPassword }),
+          credentials: "include",
+        }
+      )
       console.log("Password updated")
       setSuccess(t("auth.passwordUpdatedSuccessfully"))
       setFormData({
@@ -107,7 +172,7 @@ export default function ChangePasswordPage() {
                 onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
               >
                 <User className="h-5 w-5 mr-2" />
-                <span className="hidden sm:inline">Killian</span>
+                <span className="hidden sm:inline">{first_name}</span>
                 <ChevronDown className="h-4 w-4 ml-1" />
               </button>
 
