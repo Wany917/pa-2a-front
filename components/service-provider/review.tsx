@@ -179,40 +179,40 @@ export default function ServiceProviderReview() {
 
               {isUserMenuOpen && (
                 <div className="absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-lg z-10 py-2 border border-gray-100">
-                  <Link
-                    href="/app_service-provider/edit_account"
-                    className="flex items-center px-4 py-2 text-gray-700 hover:bg-gray-100"
-                  >
-                    <Edit className="h-4 w-4 mr-2" />
-                    <span>{t("common.editAccount")}</span>
-                  </Link>
+                <Link
+                  href="/app_service-provider/edit_account"
+                  className="flex items-center px-4 py-2 text-gray-700 hover:bg-gray-100"
+                >
+                  <Edit className="h-4 w-4 mr-2" />
+                  <span>{t("common.editAccount")}</span>
+                </Link>
 
-                  <div className="border-t border-gray-100 my-1"></div>
+                <div className="border-t border-gray-100 my-1"></div>
 
-                  <Link href="/dashboard" className="flex items-center px-4 py-2 text-gray-700 hover:bg-gray-100">
-                    <User className="h-4 w-4 mr-2" />
-                    <Image src="/user-icon.png" alt="User" width={16} height={16} className="h-4 w-4 mr-2" />
-                  </Link>
+                <Link href="/dashboard" className="flex items-center px-4 py-2 text-gray-700 hover:bg-gray-100">
+                  <User className="h-4 w-4 mr-2" />
+                  {t("common.clientSpace")}
+                </Link>
 
-                  <div className="border-t border-gray-100 my-1"></div>
+                <div className="border-t border-gray-100 my-1"></div>
 
-                  <div className="px-4 py-1 text-xs text-gray-500">{t("common.registerAs")}</div>
+                <div className="px-4 py-1 text-xs text-gray-500">{t("common.accessToSpace")}</div>
 
-                  <Link href="/register/shopkeeper" className="block px-4 py-2 text-gray-700 hover:bg-gray-100">
-                    {t("common.shopkeeper")}
-                  </Link>
+                <Link href="/register/shopkeeper" className="block px-4 py-2 text-gray-700 hover:bg-gray-100">
+                  {t("common.shopkeeper")}
+                </Link>
 
-                  <Link href="/register/deliveryman" className="block px-4 py-2 text-gray-700 hover:bg-gray-100">
-                    {t("common.deliveryMan")}
-                  </Link>
+                <Link href="/register/deliveryman" className="block px-4 py-2 text-gray-700 hover:bg-gray-100">
+                  {t("common.deliveryMan")}
+                </Link>
 
-                  <div className="border-t border-gray-100 my-1"></div>
+                <div className="border-t border-gray-100 my-1"></div>
 
-                  <Link href="/logout" className="flex items-center px-4 py-2 text-red-600 hover:bg-gray-100">
-                    <LogOut className="h-4 w-4 mr-2" />
-                    <span>{t("common.logout")}</span>
-                  </Link>
-                </div>
+                <Link href="/logout" className="flex items-center px-4 py-2 text-red-600 hover:bg-gray-100">
+                  <LogOut className="h-4 w-4 mr-2" />
+                  <span>{t("common.logout")}</span>
+                </Link>
+              </div>
               )}
             </div>
           </div>

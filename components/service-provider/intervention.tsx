@@ -210,12 +210,12 @@ export default function ServiceProviderIntervention() {
 
                   <Link href="/dashboard" className="flex items-center px-4 py-2 text-gray-700 hover:bg-gray-100">
                     <User className="h-4 w-4 mr-2" />
-                    <Image src="/user-icon.png" alt="User" width={16} height={16} className="h-4 w-4 mr-2" />
+                    {t("common.clientSpace")}
                   </Link>
 
                   <div className="border-t border-gray-100 my-1"></div>
 
-                  <div className="px-4 py-1 text-xs text-gray-500">{t("common.registerAs")}</div>
+                  <div className="px-4 py-1 text-xs text-gray-500">{t("common.accessToSpace")}</div>
 
                   <Link href="/register/shopkeeper" className="block px-4 py-2 text-gray-700 hover:bg-gray-100">
                     {t("common.shopkeeper")}
@@ -254,7 +254,7 @@ export default function ServiceProviderIntervention() {
                     {t("serviceProvider.client")}
                     </th>
                     <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    {t("serviceProvider.address")}
+                    {t("serviceProvider.addressClient")}
                     </th>
                     <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       
@@ -285,11 +285,11 @@ export default function ServiceProviderIntervention() {
                               <div className="flex items-start gap-6">
                                 <div className="flex-1">
                                   <div className="flex justify-between items-center mb-2">
-                                    <h3 className="text-lg font-semibold">{intervention.client}'s Intervention</h3>
+                                    <h3 className="text-lg font-semibold">{t("serviceProvider.serviceFor")} {intervention.client}</h3>
                                   </div>
-                                  <p className="text-gray-700 mb-4">{intervention.address}</p>
+                                  <p className="text-gray-700 mb-4">{intervention.address} {t("serviceProvider.at")} {intervention.hour}</p>
                                   <div className="flex justify-between items-center">
-                                    <span className="text-sm text-gray-500">Booked on {intervention.date}</span>
+                                    <span className="text-sm text-gray-500">{t("serviceProvider.bookedOn")} {intervention.date}</span>
                                   </div>
                                 </div>
                               </div>

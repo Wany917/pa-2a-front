@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import React, { useState, ReactNode } from "react"
 import Link from "next/link"
 import Image from "next/image"
 import {
@@ -49,7 +49,7 @@ export default function ServiceProviderPage() {
 
   // Fonction pour rendre les étoiles
   const renderStars = (rating: number) => {
-    const stars: JSX.Element[] = []
+    const stars: ReactNode[] = []
     const fullStars = Math.floor(rating)
     const hasHalfStar = rating % 1 !== 0
 
@@ -159,24 +159,40 @@ export default function ServiceProviderPage() {
               </button>
               {isUserMenuOpen && (
                 <div className="absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-lg z-10 py-2 border border-gray-100">
-                  <Link href="/app_service-provider/edit_account" className="flex items-center px-4 py-2 text-gray-700 hover:bg-gray-100">
-                    <Edit className="h-4 w-4 mr-2" />
-                    <span>{t("common.editAccount")}</span>
-                  </Link>
-                  <div className="border-t border-gray-100 my-1" />
-                  <div className="px-4 py-1 text-xs text-gray-500">{t("common.registerAs")}</div>
-                  <Link href="/register/shopkeeper" className="block px-4 py-2 text-gray-700 hover:bg-gray-100">
-                    {t("common.shopkeeper")}
-                  </Link>
-                  <Link href="/register/deliveryman" className="block px-4 py-2 text-gray-700 hover:bg-gray-100">
-                    {t("common.deliveryMan")}
-                  </Link>
-                  <div className="border-t border-gray-100 my-1" />
-                  <Link href="/logout" className="flex items-center px-4 py-2 text-red-600 hover:bg-gray-100">
-                    <LogOut className="h-4 w-4 mr-2" />
-                    <span>{t("common.logout")}</span>
-                  </Link>
-                </div>
+                <Link
+                  href="/app_service-provider/edit_account"
+                  className="flex items-center px-4 py-2 text-gray-700 hover:bg-gray-100"
+                >
+                  <Edit className="h-4 w-4 mr-2" />
+                  <span>{t("common.editAccount")}</span>
+                </Link>
+
+                <div className="border-t border-gray-100 my-1"></div>
+
+                <Link href="/dashboard" className="flex items-center px-4 py-2 text-gray-700 hover:bg-gray-100">
+                  <User className="h-4 w-4 mr-2" />
+                  {t("common.clientSpace")}
+                </Link>
+
+                <div className="border-t border-gray-100 my-1"></div>
+
+                <div className="px-4 py-1 text-xs text-gray-500">{t("common.accessToSpace")}</div>
+
+                <Link href="/register/shopkeeper" className="block px-4 py-2 text-gray-700 hover:bg-gray-100">
+                  {t("common.shopkeeper")}
+                </Link>
+
+                <Link href="/register/deliveryman" className="block px-4 py-2 text-gray-700 hover:bg-gray-100">
+                  {t("common.deliveryMan")}
+                </Link>
+
+                <div className="border-t border-gray-100 my-1"></div>
+
+                <Link href="/logout" className="flex items-center px-4 py-2 text-red-600 hover:bg-gray-100">
+                  <LogOut className="h-4 w-4 mr-2" />
+                  <span>{t("common.logout")}</span>
+                </Link>
+              </div>
               )}
             </div>
           </div>
