@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Image from "next/image"
 import Link from "next/link"
 import { User, Menu, X, LogOut, Edit, ChevronDown } from "lucide-react"
@@ -15,6 +15,7 @@ interface HeaderProps {
 export default function ResponsiveHeader({ activePage }: HeaderProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false)
+  const [first_name, setUserName] = useState("")
   const { isMobile } = useScreenSize()
   const { t } = useLanguage()
 
@@ -25,6 +26,30 @@ export default function ResponsiveHeader({ activePage }: HeaderProps) {
   const toggleUserMenu = () => {
     setIsUserMenuOpen(!isUserMenuOpen)
   }
+
+  useEffect(() => {
+		const token =
+			sessionStorage.getItem('authToken') ||
+			localStorage.getItem('authToken');
+		if (!token) return;
+
+		fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/me`, {
+			method: 'GET',
+			headers: {
+				'Content-Type': 'application/json',
+				Authorization: `Bearer ${token}`,
+			},
+			credentials: 'include',
+		})
+			.then((res) => {
+				if (!res.ok) throw new Error('Unauthorized');
+				return res.json();
+			})
+			.then((data) => {
+				setUserName(data.firstName);
+			})
+			.catch((err) => console.error('Auth/me failed:', err));
+	}, []);
 
   return (
     <header className="bg-white shadow-sm">
@@ -92,7 +117,7 @@ export default function ResponsiveHeader({ activePage }: HeaderProps) {
               onClick={toggleUserMenu}
             >
               <User className="h-5 w-5 mr-2" />
-              <span className="hidden sm:inline">Killian</span>
+              <span className="hidden sm:inline">{first_name}</span>
               <ChevronDown className="h-4 w-4 ml-1" />
             </button>
 

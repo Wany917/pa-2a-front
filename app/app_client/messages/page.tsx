@@ -33,6 +33,7 @@ interface Conversation {
 }
 
 export default function MessagesPage() {
+  const [first_name, setUserName] = useState("")
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false)
   const [activeTab, setActiveTab] = useState<"all" | "delivery" | "service">("all")
   const [searchQuery, setSearchQuery] = useState("")
@@ -308,6 +309,30 @@ export default function MessagesPage() {
 
   // Mark messages as read when conversation is selected
   useEffect(() => {
+		const token =
+			sessionStorage.getItem('authToken') ||
+			localStorage.getItem('authToken');
+		if (!token) return;
+
+		fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/me`, {
+			method: 'GET',
+			headers: {
+				'Content-Type': 'application/json',
+				Authorization: `Bearer ${token}`,
+			},
+			credentials: 'include',
+		})
+			.then((res) => {
+				if (!res.ok) throw new Error('Unauthorized');
+				return res.json();
+			})
+			.then((data) => {
+				setUserName(data.firstName);
+			})
+			.catch((err) => console.error('Auth/me failed:', err));
+	}, []);
+
+  useEffect(() => {
     if (selectedConversation) {
       setConversations((prevConversations) =>
         prevConversations.map((conversation) => {
@@ -415,7 +440,7 @@ export default function MessagesPage() {
                 onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
               >
                 <User className="h-5 w-5 mr-2" />
-                <span className="hidden sm:inline">Killian</span>
+                <span className="hidden sm:inline">{first_name}</span>
                 <ChevronDown className="h-4 w-4 ml-1" />
               </button>
 

@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Image from "next/image"
 import Link from "next/link"
 import { User, ChevronDown, Edit, LogOut, Plus, AlertCircle, FileText, CheckCircle } from "lucide-react"
@@ -22,6 +22,7 @@ interface ComplaintItem {
 
 export default function ComplaintClient() {
   const { t } = useLanguage()
+  const [first_name, setUserName] = useState("")
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false)
   const [activeTab, setActiveTab] = useState<"all" | "pending" | "resolved">("all")
   const [showComplaintModal, setShowComplaintModal] = useState(false)
@@ -74,6 +75,30 @@ export default function ComplaintClient() {
     if (activeTab === "resolved") return ["done", "rejected"].includes(item.status)
     return true
   })
+
+  useEffect(() => {
+		const token =
+			sessionStorage.getItem('authToken') ||
+			localStorage.getItem('authToken');
+		if (!token) return;
+
+		fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/me`, {
+			method: 'GET',
+			headers: {
+				'Content-Type': 'application/json',
+				Authorization: `Bearer ${token}`,
+			},
+			credentials: 'include',
+		})
+			.then((res) => {
+				if (!res.ok) throw new Error('Unauthorized');
+				return res.json();
+			})
+			.then((data) => {
+				setUserName(data.firstName);
+			})
+			.catch((err) => console.error('Auth/me failed:', err));
+	}, []);
 
   // Handle file input change
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -203,7 +228,7 @@ export default function ComplaintClient() {
                 onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
               >
                 <User className="h-5 w-5 mr-2" />
-                <span className="hidden sm:inline">Killian</span>
+                <span className="hidden sm:inline">{first_name}</span>
                 <ChevronDown className="h-4 w-4 ml-1" />
               </button>
 

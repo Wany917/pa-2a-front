@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Image from "next/image"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
@@ -13,6 +13,7 @@ import { useLanguage } from "@/components/language-context"
 export default function CreateComplaintClient() {
   const router = useRouter()
   const { t } = useLanguage()
+  const [first_name, setUserName] = useState("")
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [files, setFiles] = useState<File[]>([])
@@ -23,6 +24,30 @@ export default function CreateComplaintClient() {
     shippingPrice: "",
     description: "",
   })
+
+  useEffect(() => {
+		const token =
+			sessionStorage.getItem('authToken') ||
+			localStorage.getItem('authToken');
+		if (!token) return;
+
+		fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/me`, {
+			method: 'GET',
+			headers: {
+				'Content-Type': 'application/json',
+				Authorization: `Bearer ${token}`,
+			},
+			credentials: 'include',
+		})
+			.then((res) => {
+				if (!res.ok) throw new Error('Unauthorized');
+				return res.json();
+			})
+			.then((data) => {
+				setUserName(data.firstName);
+			})
+			.catch((err) => console.error('Auth/me failed:', err));
+	}, []);
 
   // Handle form input changes
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -127,7 +152,7 @@ export default function CreateComplaintClient() {
                 onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
               >
                 <User className="h-5 w-5 mr-2" />
-                <span className="hidden sm:inline">Killian</span>
+                <span className="hidden sm:inline">{first_name}</span>
                 <ChevronDown className="h-4 w-4 ml-1" />
               </button>
 

@@ -33,6 +33,7 @@ interface TimeSlot {
 export default function ServiceDetailClient({ id }: { id: string }) {
   const { t, language } = useLanguage()
   const serviceId = id
+  const [first_name, setUserName] = useState("")
   const [service, setService] = useState<Service | null>(null)
   const [loading, setLoading] = useState(true)
   const [date, setDate] = useState<Date | undefined>(undefined)
@@ -52,6 +53,30 @@ export default function ServiceDetailClient({ id }: { id: string }) {
         return enUS
     }
   }
+
+  useEffect(() => {
+		const token =
+			sessionStorage.getItem('authToken') ||
+			localStorage.getItem('authToken');
+		if (!token) return;
+
+		fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/me`, {
+			method: 'GET',
+			headers: {
+				'Content-Type': 'application/json',
+				Authorization: `Bearer ${token}`,
+			},
+			credentials: 'include',
+		})
+			.then((res) => {
+				if (!res.ok) throw new Error('Unauthorized');
+				return res.json();
+			})
+			.then((data) => {
+				setUserName(data.firstName);
+			})
+			.catch((err) => console.error('Auth/me failed:', err));
+	}, []);
 
   useEffect(() => {
     const services: Service[] = [
@@ -212,7 +237,7 @@ export default function ServiceDetailClient({ id }: { id: string }) {
               className="flex items-center bg-green-200 text-green-800 rounded-full px-4 py-1 hover:bg-green-300 transition-colors"
             >
               <User className="h-5 w-5 mr-2" />
-              <span className="hidden sm:inline">Killian</span>
+              <span className="hidden sm:inline">{first_name}</span>
             </Link>
           </div>
         </div>

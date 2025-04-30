@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Image from "next/image"
 import Link from "next/link"
 import { User, ChevronDown, Edit, LogOut, Star, CreditCard } from "lucide-react"
@@ -33,6 +33,7 @@ interface ServiceItem {
 
 export default function PaymentsPage() {
   const { t } = useLanguage()
+  const [first_name, setUserName] = useState("")
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false)
   const [activeTab, setActiveTab] = useState<"all" | "unpaid" | "paid">("all")
   const [showPaymentModal, setShowPaymentModal] = useState<string | null>(null)
@@ -110,6 +111,30 @@ export default function PaymentsPage() {
     if (activeTab === "all") return true
     return item.status === activeTab
   })
+
+  useEffect(() => {
+		const token =
+			sessionStorage.getItem('authToken') ||
+			localStorage.getItem('authToken');
+		if (!token) return;
+
+		fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/me`, {
+			method: 'GET',
+			headers: {
+				'Content-Type': 'application/json',
+				Authorization: `Bearer ${token}`,
+			},
+			credentials: 'include',
+		})
+			.then((res) => {
+				if (!res.ok) throw new Error('Unauthorized');
+				return res.json();
+			})
+			.then((data) => {
+				setUserName(data.firstName);
+			})
+			.catch((err) => console.error('Auth/me failed:', err));
+	}, []);
 
   // Handle payment
   const handlePayment = async (type: "delivery" | "service", id: string) => {
@@ -210,7 +235,7 @@ export default function PaymentsPage() {
                 onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
               >
                 <User className="h-5 w-5 mr-2" />
-                <span className="hidden sm:inline">Killian</span>
+                <span className="hidden sm:inline">{first_name}</span>
                 <ChevronDown className="h-4 w-4 ml-1" />
               </button>
 
