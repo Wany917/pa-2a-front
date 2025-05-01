@@ -30,9 +30,6 @@ export default function SigninClient() {
     setIsSubmitting(true)
 
     try {
-      // Simuler l'envoi des données d'inscription (à remplacer par votre logique réelle)
-      await new Promise((resolve) => setTimeout(resolve, 1500))
-
       console.log("Registration:", { name, email, password })
       router.push("/verify-email") // Rediriger vers la vérification d'email
     } catch (err) {
