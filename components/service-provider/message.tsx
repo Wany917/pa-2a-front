@@ -23,7 +23,7 @@ interface Conversation {
   recipientId: string
   recipientName: string
   recipientAvatar: string
-  recipientType: "delivery" | "service"
+  recipientType: "client" 
   serviceType?: string
   lastMessage: string
   lastMessageTime: string
