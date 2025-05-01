@@ -308,12 +308,12 @@ export default function ServiceProviderReviewDetails() {
                               <div className="flex items-start gap-6">
                                 <div className="flex-1">
                                   <div className="flex justify-between items-center mb-2">
-                                    <h3 className="text-lg font-semibold">{review.client}'s Review</h3>
+                                    <h3 className="text-lg font-semibold">{t("serviceProvider.reviewGivenBy")} {review.client}</h3>
                                     <div className="flex">{renderStars(review.grade)}</div>
                                   </div>
                                   <p className="text-gray-700 mb-4">{review.fullReview}</p>
                                   <div className="flex justify-between items-center">
-                                    <span className="text-sm text-gray-500">Posted on {review.date}</span>
+                                    <span className="text-sm text-gray-500">{t("serviceProvider.postedOn")} {review.date}</span>
                                   </div>
                                 </div>
                               </div>

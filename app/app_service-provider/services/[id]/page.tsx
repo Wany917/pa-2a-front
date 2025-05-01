@@ -282,7 +282,7 @@ export default function ServiceProviderEditPage({ params }: EditServiceContentPr
                         className="mt-2"
                         onClick={() => document.getElementById("image")?.click()}
                       >
-                        {t("service.changeImage")}
+                        {t("serviceProvider.changeImage")}
                       </Button>
                     )}
                   </div>

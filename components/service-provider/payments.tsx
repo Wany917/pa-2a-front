@@ -1,7 +1,7 @@
 "use client"
 
 import React, { useState, ReactNode } from "react"
-import { useRouter } from "next/navigation"  // ou "next/router" si tu es en pages/ dir
+import { useRouter } from "next/navigation"  
 import Link from "next/link"
 import Image from "next/image"
 import {
@@ -101,6 +101,21 @@ export default function PaymentsDeliveryman() {
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState("")
   const [selectedInvoice, setSelectedInvoice] = useState<(typeof mockPayments)[0] | null>(null)
+
+  // Filtrer les paiements selon la recherche
+  const filteredPayments = payments.filter(payment => {
+    if (!searchQuery) return true
+    const q = searchQuery.toLowerCase()
+  
+    const address = payment.clientAddress ?? payment.whereTo ?? ""
+    return (
+      payment.announceName.toLowerCase().includes(q) ||
+      address.toLowerCase().includes(q) ||
+      payment.price.toLowerCase().includes(q) ||
+      payment.deliveryDate.toLowerCase().includes(q) ||
+      payment.status.toLowerCase().includes(q)
+    )
+  })  
 
   const handlePreviewInvoice = (payment: (typeof mockPayments)[0]) => {
     setSelectedInvoice(payment)
@@ -277,7 +292,7 @@ export default function PaymentsDeliveryman() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200">
-                  {payments.map((payment) => (
+                  {filteredPayments.map((payment) => (
                     <tr key={payment.id} className="hover:bg-gray-50">
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center">

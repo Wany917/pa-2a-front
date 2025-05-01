@@ -35,7 +35,8 @@
     "create": "Créer",
     "backToServices": "Retour aux services",
     "clientSpace": "Espace client",
-    "accessToSpace": "Accéder à l'espace :"
+    "accessToSpace": "Accéder à l'espace :",
+    "end": "Fin"
   },
   "navigation": {
     "app_client": "Tableau de bord",
@@ -44,7 +45,8 @@
     "messages": "Messages",
     "makeComplaint": "Faire une réclamation",
     "backToApp_Client": "Retour à la page d'accueil",
-    "backToComplaints": "Retour aux réclamations"
+    "backToComplaints": "Retour aux réclamations",
+    "backToCalendar": "Retour au calendrier"
   },
   "app_client": {
     "welcome": "Découvrez ce qu'EcoDeli et ses partenaires ont à vous offrir",
@@ -358,7 +360,13 @@
   "sat": "SAM",
   "sun": "DIM",
   "noEvents": "Aucune livraison prévue ce jour",
-  "viewDelivery": "Voir les détails de la livraison"
+  "viewDelivery": "Voir les détails de la livraison",
+  "today": "Aujourd'hui",
+  "day": "Jour",
+  "week": "Semaine",
+  "month": "Mois",
+  "previous": "Précédent",
+  "next": "Suivant"
 },
   "deliveryman": {
     "dashboard": "Tableau de bord",
@@ -427,6 +435,7 @@
     "dashboard": "Tableau de bord",
     "review": "Avis",
     "services": "Services",
+    "service": "Service",
     "calendar": "Calendrier",
     "interventions": "Interventions",
     "messages": "Messages",
@@ -472,6 +481,30 @@
     "at": "à",
     "intervention": "Vos prochaines interventions",
     "serviceFor": "Service pour",
-    "addressClient": "Adresse du client"
+    "addressClient": "Adresse du client",
+    "date": "Date",
+    "time": "Heure",
+    "status": "Statut",
+    "numberOfClients": "Nombre de clients",
+    "bestService": "Meilleur service",
+    "numbersOfTheMonth": "Chiffres du mois",
+    "thisMonth": "ce mois",
+    "thanLastMonth": "que le mois dernier",
+    "reviewGivenBy": "Avis donné par",
+    "postedOn": "Publié le",
+    "myAvailabilities": "Mes disponibilités",
+    "start": "Début",
+    "title": "Titre",
+    "addSlot": "Ajouter un créneau",
+    "editSlot": "Modifier le créneau",
+    "available": "Disponible"
+  },
+  "status": {
+    "pending": "En attente",
+    "inProgress": "En cours",
+    "completed": "Terminé",
+    "canceled": "Annulé",
+    "delivered": "Livré",
+    "confirmed": "Confirmé"
   }
 }

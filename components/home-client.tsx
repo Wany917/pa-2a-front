@@ -239,7 +239,7 @@ export default function HomeClient() {
                 </li>
               </ul>
 
-              <button className="w-full py-2 px-4 bg-white text-green-500 rounded-md hover:bg-green-50 transition-colors">
+              <button className="w-full py-2 px-4 bg-white text-green-500 rounded-md hover:bg-green-600 hover:text-white transition-colors">
                 {t("home.getStarted")}
               </button>
             </div>
@@ -294,21 +294,31 @@ export default function HomeClient() {
               <Image src="/logo.png" alt="EcoDeli" width={120} height={40} className="h-auto mb-2" />
             </div>
 
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-8">
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-4 sm:gap-8 mt-6">
               <div>
-                <h3 className="text-sm font-bold mb-4">{t("footer.legalNotice")}</h3>
+                <Link href="/legal-notice">
+                  <p className="text-sm font-bold mb-4">{t("footer.legalNotice")}</p>
+                </Link>
               </div>
               <div>
-                <h3 className="text-sm font-bold mb-4">{t("footer.clientSpace")}</h3>
+                <Link href="/app_client">
+                  <p className="text-sm font-bold mb-4">{t("footer.clientSpace")}</p>
+                </Link>
               </div>
               <div>
-                <h3 className="text-sm font-bold mb-4">{t("footer.serviceProviderSpace")}</h3>
+                <Link href="/app_service-provider">
+                  <p className="text-sm font-bold mb-4">{t("footer.serviceProviderSpace")}</p>
+                </Link>
               </div>
               <div>
-                <h3 className="text-sm font-bold mb-4">{t("footer.shopkeeperSpace")}</h3>
+                <Link href="/app_shopkeeper">
+                  <p className="text-sm font-bold mb-4">{t("footer.shopkeeperSpace")}</p>
+                </Link>
               </div>
               <div>
-                <h3 className="text-sm font-bold mb-4">{t("footer.deliverymanSpace")}</h3>
+                <Link href="/app_deliveryman">
+                  <p className="text-sm font-bold mb-4">{t("footer.deliverymanSpace")}</p>
+                </Link>
               </div>
             </div>
           </div>

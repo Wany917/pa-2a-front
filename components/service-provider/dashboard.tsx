@@ -98,14 +98,15 @@ export default function ServiceProviderDashboard() {
       case "pending":
         bgColor = "bg-[#F8A097] text-white"
         break
-      case "cancelled":
+      case "canceled":
         bgColor = "bg-[#E57373] text-white"
         break
       default:
         bgColor = "bg-gray-200 text-gray-800"
     }
-
-    return <Badge className={`${bgColor} font-normal`}>{status}</Badge>
+    // Traduction dynamique de status.<clé>
+    const label = t(`status.${status.toLowerCase()}`) || status
+    return <Badge className={`${bgColor} font-normal`}>{label}</Badge>
   }
 
   return (
@@ -275,12 +276,12 @@ export default function ServiceProviderDashboard() {
             <table className="min-w-full divide-y divide-gray-200">
                 <thead>
                 <tr>
-                    <th className="px-6 py-3 text-left text-sm font-medium text-gray-500">Client</th>
-                    <th className="px-6 py-3 text-left text-sm font-medium text-gray-500">Service</th>
-                    <th className="px-6 py-3 text-left text-sm font-medium text-gray-500">Date</th>
-                    <th className="px-6 py-3 text-left text-sm font-medium text-gray-500">Time</th>
-                    <th className="px-6 py-3 text-left text-sm font-medium text-gray-500">Location</th>
-                    <th className="px-6 py-3 text-left text-sm font-medium text-gray-500">Status</th>
+                    <th className="px-6 py-3 text-left text-sm font-medium text-gray-500">{t("serviceProvider.client")}</th>
+                    <th className="px-6 py-3 text-left text-sm font-medium text-gray-500">{t("serviceProvider.service")}</th>
+                    <th className="px-6 py-3 text-left text-sm font-medium text-gray-500">{t("serviceProvider.date")}</th>
+                    <th className="px-6 py-3 text-left text-sm font-medium text-gray-500">{t("serviceProvider.time")}</th>
+                    <th className="px-6 py-3 text-left text-sm font-medium text-gray-500">{t("serviceProvider.addressClient")}</th>
+                    <th className="px-6 py-3 text-left text-sm font-medium text-gray-500">{t("serviceProvider.status")}</th>
                 </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200">
@@ -304,18 +305,18 @@ export default function ServiceProviderDashboard() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8">
         {/* Nombre de clients */}
         <Card className="p-6">
-          <h3 className="text-lg font-semibold mb-8">Number of client</h3>
+          <h3 className="text-lg font-semibold mb-8">{t("serviceProvider.numberOfClients")}</h3>
           <div className="flex flex-col items-center justify-center">
             <p className="text-5xl font-bold mb-6">83.9 K</p>
             <div className="bg-[#8CD790] bg-opacity-20 text-[#8CD790] px-4 py-2 rounded-full text-sm">
-              +9.7 K this month
+              +9.7 K {t("serviceProvider.thisMonth")}
             </div>
           </div>
         </Card>
 
         {/* Meilleur service */}
         <Card className="p-6">
-          <h3 className="text-lg font-semibold mb-4 text-center">Best service</h3>
+          <h3 className="text-lg font-semibold mb-4 text-center">{t("serviceProvider.bestService")}</h3>
           <p className="text-center font-medium mb-4">Dog-sitter</p>
           <div className="flex justify-center mb-4">
             <div className="relative w-40 h-40 rounded-lg overflow-hidden">
@@ -331,11 +332,11 @@ export default function ServiceProviderDashboard() {
 
         {/* Chiffres du mois */}
         <Card className="p-6">
-          <h3 className="text-lg font-semibold mb-8">Numbers of the month</h3>
+          <h3 className="text-lg font-semibold mb-8">{t("serviceProvider.numbersOfTheMonth")}</h3>
           <div className="flex flex-col items-center justify-center">
             <p className="text-5xl font-bold mb-6">£ 4.5 K</p>
             <div className="bg-[#8CD790] bg-opacity-20 text-[#8CD790] px-4 py-2 rounded-full text-sm">
-              +5.4% than last month
+              +5.4% {t("serviceProvider.thanLastMonth")}
             </div>
           </div>
         </Card>

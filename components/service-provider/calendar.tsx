@@ -211,10 +211,10 @@ export default function CalendarPage() {
 
             <main className="min-h-screen bg-gray-100 p-6">
             <div className="flex items-center justify-between mb-4">
-                <h1 className="text-2xl font-semibold text-gray-800">Mon calendrier</h1>
+                <h1 className="text-2xl font-semibold text-gray-800">{t("serviceProvider.calendar")}</h1>
                 <Link href="/app_service-provider/calendar/availabilities">
                 <p className="bg-green-50 text-white px-4 py-2 rounded hover:bg-green-600">
-                    Mes disponibilités
+                {t("serviceProvider.myAvailabilities")}
                 </p>
                 </Link>
             </div>
