@@ -82,7 +82,10 @@ export default function EditAccountClient() {
         `${process.env.NEXT_PUBLIC_API_URL}/utilisateurs/${userId}`,
         {
           method: "PUT",
-          headers: { "Content-Type": "application/json" },
+          headers: { 
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${sessionStorage.getItem("authToken")}`,
+          },
           body: JSON.stringify(formData),
           credentials: "include",
         }
