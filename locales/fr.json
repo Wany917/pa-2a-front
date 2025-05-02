@@ -159,7 +159,9 @@
     "continueToAddresses": "Continuer vers les adresses",
     "enterAddresses": "Entrez l'adresse de départ et de livraison",
     "enterStartingAddress": "Entrez l'adresse de départ",
-    "enterDestinationAddress": "Entrez l'adresse de livraison"
+    "enterDestinationAddress": "Entrez l'adresse de livraison",
+    "addressOption" : "Adresse",
+    "boxOption" : "Box de stockage EcoDeli"
   },
   "payments": {
     "yourPayments": "Vos paiements",
@@ -497,7 +499,10 @@
     "title": "Titre",
     "addSlot": "Ajouter un créneau",
     "editSlot": "Modifier le créneau",
-    "available": "Disponible"
+    "available": "Disponible",
+    "editYourJustificativePieces": "Modifier vos pièces justificatives",
+    "editYourDocuments": "Modifier vos documents",
+    "uploadYourNewDocument": "Importer un nouveau document en .pdf"
   },
   "status": {
     "pending": "En attente",
@@ -506,5 +511,44 @@
     "canceled": "Annulé",
     "delivered": "Livré",
     "confirmed": "Confirmé"
+  },
+  "shopkeeper": {
+    "dashboard": "Tableau de bord",
+    "announcements": "Annonces",
+    "contract": "Contrat",
+    "messages": "Messages",
+    "payments": "Paiements",
+    "settings": "Paramètres",
+    "logout": "Déconnexion",
+    "profile": "Profil",
+    "search": "Rechercher...",
+    "totalClients": "Total Clients",
+    "deliveriesThisWeek": "Livraisons cette semaine",
+    "totalPendingDeliveries": "Total des livraisons en attente",
+    "fromYesterday": "depuis hier",
+    "deliveriesThisMonth": "Livraisons ce mois",
+    "recentDeliveries": "Livraisons récentes",
+    "viewAll": "Voir tout"
+  },
+  "contracts": {
+    "contract": "Contrat",
+    "contractDetails": "Détails du contrat",
+    "contractId": "ID du contrat",
+    "clientName": "Nom du client",
+    "shopkeeperName": "Nom du commerçant",
+    "startDate": "Date de début",
+    "endDate": "Date de fin",
+    "status": "Statut",
+    "totalAmount": "Montant total",
+    "paymentStatus": "Statut du paiement",
+    "viewContract": "Voir le contrat",
+    "monthlyCharge": "Frais mensuels",
+    "basic": "Basique",
+    "standard": "Standard",
+    "ultimate": "Ultime",
+    "title": "Tous les contrats disponibles",
+    "getStarted": "Commencer",
+    "startFreeTrial": "Commencer l'essai gratuit",
+    "renew": "Renouveler"
   }
 }

@@ -336,7 +336,7 @@ export default function HomeClient() {
               </div>
               <div>
                 <Link href="/app_service-provider">
-                  <p className="text-sm font-bold mb-4">{t("footer.serviceProviderSpace")}</p>
+                  <p className="text-sm font-bold mb-4">{t("footer.serviceProviderSpace").trim()}</p>
                 </Link>
               </div>
               <div>
