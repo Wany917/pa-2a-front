@@ -37,7 +37,8 @@
     "clientSpace": "Espace client",
     "accessToSpace": "Accéder à l'espace :",
     "end": "Fin",
-    "confirm": "Confirmer"
+    "confirm": "Confirmer",
+    "add": "Ajouter"
   },
   "navigation": {
     "app_client": "Tableau de bord",
@@ -167,7 +168,15 @@
     "normalDelivery": "Livraison normale",
     "cartDropOff": "Lâché de chariot",
     "normalDeliveryDescription": "Le livreur viendra chercher le colis et le livrera à l'adresse de destination (avec une ou plusieurs étapes).",
-    "cartDropOffDescription": "Le livreur viendra chercher le contenu du chariot et le livrera à l'adresse de destination (en une seule fois)."
+    "cartDropOffDescription": "Le livreur viendra chercher le contenu du chariot et le livrera à l'adresse de destination (en une seule fois).",
+    "createType": "Choisir un type d'annonce",
+    "createPackage": "Créer un colis",
+    "createShoppingList": "Créer une liste de courses",
+    "shoppingListItems": "Liste de courses",
+    "title": "Titre de votre liste",
+    "shopppingListItems": "Articles de la liste de courses",
+    "listPrice": "Prix pour la livraison et la liste de courses",
+    "shoppingList": "Liste de courses"
   },
   "payments": {
     "yourPayments": "Vos paiements",

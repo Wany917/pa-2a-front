@@ -37,7 +37,8 @@
     "clientSpace": "Client space",
     "accessToSpace": "Access space:",
     "end": "End",
-    "confirm": "Confirm"
+    "confirm": "Confirm",
+    "add": "Add"
   },
   "navigation": {
     "app_client": "Dashboard",
@@ -167,7 +168,15 @@
     "normalDelivery": "Normal delivery",
     "cartDropOff": "Cart drop-off",
     "normalDeliveryDescription": "The delivery person will pick up the package and deliver it to the destination address (with one or more stops).",
-    "cartDropOffDescription": "The delivery person will pick up the cart contents and deliver them to the destination address in one go."
+    "cartDropOffDescription": "The delivery person will pick up the cart contents and deliver them to the destination address in one go.",
+    "createType": "Choose an announcement type",
+    "createPackage": "Create a package",
+    "createShoppingList": "Create a shopping list",
+    "shoppingListItems": "Shopping list",
+    "title": "Title of your list",
+    "shopppingListItems": "Shopping list items",
+    "listPrice": "Price for delivery and shopping list",
+    "shoppingList": "Shopping list"
   },
   "payments": {
     "yourPayments": "Your payments",

@@ -47,7 +47,8 @@
     "makeComplaint": "Hacer una reclamación",
     "backToApp_Client": "Volver al panel",
     "backToComplaints": "Volver a reclamaciones",
-    "backToCalendar": "Volver al calendario"
+    "backToCalendar": "Volver al calendario",
+    "add": "Agregar"
   },
   "app_client": {
     "welcome": "Descubra lo que EcoDeli y sus socios tienen para ofrecerle",
@@ -167,7 +168,15 @@
     "normalDelivery": "Entrega normal",
     "cartDropOff": "Entrega de carrito",
     "normalDeliveryDescription": "El repartidor recogerá el paquete y lo entregará en la dirección de destino (con una o más paradas).",
-    "cartDropOffDescription": "El repartidor recogerá el contenido del carrito y lo entregará en la dirección de destino de una sola vez."
+    "cartDropOffDescription": "El repartidor recogerá el contenido del carrito y lo entregará en la dirección de destino de una sola vez.",
+    "createType": "Elegir un tipo de anuncio",
+    "createPackage": "Crear un paquete",
+    "createShoppingList": "Crear una lista de compras",
+    "shoppingListItems": "Lista de compras",
+    "title": "Título de tu lista",
+    "shopppingListItems": "Artículos de la lista de compras",
+    "listPrice": "Precio para la entrega y la lista de compras",
+    "shoppingList": "Lista de compras"
   },
   "payments": {
     "yourPayments": "Sus pagos",
