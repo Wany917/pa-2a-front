@@ -159,7 +159,9 @@
     "continueToAddresses": "Continuer vers les adresses",
     "enterAddresses": "Entrez l'adresse de départ et de livraison",
     "enterStartingAddress": "Entrez l'adresse de départ",
-    "enterDestinationAddress": "Entrez l'adresse de livraison"
+    "enterDestinationAddress": "Entrez l'adresse de livraison",
+    "addressOption" : "Adresse",
+    "boxOption" : "Box de stockage EcoDeli"
   },
   "payments": {
     "yourPayments": "Vos paiements",
