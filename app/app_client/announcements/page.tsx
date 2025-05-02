@@ -93,20 +93,11 @@ export default function AnnouncementsPage() {
                 </div>
 
                 <div className="flex flex-wrap gap-2">
-                  <Link
-                    href={`/app_client/announcements/edit/${announcement.id}`}
-                    className="bg-gray-100 text-gray-700 px-3 py-1 rounded-md text-sm hover:bg-gray-200 transition-colors inline-block"
-                  >
-                    {t("announcements.edit")}
-                  </Link>
                   <button
                     className="bg-red-100 text-red-600 px-3 py-1 rounded-md text-sm hover:bg-red-200 transition-colors"
                     onClick={() => handleDelete(announcement.id)}
                   >
                     {t("announcements.delete")}
-                  </button>
-                  <button className="bg-yellow-100 text-yellow-600 px-3 py-1 rounded-md text-sm hover:bg-yellow-200 transition-colors">
-                    {t("announcements.editNoDeliveryDate")}
                   </button>
                 </div>
               </div>

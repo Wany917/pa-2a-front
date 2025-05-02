@@ -161,7 +161,12 @@
     "enterStartingAddress": "Entrez l'adresse de départ",
     "enterDestinationAddress": "Entrez l'adresse de livraison",
     "addressOption" : "Adresse",
-    "boxOption" : "Box de stockage EcoDeli"
+    "boxOption" : "Box de stockage EcoDeli",
+    "selectDeliveryType": "Sélectionner le type de livraison",
+    "normalDelivery": "Livraison normale",
+    "cartDropOff": "Lâché de chariot",
+    "normalDeliveryDescription": "Le livreur viendra chercher le colis et le livrera à l'adresse de destination (avec une ou plusieurs étapes).",
+    "cartDropOffDescription": "Le livreur viendra chercher le contenu du chariot et le livrera à l'adresse de destination (en une seule fois)."
   },
   "payments": {
     "yourPayments": "Vos paiements",
