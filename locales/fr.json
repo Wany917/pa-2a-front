@@ -36,7 +36,8 @@
     "backToServices": "Retour aux services",
     "clientSpace": "Espace client",
     "accessToSpace": "Accéder à l'espace :",
-    "end": "Fin"
+    "end": "Fin",
+    "confirm": "Confirmer"
   },
   "navigation": {
     "app_client": "Tableau de bord",
@@ -406,6 +407,10 @@
     "checkBackLater": "Revenez plus tard pour de nouvelles opportunités de livraison",
     "switchToClientAccount": "Passer au compte client",
     "by": "Par",
+    "partialDelivery": "Livraison partielle",
+    "fullDelivery": "Livraison complète",
+    "partialUntil": "Partiel jusqu'à",
+    "chooseDeliveryType": "Choisir le type de livraison",
       "deliveryAddress": "Adresse de livraison",
       "priceForDelivery": "Prix de livraison",
       "storageBox": "Box de stockage",
