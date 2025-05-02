@@ -27,7 +27,16 @@
     "selectYourPackageSize": "Sélectionnez la taille de votre colis",
     "previous": "Précédent",
     "next": "Suivant",
-    "getStarted": "Commencer"
+    "getStarted": "Commencer",
+    "backToReview": "Retour aux avis",
+    "edit" : "Modifier",
+    "delete" : "Supprimer",
+    "creating": "Création en cours...",
+    "create": "Créer",
+    "backToServices": "Retour aux services",
+    "clientSpace": "Espace client",
+    "accessToSpace": "Accéder à l'espace :",
+    "end": "Fin"
   },
   "navigation": {
     "app_client": "Tableau de bord",
@@ -36,7 +45,8 @@
     "messages": "Messages",
     "makeComplaint": "Faire une réclamation",
     "backToApp_Client": "Retour à la page d'accueil",
-    "backToComplaints": "Retour aux réclamations"
+    "backToComplaints": "Retour aux réclamations",
+    "backToCalendar": "Retour au calendrier"
   },
   "app_client": {
     "welcome": "Découvrez ce qu'EcoDeli et ses partenaires ont à vous offrir",
@@ -183,7 +193,9 @@
     "submitRating": "Soumettre l'évaluation",
     "noDeliveriesFound": "Aucune livraison trouvée",
     "noServicesFound": "Aucun service trouvé",
-    "rateDelivery": "Évaluer"
+    "rateDelivery": "Évaluer",
+    "clientAddress": "Adresse du client",
+    "serviceDate": "Date du service donné"
   },
   "complaints": {
     "yourComplaints": "Vos réclamations",
@@ -348,7 +360,13 @@
   "sat": "SAM",
   "sun": "DIM",
   "noEvents": "Aucune livraison prévue ce jour",
-  "viewDelivery": "Voir les détails de la livraison"
+  "viewDelivery": "Voir les détails de la livraison",
+  "today": "Aujourd'hui",
+  "day": "Jour",
+  "week": "Semaine",
+  "month": "Mois",
+  "previous": "Précédent",
+  "next": "Suivant"
 },
   "deliveryman": {
     "dashboard": "Tableau de bord",
@@ -385,7 +403,7 @@
       "priceForDelivery": "Prix de livraison",
       "storageBox": "Box de stockage",
       "packageInMailbox": "Le colis est dans la boîte aux lettres",    
-      "deliveriess": {
+    "deliveriess": {
       "image": "Image",
       "announceName": "Nom de l'annonce",
       "whereTo": "Destination",
@@ -397,8 +415,9 @@
       "inTransit": "En transit",
       "delivered": "Livré",
       "pending": "En attente",
-      "noDeliveriesFound": "Aucune livraison trouvée",
-    "editJustificative": {
+      "noDeliveriesFound": "Aucune livraison trouvée"
+  },
+  "editJustificative": {
       "editYourJustificativePieces": "Modifier vos pièces justificatives",
       "yourLicence": "Votre permis",
       "yourID": "Votre pièce d'identité",
@@ -411,6 +430,81 @@
       "goBackToEcoDeli": "Retour à EcoDeli",
       "dailyDelivery": "Livraison Quotidienne"
     }
+},
+"serviceProvider": {
+    "dashboard": "Tableau de bord",
+    "review": "Avis",
+    "services": "Services",
+    "service": "Service",
+    "calendar": "Calendrier",
+    "interventions": "Interventions",
+    "messages": "Messages",
+    "payments": "Paiements",
+    "settings": "Paramètres",
+    "logout": "Déconnexion",
+    "profile": "Profil",
+    "search": "Rechercher...",
+    "totalClients": "Total Clients",
+    "deliveriesThisWeek": "Livraisons cette semaine",
+    "totalPendingDeliveries": "Total des livraisons en attente",
+    "fromYesterday": "depuis hier",
+    "deliveriesThisMonth": "Livraisons ce mois",
+    "recentDeliveries": "Livraisons récentes",
+    "viewAll": "Voir tout",
+    "upcomingInterventions": "Interventions à venir",
+    "grade": "Note",
+    "client": "Client",
+    "serviceName": "Nom du service",
+    "addService": "Ajouter un service",
+    "price": "Prix du service",
+    "description": "Description du service",
+    "image": "Image pour le service",
+    "changeImage": "Changer l'image",
+    "serviceDetails": "Détails du service",
+    "saving": "Enregistrement...",
+    "name": "Nom du service",
+    "namePlaceholder": "Entrez le nom du service",
+    "descriptionPlaceholder": "Entrez la description du service",
+    "pricePlaceholder": "Entrez le prix du service",
+    "uploadPhoto": "Sélectionner une photo",
+    "verification": "Vérification",
+    "details": "Détails",
+    "documentTitle": "Veuillez renseigner un document",
+    "documentDescription": "Ce document est requis pour vérifier votre aptitude à exercer ce nouveau service avec EcoDeli.",
+    "dropDocument": "Déposez le document ici ou cliquez pour sélectionner un fichier",
+    "documentFormat": "Format accepté : .pdf",
+    "browseFiles": "Parcourir vos fichiers",
+    "pendingThanksTitle": "Merci ! Votre service est en attente de vérification.",
+    "pendingMessageLine1": "Nous avons bien reçu votre demande de service !!",
+    "pendingMessageLine2": "Notre équipe de vérification examinera votre demande et vous informera dès que possible par e-mail sous 24 heures.",
+    "bookedOn": "Réservé le",
+    "at": "à",
+    "intervention": "Vos prochaines interventions",
+    "serviceFor": "Service pour",
+    "addressClient": "Adresse du client",
+    "date": "Date",
+    "time": "Heure",
+    "status": "Statut",
+    "numberOfClients": "Nombre de clients",
+    "bestService": "Meilleur service",
+    "numbersOfTheMonth": "Chiffres du mois",
+    "thisMonth": "ce mois",
+    "thanLastMonth": "que le mois dernier",
+    "reviewGivenBy": "Avis donné par",
+    "postedOn": "Publié le",
+    "myAvailabilities": "Mes disponibilités",
+    "start": "Début",
+    "title": "Titre",
+    "addSlot": "Ajouter un créneau",
+    "editSlot": "Modifier le créneau",
+    "available": "Disponible"
+  },
+  "status": {
+    "pending": "En attente",
+    "inProgress": "En cours",
+    "completed": "Terminé",
+    "canceled": "Annulé",
+    "delivered": "Livré",
+    "confirmed": "Confirmé"
   }
-}
 }

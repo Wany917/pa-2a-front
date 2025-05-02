@@ -71,7 +71,7 @@ export default function ChangePasswordPage() {
       <header className="bg-white shadow-sm">
         <div className="container mx-auto px-4 py-3 flex items-center justify-between">
           <div className="flex items-center">
-            <Link href="/app_deliveryman/dashboard">
+            <Link href="/app_service-provider">
               <Image
                 src="/logo.png"
                 alt="EcoDeli Logo"
@@ -91,7 +91,7 @@ export default function ChangePasswordPage() {
       {/* Main Content */}
       <main className="container mx-auto px-4 py-8">
         <div className="mb-6">
-          <Link href="/app_deliveryman/edit-account" className="text-green-500 hover:underline flex items-center">
+          <Link href="/app_service-provider/edit_account" className="text-green-50 hover:underline flex items-center">
             <ChevronDown className="h-4 w-4 mr-1 rotate-90" />
             {t("common.back")}
           </Link>
@@ -165,7 +165,7 @@ export default function ChangePasswordPage() {
 
               <div className="flex justify-end space-x-3 pt-4">
                 <Link
-                  href="/app_deliveryman/edit-account"
+                  href="/app_service-provider/edit_account"
                   className="px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
                 >
                   {t("common.cancel")}

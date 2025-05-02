@@ -21,7 +21,6 @@ export default function CreateAnnouncementPage() {
   const [currentPackage, setCurrentPackage] = useState(1)
 
   // États pour les adresses
-  const [startingAddress, setStartingAddress] = useState("")
   const [destinationAddress, setDestinationAddress] = useState("")
   const [startingSuggestions, setStartingSuggestions] = useState<AddressSuggestion[]>([])
   const [destinationSuggestions, setDestinationSuggestions] = useState<AddressSuggestion[]>([])
@@ -29,6 +28,9 @@ export default function CreateAnnouncementPage() {
   const [showDestinationSuggestions, setShowDestinationSuggestions] = useState(false)
   const [isLoadingStartingSuggestions, setIsLoadingStartingSuggestions] = useState(false)
   const [isLoadingDestinationSuggestions, setIsLoadingDestinationSuggestions] = useState(false)
+  const [startingType, setStartingType] = useState<'address' | 'box'>('address')
+  const [startingAddress, setStartingAddress] = useState("")
+  const [startingBox, setStartingBox] = useState("")
 
   // Refs pour les dropdowns
   const startingSuggestionsRef = useRef<HTMLDivElement>(null)
@@ -300,48 +302,79 @@ export default function CreateAnnouncementPage() {
 
               <div className="space-y-6">
                 {/* Adresse de départ */}
-                <div className="relative">
-                  <label htmlFor="startingAddress" className="block text-sm font-medium text-gray-700 mb-1">
-                    {t("announcements.startingPoint")}
-                  </label>
-                  <div className="relative">
-                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                      <MapPin className="h-5 w-5 text-gray-400" />
-                    </div>
-                    <input
-                      type="text"
-                      id="startingAddress"
-                      value={startingAddress}
-                      onChange={(e) => setStartingAddress(e.target.value)}
-                      onFocus={() => startingAddress.length >= 3 && setShowStartingSuggestions(true)}
-                      className="w-full pl-10 pr-10 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
-                      placeholder={t("announcements.enterStartingAddress")}
-                      required
-                    />
-                    {isLoadingStartingSuggestions && (
-                      <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
-                        <div className="animate-spin h-5 w-5 border-2 border-gray-300 border-t-green-500 rounded-full" />
-                      </div>
-                    )}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">{t("announcements.startingPoint")}</label>
+                  <div className="flex items-center space-x-6 mb-4">
+                    <label className="flex items-center space-x-2">
+                      <input
+                        type="radio"
+                        name="startingType"
+                        value="address"
+                        checked={startingType === 'address'}
+                        onChange={() => setStartingType('address')}
+                        className="h-4 w-4 text-green-500"
+                      />
+                      <span>{t("announcements.addressOption")}</span>
+                    </label>
+                    <label className="flex items-center space-x-2">
+                      <input
+                        type="radio"
+                        name="startingType"
+                        value="box"
+                        checked={startingType === 'box'}
+                        onChange={() => setStartingType('box')}
+                        className="h-4 w-4 text-green-500"
+                      />
+                      <span>{t("announcements.boxOption")}</span>
+                    </label>
                   </div>
-
-                  {/* Suggestions d'adresses de départ */}
-                  {showStartingSuggestions && startingSuggestions.length > 0 && (
-                    <div
-                      ref={startingSuggestionsRef}
-                      className="absolute z-10 mt-1 w-full bg-white shadow-lg rounded-md border border-gray-200 max-h-60 overflow-auto"
-                    >
-                      {startingSuggestions.map((suggestion, index) => (
-                        <div
-                          key={index}
-                          className="px-4 py-2 hover:bg-gray-100 cursor-pointer flex items-center"
-                          onClick={() => selectStartingAddress(suggestion)}
-                        >
-                          <MapPin className="h-4 w-4 text-gray-400 mr-2 flex-shrink-0" />
-                          <span className="text-sm">{suggestion.label}</span>
+                  {startingType === 'address' ? (
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <MapPin className="h-5 w-5 text-gray-400" />
+                      </div>
+                      <input
+                        type="text"
+                        id="startingAddress"
+                        value={startingAddress}
+                        onChange={e => setStartingAddress(e.target.value)}
+                        onFocus={() => startingAddress.length >= 3 && setShowStartingSuggestions(true)}
+                        className="w-full pl-10 pr-10 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                        placeholder={t("announcements.enterStartingAddress")}
+                      />
+                      {isLoadingStartingSuggestions && (
+                        <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
+                          <div className="animate-spin h-5 w-5 border-2 border-gray-300 border-t-green-500 rounded-full" />
                         </div>
-                      ))}
+                      )}
+                      {showStartingSuggestions && startingSuggestions.length > 0 && (
+                        <div ref={startingSuggestionsRef} className="absolute z-10 mt-1 w-full bg-white shadow-lg rounded-md border border-gray-200 max-h-60 overflow-auto">
+                          {startingSuggestions.map((suggestion, index) => (
+                            <div
+                              key={index}
+                              className="px-4 py-2 hover:bg-gray-100 cursor-pointer flex items-center"
+                              onClick={() => selectStartingAddress(suggestion)}
+                            >
+                              <MapPin className="h-4 w-4 text-gray-400 mr-2 flex-shrink-0" />
+                              <span className="text-sm">{suggestion.label}</span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
                     </div>
+                  ) : (
+                    <select
+                      id="startingBox"
+                      name="startingBox"
+                      value={startingBox}
+                      onChange={e => setStartingBox(e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                    >
+                      <option value="">{t("common.selectYourStorageBox")}</option>
+                      <option value="Storage box 1">Storage box 1</option>
+                      <option value="Storage box 2">Storage box 2</option>
+                      <option value="Storage box 3">Storage box 3</option>
+                    </select>
                   )}
                 </div>
 
@@ -403,7 +436,11 @@ export default function CreateAnnouncementPage() {
                     type="button"
                     onClick={proceedToPackageDetails}
                     className="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
-                    disabled={!startingAddress || !destinationAddress}
+                    disabled={
+                     (startingType === 'address'
+                         ? !startingAddress
+                         : !startingBox)
+                   }
                   >
                     {t("announcements.continueToDetails")}
                   </button>
@@ -521,27 +558,7 @@ export default function CreateAnnouncementPage() {
                           <span className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-500">kg</span>
                         </div>
                       </div>
-
-                    </div>
-
-                    <div className="mt-8">
-                      <div>
-                        <label htmlFor={`storageBox-${index}`} className="block text-sm font-medium text-gray-700 mb-1">
-                          {t("announcements.storageBox")}
-                        </label>
-                        <select
-                          id={`storageBox-${index}`}
-                          name={`package_${index + 1}_storageBox`}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
-                          required
-                        >
-                          <option value="">{t("common.selectYourStorageBox")}</option>
-                          <option value="Storage box 1">Storage box 1</option>
-                          <option value="Storage box 2">Storage box 2</option>
-                          <option value="Storage box 3">Storage box 3</option>
-                        </select>
-                      </div>
-                    </div>
+                    </div>  
 
                     <div className="mt-8">
                       <label htmlFor={`packageSize-${index}`} className="block text-sm font-medium text-gray-700 mb-1">
