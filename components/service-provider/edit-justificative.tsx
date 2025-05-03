@@ -9,11 +9,15 @@ import { Download, Upload, ChevronDown } from "lucide-react"
 import { useLanguage } from "@/components/language-context"
 import LanguageSelector from "@/components/language-selector"
 
-export default function DeliverymanEditJustificative() {
+export default function ServiceProviderEditJustificative() {
   const { t } = useLanguage()
   const [files, setFiles] = useState({
     licence: {
       current: "Charlotte_Licence.pdf",
+      new: null as File | null,
+    },
+    id: {
+      current: "Charlotte_ID.pdf",
       new: null as File | null,
     },
   })
@@ -48,7 +52,7 @@ export default function DeliverymanEditJustificative() {
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
       <header className="bg-white p-4 flex justify-between items-center shadow-sm">
-        <Link href="/service-provider/dashboard" className="flex items-center">
+        <Link href="/app_service-provider/dashboard" className="flex items-center">
           <Image src="/logo.png" alt="EcoDeli" width={120} height={40} className="h-auto" />
         </Link>
 

@@ -11,14 +11,8 @@ import {
   LogOut,
   Menu,
   MessageSquare,
-  Tag,
   Edit,
   CreditCard,
-  ChevronRight,
-  ChevronLeft,
-  Calendar,
-  Star,
-  LayoutList,
   User,
   ReceiptText,
   PartyPopper,
@@ -28,10 +22,6 @@ import {
 } from "lucide-react"
 import { useLanguage } from "@/components/language-context"
 import LanguageSelector from "@/components/language-selector"
-import { Badge } from "@/components/ui/badge"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
 // Mock data for payments
 const mockPayments = [
@@ -235,7 +225,7 @@ export default function ShopkeeperPayment() {
               {isUserMenuOpen && (
                 <div className="absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-lg z-10 py-2 border border-gray-100">
                 <Link
-                  href="/app_service-provider/edit_account"
+                  href="/app_shopkeeper/edit_account"
                   className="flex items-center px-4 py-2 text-gray-700 hover:bg-gray-100"
                 >
                   <Edit className="h-4 w-4 mr-2" />

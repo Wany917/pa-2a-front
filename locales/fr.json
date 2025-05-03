@@ -36,7 +36,9 @@
     "backToServices": "Retour aux services",
     "clientSpace": "Espace client",
     "accessToSpace": "Accéder à l'espace :",
-    "end": "Fin"
+    "end": "Fin",
+    "confirm": "Confirmer",
+    "add": "Ajouter"
   },
   "navigation": {
     "app_client": "Tableau de bord",
@@ -161,7 +163,20 @@
     "enterStartingAddress": "Entrez l'adresse de départ",
     "enterDestinationAddress": "Entrez l'adresse de livraison",
     "addressOption" : "Adresse",
-    "boxOption" : "Box de stockage EcoDeli"
+    "boxOption" : "Box de stockage EcoDeli",
+    "selectDeliveryType": "Sélectionner le type de livraison",
+    "normalDelivery": "Livraison normale",
+    "cartDropOff": "Lâché de chariot",
+    "normalDeliveryDescription": "Le livreur viendra chercher le colis et le livrera à l'adresse de destination (avec une ou plusieurs étapes).",
+    "cartDropOffDescription": "Le livreur viendra chercher le contenu du chariot et le livrera à l'adresse de destination (en une seule fois).",
+    "createType": "Choisir un type d'annonce",
+    "createPackage": "Créer un colis",
+    "createShoppingList": "Créer une liste de courses",
+    "shoppingListItems": "Liste de courses",
+    "title": "Titre de votre liste",
+    "shopppingListItems": "Articles de la liste de courses",
+    "listPrice": "Prix pour la livraison et la liste de courses",
+    "shoppingList": "Liste de courses"
   },
   "payments": {
     "yourPayments": "Vos paiements",
@@ -401,6 +416,10 @@
     "checkBackLater": "Revenez plus tard pour de nouvelles opportunités de livraison",
     "switchToClientAccount": "Passer au compte client",
     "by": "Par",
+    "partialDelivery": "Livraison partielle",
+    "fullDelivery": "Livraison complète",
+    "partialUntil": "Partiel jusqu'à",
+    "chooseDeliveryType": "Choisir le type de livraison",
       "deliveryAddress": "Adresse de livraison",
       "priceForDelivery": "Prix de livraison",
       "storageBox": "Box de stockage",
@@ -528,7 +547,12 @@
     "fromYesterday": "depuis hier",
     "deliveriesThisMonth": "Livraisons ce mois",
     "recentDeliveries": "Livraisons récentes",
-    "viewAll": "Voir tout"
+    "viewAll": "Voir tout",
+    "enterSiretNumber": "Entrez votre numéro SIRET",
+    "siretNumber": "Numéro SIRET",
+    "sirenNumber": "Numéro SIREN",
+    "enterSirenNumber": "Entrez votre numéro SIREN",
+    "editYourJustificativePieces": "Modifier vos pièces justificatives"
   },
   "contracts": {
     "contract": "Contrat",
@@ -550,5 +574,16 @@
     "getStarted": "Commencer",
     "startFreeTrial": "Commencer l'essai gratuit",
     "renew": "Renouveler"
+  },
+  "translation": {
+    "management": "Gestion des langues",
+    "edit": "Modifiez et ajoutez des traductions pour chaque langue prise en charge.",
+    "addLanguage": "Ajouter une langue",
+    "deleteLanguage": "Supprimer la langue",
+    "saveChanges": "Enregistrer les modifications",
+    "newKey": "Nouvelle clé (e.g. 'home.title')",
+    "newValue": "Nouvelle valeur (e.g. 'Bienvenue sur EcoDeli')",
+    "addTranslation": "Ajouter une traduction",
+    "delete": "Supprimer"
   }
 }

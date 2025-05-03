@@ -39,6 +39,12 @@ export default function DeliverymanAnnouncements() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false)
 
+  // Modal d'acceptation
+  const [showModal, setShowModal] = useState(false)
+  const [currentId, setCurrentId] = useState<string | null>(null)
+  const [isPartial, setIsPartial] = useState(false)
+  const [partialLocation, setPartialLocation] = useState("")
+
   // Données d'exemple pour les annonces
   const announcements: Announcement[] = [
     {
@@ -83,8 +89,16 @@ export default function DeliverymanAnnouncements() {
   ]
 
   const handleAcceptDelivery = (id: string) => {
-    console.log(`Accepted delivery for announcement ${id}`)
-    // Ici vous pourriez implémenter la logique pour accepter une livraison
+    setCurrentId(id)
+    setIsPartial(false)
+    setPartialLocation("")
+    setShowModal(true)
+  }
+
+  const confirmDelivery = () => {
+    // Ici, appel API ou logique métier
+    console.log(`Delivery ${currentId} accepted as ${isPartial ? `partielle jusqu'à ${partialLocation}` : "totale"}`)
+    setShowModal(false)
   }
 
   return (
@@ -310,6 +324,59 @@ export default function DeliverymanAnnouncements() {
             </div>
           )}
         </main>
+
+        {/* Modal après acceptation */}
+        {showModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-md">
+              <h2 className="text-lg font-semibold mb-4">{t("deliveryman.chooseDeliveryType")}</h2>
+              <div className="space-y-3">
+                <label className="flex items-center">
+                  <input
+                    type="radio"
+                    checked={!isPartial}
+                    onChange={() => setIsPartial(false)}
+                    className="mr-2"
+                  />
+                  {t("deliveryman.fullDelivery")}
+                </label>
+                <label className="flex items-center">
+                  <input
+                    type="radio"
+                    checked={isPartial}
+                    onChange={() => setIsPartial(true)}
+                    className="mr-2"
+                  />
+                  {t("deliveryman.partialDelivery")}
+                </label>
+                {isPartial && (
+                  <input
+                    type="text"
+                    placeholder={t("deliveryman.partialUntil")}
+                    value={partialLocation}
+                    onChange={e => setPartialLocation(e.target.value)}
+                    className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                  />
+                )}
+              </div>
+              <div className="mt-6 flex justify-end space-x-3">
+                <button
+                  onClick={() => setShowModal(false)}
+                  className="px-4 py-2 border rounded-md text-gray-700 hover:bg-gray-100"
+                >
+                  {t("common.cancel")}
+                </button>
+                <button
+                  onClick={confirmDelivery}
+                  className="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600"
+                  disabled={isPartial && !partialLocation.trim()}
+                >
+                  {t("common.confirm")}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   )
