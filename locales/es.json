@@ -547,7 +547,13 @@
     "fromYesterday": "desde ayer",
     "deliveriesThisMonth": "Entregas este mes",
     "recentDeliveries": "Entregas recientes",
-    "viewAll": "Ver todo"
+    "viewAll": "Ver todo",
+    "enterSiretNumber": "Introduzca su número SIRET",
+    "siretNumber": "Número SIRET", 
+    "sirenNumber": "Número SIREN",
+    "enterSirenNumber": "Introduzca su número SIREN",
+    "editYourJustificativePieces": "Editar sus documentos justificativos"
+
   },
   "contracts": {
     "contract": "Contrato",

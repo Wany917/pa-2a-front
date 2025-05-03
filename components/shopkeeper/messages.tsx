@@ -11,22 +11,15 @@ import {
   LogOut,
   Menu,
   MessageSquare,
-  Tag,
   Edit,
   CreditCard,
-  ChevronRight,
-  ChevronLeft,
-  Calendar,
-  Star,
-  LayoutList,
   User,
   ReceiptText,
   PartyPopper,
+  Send,
 } from "lucide-react"
 import { useLanguage } from "@/components/language-context"
 import LanguageSelector from "@/components/language-selector"
-import { Button } from "@/components/ui/button"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
 // Types for our data
 interface Message {
@@ -56,7 +49,6 @@ interface Conversation {
 export default function ShopkeeperMessage() {
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false)
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
-  const [isSubmitting, setIsSubmitting] = useState(false)
   const [activeTab, setActiveTab] = useState<"all" | "delivery" | "client">("all")
 
   const [searchQuery, setSearchQuery] = useState("")
@@ -113,7 +105,7 @@ export default function ShopkeeperMessage() {
       recipientId: "s1",
       recipientName: "Emma (Baby-sitter)",
       recipientAvatar: "/placeholder.svg?height=40&width=40",
-      recipientType: "service",
+      recipientType: "client",
       serviceType: "Baby-sitting",
       lastMessage: "I can take care of your children this Saturday from 7 PM.",
       lastMessageTime: "2025-04-02T09:45:00",
@@ -221,7 +213,7 @@ export default function ShopkeeperMessage() {
       recipientId: "s2",
       recipientName: "Charlotte (Dog-sitter)",
       recipientAvatar: "/placeholder.svg?height=40&width=40",
-      recipientType: "service",
+      recipientType: "client",
       serviceType: "Dog-sitting",
       lastMessage: "Your dog is doing great! We just came back from a walk.",
       lastMessageTime: "2025-04-02T11:05:00",
@@ -490,7 +482,7 @@ export default function ShopkeeperMessage() {
               {isUserMenuOpen && (
                 <div className="absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-lg z-10 py-2 border border-gray-100">
                 <Link
-                  href="/app_service-provider/edit_account"
+                  href="/app_shopkeeper/edit_account"
                   className="flex items-center px-4 py-2 text-gray-700 hover:bg-gray-100"
                 >
                   <Edit className="h-4 w-4 mr-2" />

@@ -330,7 +330,7 @@
     "postalCode": "Postal code",
     "country": "Country",
     "selectCountry": "Select your country",
-    "creatingAccount": "Creating account...",  
+    "creatingAccount": "Creating account...",
     "verifyEmail": "Verify your email",
     "verificationCodeSent": "We have sent a 6-digit verification code to your email. Please enter the code below to confirm your account.",
     "verifyingEmail": "Verifying email...",
@@ -547,7 +547,13 @@
     "fromYesterday": "since yesterday",
     "deliveriesThisMonth": "Deliveries this month",
     "recentDeliveries": "Recent deliveries",
-    "viewAll": "View all"
+    "viewAll": "View all",
+    "enterSiretNumber": "Enter your SIRET number",
+    "siretNumber": "SIRET Number",
+    "sirenNumber": "SIREN Number",
+    "enterSirenNumber": "Enter your SIREN number",
+    "editYourJustificativePieces": "Edit your supporting documents"
+
   },
   "contracts": {
     "contract": "Contract",

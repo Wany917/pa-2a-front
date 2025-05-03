@@ -547,7 +547,12 @@
     "fromYesterday": "depuis hier",
     "deliveriesThisMonth": "Livraisons ce mois",
     "recentDeliveries": "Livraisons récentes",
-    "viewAll": "Voir tout"
+    "viewAll": "Voir tout",
+    "enterSiretNumber": "Entrez votre numéro SIRET",
+    "siretNumber": "Numéro SIRET",
+    "sirenNumber": "Numéro SIREN",
+    "enterSirenNumber": "Entrez votre numéro SIREN",
+    "editYourJustificativePieces": "Modifier vos pièces justificatives"
   },
   "contracts": {
     "contract": "Contrat",
@@ -569,5 +574,16 @@
     "getStarted": "Commencer",
     "startFreeTrial": "Commencer l'essai gratuit",
     "renew": "Renouveler"
+  },
+  "translation": {
+    "management": "Gestion des langues",
+    "edit": "Modifiez et ajoutez des traductions pour chaque langue prise en charge.",
+    "addLanguage": "Ajouter une langue",
+    "deleteLanguage": "Supprimer la langue",
+    "saveChanges": "Enregistrer les modifications",
+    "newKey": "Nouvelle clé (e.g. 'home.title')",
+    "newValue": "Nouvelle valeur (e.g. 'Bienvenue sur EcoDeli')",
+    "addTranslation": "Ajouter une traduction",
+    "delete": "Supprimer"
   }
 }
