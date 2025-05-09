@@ -9,7 +9,7 @@ import Link from "next/link"
 import { ArrowLeft, Send } from "lucide-react"
 import ResponsiveHeader from "../../responsive-header"
 import { useLanguage } from "@/components/language-context"
-
+import { io, Socket } from "socket.io-client"
 export default function MessageDetailPage() {
   const { t } = useLanguage()
   const params = useParams()
@@ -19,108 +19,318 @@ export default function MessageDetailPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [conversation, setConversation] = useState<any>(null)
 
-  // Simuler le chargement des données
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      // Dans une application réelle, vous feriez un appel API ici
-      if (id === "1") {
-        setConversation({
-          id: 1,
-          name: "John Doe",
-          avatar: "/placeholder.svg?height=40&width=40",
-          status: "online",
-          messages: [
-            {
-              id: 1,
-              sender: "them",
-              text: "Hello! I'm your delivery person for today.",
-              time: "10:15 AM",
-            },
-            {
-              id: 2,
-              sender: "them",
-              text: "I've just picked up your package and will deliver it within the next hour.",
-              time: "10:16 AM",
-            },
-            {
-              id: 3,
-              sender: "me",
-              text: "Great! Thank you for the update.",
-              time: "10:20 AM",
-            },
-            {
-              id: 4,
-              sender: "them",
-              text: "Your package has been delivered successfully.",
-              time: "10:30 AM",
-            },
-          ],
-        })
-      } else if (id === "2") {
-        setConversation({
-          id: 2,
-          name: "Marie Dupont",
-          avatar: "/placeholder.svg?height=40&width=40",
-          status: "away",
-          messages: [
-            {
-              id: 1,
-              sender: "me",
-              text: "Hi Marie, I need a babysitter for tomorrow at 3 PM. Are you available?",
-              time: "Yesterday, 2:15 PM",
-            },
-            {
-              id: 2,
-              sender: "them",
-              text: "Hello! Yes, I'm available tomorrow at 3 PM.",
-              time: "Yesterday, 2:30 PM",
-            },
-            {
-              id: 3,
-              sender: "me",
-              text: "Perfect! How long can you stay?",
-              time: "Yesterday, 2:35 PM",
-            },
-            {
-              id: 4,
-              sender: "them",
-              text: "I'll be there at 3 PM to take care of your kids.",
-              time: "Yesterday, 2:40 PM",
-            },
-          ],
-        })
-      } else {
-        setConversation(null)
-      }
-      setIsLoading(false)
-    }, 1000)
 
-    return () => clearTimeout(timer)
-  }, [id])
+// Ajouter cette fonction dans votre composant MessageDetailPage
+const formatMessageTime = (dateString: string): string => {
+  const date = new Date(dateString);
+  const now = new Date();
+  const yesterday = new Date(now);
+  yesterday.setDate(yesterday.getDate() - 1);
 
-  const handleSendMessage = (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!message.trim()) return
-
-    // Dans une application réelle, vous enverriez le message à l'API ici
-    const newMessage = {
-      id: conversation.messages.length + 1,
-      sender: "me",
-      text: message,
-      time: "Just now",
-    }
-
-    setConversation({
-      ...conversation,
-      messages: [...conversation.messages, newMessage],
-    })
-
-    setMessage("")
+  // Si c'est aujourd'hui
+  if (date.toDateString() === now.toDateString()) {
+    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   }
+  
+  // Si c'est hier
+  if (date.toDateString() === yesterday.toDateString()) {
+    return `Hier, ${date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+  }
+  
+  // Pour les autres dates
+  return date.toLocaleDateString([], {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  });
+};
+
+// Dans useEffect
+useEffect(() => {
+  const token = sessionStorage.getItem('authToken') || localStorage.getItem('authToken')
+  if (!token) return
+  
+  setIsLoading(true)
+  
+  // Récupérer les détails de la conversation
+  fetch(`${process.env.NEXT_PUBLIC_API_URL}/messages/inbox`, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`
+    }
+  })
+  .then(res => res.json())
+  .then(data => {
+    // Chercher la conversation correspondant à l'ID
+    const conversationId = id as string
+    const matchingMessages = data.messages.filter((msg: any) => 
+      msg.senderId.toString() === conversationId || 
+      msg.receiverId.toString() === conversationId
+    )
+    
+    if (matchingMessages.length > 0) {
+      // Créer la conversation depuis les messages
+      const firstMessage = matchingMessages[0]
+      const otherUser = firstMessage.senderId.toString() === conversationId 
+        ? firstMessage.sender 
+        : firstMessage.receiver
+      
+      // Gérer le cas où les noms sont undefined
+      const firstName = otherUser?.first_name || otherUser?.firstName || 'Utilisateur';
+      const lastName = otherUser?.last_name || otherUser?.lastName || '';
+      const userName = `${firstName} ${lastName}`.trim();
+      
+      // Trier les messages par date (du plus ancien au plus récent)
+      matchingMessages.sort((a: any, b: any) => 
+        new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+      );
+      
+      const formattedMessages = matchingMessages.map((msg: any) => ({
+        id: msg.id,
+        sender: msg.senderId.toString() === conversationId ? "them" : "me",
+        text: msg.content,
+        time: formatMessageTime(msg.createdAt)
+      }))
+      
+      setConversation({
+        id: parseInt(conversationId),
+        name: userName,
+        avatar: "/placeholder.svg?height=40&width=40",
+        status: "offline", // Par défaut
+        messages: formattedMessages
+      })
+      
+      // Aussi initialiser WebSocket pour les mises à jour en temps réel
+      initializeWebSocket(token, parseInt(conversationId))
+      
+      // Faire défiler vers le bas pour voir les messages les plus récents
+      setTimeout(() => {
+        const messagesContainer = document.querySelector('.messages-scroll-container')
+        if (messagesContainer) {
+          messagesContainer.scrollTop = messagesContainer.scrollHeight
+        }
+      }, 100)
+    }
+    
+    setIsLoading(false)
+  })
+  .catch(err => {
+    console.error('Failed to load conversation:', err)
+    setIsLoading(false)
+  })
+}, [id])
+
+const initializeWebSocket = (token: string, conversationId: number) => {
+  // Récupérer l'ID utilisateur
+  fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/me`, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`
+    }
+  })
+  .then(res => res.json())
+  .then(data => {
+    const socketIo = io(`${process.env.NEXT_PUBLIC_API_URL}`, {
+      query: { user_id: data.id.toString() },
+      auth: { userId: data.id.toString() },
+      reconnection: true,
+      reconnectionAttempts: 5,
+      reconnectionDelay: 1000
+    })
+    
+    socketIo.on('new_message', (message) => {
+      // Ajouter le nouveau message s'il fait partie de cette conversation
+      if (message.senderId === conversationId || message.receiverId === conversationId) {
+        const newMsg = {
+          id: message.id || Date.now(),
+          sender: message.senderId === conversationId ? "them" : "me",
+          text: message.content,
+          time: "Just now"
+        }
+        
+        setConversation((prev: any) => {
+          if (!prev) return prev;
+          
+          // Vérifier si ce message existe déjà
+          const messageExists = prev.messages.some((m: any) => 
+            (m.id === newMsg.id) || 
+            (m.text === newMsg.text && m.sender === newMsg.sender && m.time === "Just now")
+          );
+          
+          if (messageExists) return prev;
+          
+          const updatedMessages = [...prev.messages, newMsg]
+          // Trier les messages par date (du plus ancien au plus récent)
+          updatedMessages.sort((a: any, b: any) => {
+            // Pour les nouveaux messages qui ont "Just now" comme temps
+            if (a.time === "Just now" && b.time !== "Just now") return 1;
+            if (a.time !== "Just now" && b.time === "Just now") return -1;
+            if (a.time === "Just now" && b.time === "Just now") return 0;
+            
+            // Sinon, comparer en fonction de l'ID en ordre croissant
+            return a.id - b.id;
+          });
+          
+          // Faire défiler vers le bas pour voir le nouveau message
+          setTimeout(() => {
+            const messagesContainer = document.querySelector('.messages-scroll-container')
+            if (messagesContainer) {
+              messagesContainer.scrollTop = messagesContainer.scrollHeight
+            }
+          }, 100)
+          
+          return {
+            ...prev,
+            messages: updatedMessages
+          }
+        })
+      }
+    })
+    
+    // Ajout d'un événement pour les messages envoyés par cet utilisateur
+    socketIo.on('message_sent', (message) => {
+      if (message.senderId === data.id && message.receiverId === conversationId) {
+        const newMsg = {
+          id: message.id || Date.now(),
+          sender: "me",
+          text: message.content,
+          time: "Just now"
+        }
+        
+        setConversation((prev: any) => {
+          if (!prev) return prev;
+          
+          // Vérifier si ce message existe déjà
+          const messageExists = prev.messages.some((m: any) => 
+            (m.id === newMsg.id) || 
+            (m.text === newMsg.text && m.sender === newMsg.sender && m.time === "Just now")
+          );
+          
+          if (messageExists) return prev;
+          
+          const updatedMessages = [...prev.messages, newMsg];
+          
+          // Trier du plus ancien au plus récent
+          updatedMessages.sort((a: any, b: any) => {
+            if (a.time === "Just now" && b.time !== "Just now") return 1;
+            if (a.time !== "Just now" && b.time === "Just now") return -1;
+            if (a.time === "Just now" && b.time === "Just now") return 0;
+            return a.id - b.id;
+          });
+          
+          // Faire défiler vers le bas pour voir le nouveau message
+          setTimeout(() => {
+            const messagesContainer = document.querySelector('.messages-scroll-container')
+            if (messagesContainer) {
+              messagesContainer.scrollTop = messagesContainer.scrollHeight
+            }
+          }, 100)
+          
+          return {
+            ...prev,
+            messages: updatedMessages
+          }
+        })
+      }
+    })
+    
+    // Gérer le statut en ligne/hors ligne
+    socketIo.on('user_status_change', (data) => {
+      if (data.userId === conversationId) {
+        setConversation((prev: any) => ({
+          ...prev,
+          status: data.status
+        }))
+      }
+    })
+    
+    return () => {
+      socketIo.disconnect()
+    }
+  })
+}
+
+// Dans handleSendMessage
+const handleSendMessage = (e: React.FormEvent) => {
+  e.preventDefault()
+  if (!message.trim() || !conversation) return
+
+  const token = sessionStorage.getItem('authToken') || localStorage.getItem('authToken')
+  if (!token) return
+  
+  // Récupérer l'ID utilisateur
+  fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/me`, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`
+    }
+  })
+  .then(res => res.json())
+  .then(userData => {
+    // Envoyer le message via l'API
+    fetch(`${process.env.NEXT_PUBLIC_API_URL}/messages`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`
+      },
+      body: JSON.stringify({
+        senderId: userData.id,
+        receiverId: conversation.id,
+        content: message
+      })
+    })
+    .then(res => res.json())
+    .then(data => {
+      // Mettre à jour l'UI
+      const newMessage = {
+        id: conversation.messages.length + 1,
+        sender: "me",
+        text: message,
+        time: "Just now",
+      }
+      
+      // Créer une nouvelle liste de messages incluant le nouveau message
+      const updatedMessages = [...conversation.messages, newMessage];
+      
+      // Trier les messages par date (du plus ancien au plus récent)
+      updatedMessages.sort((a, b) => {
+        // Pour les nouveaux messages qui ont "Just now" comme temps
+        if (a.time === "Just now" && b.time !== "Just now") return 1;
+        if (a.time !== "Just now" && b.time === "Just now") return -1;
+        if (a.time === "Just now" && b.time === "Just now") return 0;
+        
+        // Sinon, comparer en fonction de l'ID en ordre croissant
+        return a.id - b.id;
+      });
+      
+      setConversation({
+        ...conversation,
+        messages: updatedMessages,
+      })
+      
+      // Faire défiler vers le bas pour voir le nouveau message
+      setTimeout(() => {
+        const messagesContainer = document.querySelector('.messages-scroll-container')
+        if (messagesContainer) {
+          messagesContainer.scrollTop = messagesContainer.scrollHeight
+        }
+      }, 100)
+      
+      setMessage("")
+    })
+    .catch(err => console.error('Failed to send message:', err))
+  })
+}
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-gray-50"> 
         <ResponsiveHeader />
         <main className="container mx-auto px-4 py-8">
           <div className="max-w-4xl mx-auto bg-white rounded-lg shadow-md p-8 text-center">
@@ -189,7 +399,7 @@ export default function MessageDetailPage() {
           </div>
 
           {/* Messages */}
-          <div className="p-4 h-96 overflow-y-auto">
+          <div className="p-4 h-96 overflow-y-auto messages-scroll-container">
             <div className="space-y-4">
               {conversation.messages.map((msg: any) => (
                 <div key={msg.id} className={`flex ${msg.sender === "me" ? "justify-end" : "justify-start"}`}>
