@@ -31,35 +31,114 @@ export default function EditAnnouncementPage() {
 
   // Simuler le chargement des données
   useEffect(() => {
-    // Dans une application réelle, vous feriez un appel API ici
-    console.log(`Loading announcement with ID: ${id}`)
+    // Chargement des données de l'annonce depuis l'API
+    const fetchAnnouncementData = async () => {
+      try {
+        const token = sessionStorage.getItem('authToken') || localStorage.getItem('authToken');
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/annonces/${id}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          // Mise à jour des données du formulaire avec les valeurs reçues de l'API
+          setAnnouncement({
+            title: data.title || "Untitled Announcement",
+            deliveryAddress: data.destination_address || "",
+            price: data.price?.toString() || "0",
+            deliveryDate: data.scheduled_date ? 
+              new Date(data.scheduled_date).toISOString().split('T')[0] : 
+              "2025-05-15",
+            amount: data.amount?.toString() || "1",
+            storageBox: data.storage_box || "Storage box 1",
+            packageSize: data.colis?.length > 0 ? data.colis[0].size || "Medium" : "Medium",
+            weight: data.colis?.length > 0 ? data.colis[0].weight?.toString() || "2.5" : "2.5",
+            priorityShipping: data.priority || false,
+          });
+          
+          // Si une image est disponible, on pourrait faire un autre appel pour la récupérer
+        } else {
+          console.error("Error fetching announcement:", await response.text());
+        }
+      } catch (error) {
+        console.error("Error:", error);
+      }
+    };
+    
+    fetchAnnouncementData();
   }, [id])
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsSubmitting(true)
 
-    // Dans une application réelle, vous créeriez un FormData pour envoyer l'image
-    const formData = new FormData()
-    formData.append("title", announcement.title)
-    formData.append("deliveryAddress", announcement.deliveryAddress)
-    formData.append("price", announcement.price)
-    formData.append("deliveryDate", announcement.deliveryDate)
-    formData.append("amount", announcement.amount)
-    formData.append("storageBox", announcement.storageBox)
-    formData.append("packageSize", announcement.packageSize)
-    formData.append("weight", announcement.weight)
-    formData.append("priorityShipping", announcement.priorityShipping.toString())
+    try {
+      const token = sessionStorage.getItem('authToken') || localStorage.getItem('authToken');
+      
+      // Récupérer l'ID de l'utilisateur connecté
+      const userResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/me`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      if (!userResponse.ok) {
+        throw new Error("Impossible de récupérer les informations utilisateur");
+      }
+      
+      const userData = await userResponse.json();
+      const utilisateurId = userData.id;
+      
+      // Création du FormData avec les données du formulaire
+      const formData = new FormData()
+      formData.append("utilisateur_id", utilisateurId.toString());
+      formData.append("title", announcement.title)
+      formData.append("destination_address", announcement.deliveryAddress)
+      formData.append("price", announcement.price)
+      
+      // Correction du format de date pour respecter le format attendu par le backend
+      const dateObj = new Date(announcement.deliveryDate)
+      const formattedDate = dateObj.toISOString(); // Format ISO standard
+      formData.append("scheduled_date", formattedDate)
+      
+      // Ces champs ne sont pas tous directement pris en charge par l'API, mais on peut les envoyer
+      // comme métadonnées dans la description ou les gérer côté serveur
+      formData.append("amount", announcement.amount)
+      formData.append("storage_box", announcement.storageBox)
+      formData.append("package_size", announcement.packageSize)
+      formData.append("weight", announcement.weight)
+      formData.append("priority", announcement.priorityShipping.toString())
 
-    if (image) {
-      formData.append("image", image)
+      // Ajout de l'image si disponible
+      if (image) {
+        formData.append("image", image)
+      }
+
+      // Envoi de la requête PUT pour mettre à jour l'annonce
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/annonces/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        },
+        body: formData
+      });
+
+      if (response.ok) {
+        // Redirection vers la page des annonces
+        window.location.href = "/app_client/announcements"
+      } else {
+        const errorData = await response.json();
+        console.error("Error updating announcement:", JSON.stringify(errorData));
+        alert(t("announcements.errorUpdating"));
+      }
+    } catch (error) {
+      console.error("Error:", error);
+      alert(t("common.errorOccurred"));
+    } finally {
+      setIsSubmitting(false);
     }
-
-    // Simuler une soumission
-    setTimeout(() => {
-      setIsSubmitting(false)
-      window.location.href = "/app_client/announcements"
-    }, 1500)
   }
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {

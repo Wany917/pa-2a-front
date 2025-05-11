@@ -7,6 +7,7 @@ import Link from "next/link"
 import { ArrowLeft, Plus, Minus, Package, MapPin } from "lucide-react"
 import ResponsiveHeader from "../../responsive-header"
 import { useLanguage } from "@/components/language-context"
+import { useRouter } from "next/navigation"
 
 interface AddressSuggestion {
   label: string
@@ -19,6 +20,7 @@ export default function CreateAnnouncementPage() {
   const [step, setStep] = useState(1) // Étape 1: Nombre de colis, Étape 2: Adresses, Étape 3: Détails des colis
   const [packageCount, setPackageCount] = useState(1)
   const [currentPackage, setCurrentPackage] = useState(1)
+  const [error, setError] = useState<string | null>(null)
 
   // États pour les adresses
   const [destinationAddress, setDestinationAddress] = useState("")
@@ -32,6 +34,16 @@ export default function CreateAnnouncementPage() {
   const [startingAddress, setStartingAddress] = useState("")
   const [startingBox, setStartingBox] = useState("")
 
+  // États pour les caractéristiques du colis
+  const [title, setTitle] = useState("")
+  const [price, setPrice] = useState("")
+  const [description, setDescription] = useState("")
+  const [packageName, setPackageName] = useState("")
+  const [packageSize, setPackageSize] = useState("Medium")
+  const [packageWeight, setPackageWeight] = useState("1")
+  const [deliveryDate, setDeliveryDate] = useState<Date | null>(null)
+  const [selectedImage, setSelectedImage] = useState<File | null>(null)
+
   // Refs pour les dropdowns
   const startingSuggestionsRef = useRef<HTMLDivElement>(null)
   const destinationSuggestionsRef = useRef<HTMLDivElement>(null)
@@ -43,6 +55,8 @@ export default function CreateAnnouncementPage() {
       imagePreview: null,
     },
   ])
+
+  const router = useRouter()
 
   // Effet pour gérer les clics en dehors des suggestions
   useEffect(() => {
@@ -149,42 +163,134 @@ export default function CreateAnnouncementPage() {
     }
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    setIsSubmitting(true)
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
 
-    // Dans une application réelle, vous créeriez un FormData pour envoyer les données
-    const formData = new FormData(e.target as HTMLFormElement)
-
-    // Ajouter les adresses
-    formData.append("startingAddress", startingAddress)
-    formData.append("destinationAddress", destinationAddress)
-
-    // Ajouter les images
-    packages.forEach((pkg, index) => {
-      if (pkg.image) {
-        formData.append(`package_${index + 1}_image`, pkg.image)
+    try {
+      // Vérifions que les données essentielles sont présentes
+      if (!destinationAddress) {
+        setError(t("announcements.errorMissingDestination"));
+        setIsSubmitting(false);
+        return;
       }
-    })
 
-    // Simuler une soumission
-    setTimeout(() => {
-      setIsSubmitting(false)
-      window.location.href = "/app_client/announcements"
-    }, 1500)
-  }
+      if (!packageName) {
+        setError("Le nom du colis est obligatoire");
+        setIsSubmitting(false);
+        return;
+      }
+
+      if (!price) {
+        setError("Le prix est obligatoire");
+        setIsSubmitting(false);
+        return;
+      }
+
+      // Utiliser le nom du package comme titre s'il n'est pas défini séparément
+      const finalTitle = title || packageName;
+
+      const token = sessionStorage.getItem('authToken') || localStorage.getItem('authToken');
+      if (!token) {
+        setError(t("auth.errorNotAuthenticated"));
+        setIsSubmitting(false);
+        return;
+      }
+
+      // Récupérer l'ID de l'utilisateur connecté
+      const userResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/me`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      if (!userResponse.ok) {
+        throw new Error(t("auth.errorRetrievingInfo"));
+      }
+      
+      const userData = await userResponse.json();
+      const utilisateurId = userData.id;
+
+      console.log("Préparation des données du formulaire");
+      
+      // Création du FormData avec les données du formulaire
+      const formData = new FormData();
+      
+      // Données utilisateur et générales
+      formData.append("utilisateur_id", utilisateurId.toString());
+      formData.append("title", finalTitle);
+      formData.append("price", price ? price.toString() : "0");
+      
+      // Adresses clairement définies
+      formData.append("destination_address", destinationAddress);
+      formData.append("starting_address", startingAddress || "");
+      
+      // Dates
+      if (deliveryDate) {
+        const formattedDate = deliveryDate.toISOString();
+        console.log("Date de livraison formatée:", formattedDate);
+        formData.append("scheduled_date", formattedDate);
+      }
+
+      // Note pour packSize - s'assurer qu'il est correct
+      formData.append("description", `Package Name: ${packageName}\nPackage Size: ${packageSize}\nPackage Weight: ${packageWeight}\nAdditional Notes: ${description || "No additional notes"}`);
+      
+      // Images
+      if (selectedImage) {
+        console.log("Ajout de l'image au formulaire", selectedImage.name);
+        formData.append("image", selectedImage);
+      }
+
+      // Afficher toutes les données qui vont être envoyées pour le débogage
+      const formDataDebug: Record<string, any> = {};
+      formData.forEach((value, key) => {
+        formDataDebug[key] = value instanceof File ? `[File: ${value.name}]` : value;
+      });
+      console.log("Données envoyées:", formDataDebug);
+      
+      // Envoi des données
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/annonces`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        },
+        body: formData
+      });
+
+      console.log("Réponse du serveur:", response.status);
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error("Erreur détaillée:", errorData);
+        throw new Error(`${t("announcements.errorCreating")}: ${JSON.stringify(errorData)}`);
+      }
+
+      // Redirection vers la liste des annonces
+      router.push('/app_client/announcements');
+    } catch (error: any) {
+      console.error("Erreur lors de la création:", error);
+      setError(error.message || t("common.errorOccurred"));
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>, packageIndex: number) => {
-    const file = e.target.files?.[0]
-    if (file) {
-      const newPackages = [...packages]
-      newPackages[packageIndex].image = file
-
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0]
       const reader = new FileReader()
-      reader.onloadend = () => {
-        newPackages[packageIndex].imagePreview = reader.result as string
+
+      reader.onload = (event) => {
+        const newPackages = [...packages]
+        newPackages[packageIndex] = {
+          ...newPackages[packageIndex],
+          image: file,
+          imagePreview: event.target?.result,
+        }
         setPackages(newPackages)
+        setSelectedImage(file)
       }
+
       reader.readAsDataURL(file)
     }
   }
@@ -243,6 +349,19 @@ export default function CreateAnnouncementPage() {
             </Link>
             <h1 className="text-2xl font-semibold text-green-400">{t("announcements.goBackToAnnouncements")}</h1>
           </div>
+
+          {/* Affichage des erreurs */}
+          {error && (
+            <div className="bg-red-100 text-red-700 p-4 mb-6 rounded-lg">
+              {error}
+              <button 
+                className="ml-2 text-red-900 font-bold"
+                onClick={() => setError(null)}
+              >
+                ×
+              </button>
+            </div>
+          )}
 
           {/* Étape 1: Sélection du nombre de colis */}
           {step === 1 && (
@@ -508,6 +627,21 @@ export default function CreateAnnouncementPage() {
                     </div>
 
                     <div>
+                      <label htmlFor="announcement-title" className="block text-sm font-medium text-gray-700 mb-1">
+                        Titre de l'annonce
+                      </label>
+                      <input
+                        type="text"
+                        id="announcement-title"
+                        value={title}
+                        onChange={(e) => setTitle(e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                        placeholder="Titre de votre annonce"
+                        required
+                      />
+                    </div>
+
+                    <div>
                       <label htmlFor={`name-${index}`} className="block text-sm font-medium text-gray-700 mb-1">
                         {t("announcements.packageName")}
                       </label>
@@ -515,6 +649,8 @@ export default function CreateAnnouncementPage() {
                         type="text"
                         id={`name-${index}`}
                         name={`package_${index + 1}_name`}
+                        value={packageName}
+                        onChange={(e) => setPackageName(e.target.value)}
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
                         required
                       />
@@ -531,6 +667,8 @@ export default function CreateAnnouncementPage() {
                             type="number"
                             id={`price-${index}`}
                             name={`package_${index + 1}_price`}
+                            value={price}
+                            onChange={(e) => setPrice(e.target.value)}
                             min="0"
                             step="0.01"
                             className="w-full pl-8 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
@@ -548,6 +686,8 @@ export default function CreateAnnouncementPage() {
                             type="number"
                             id={`weight-${index}`}
                             name={`package_${index + 1}_weight`}
+                            value={packageWeight}
+                            onChange={(e) => setPackageWeight(e.target.value)}
                             min="0"
                             step="0.1"
                             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
@@ -564,7 +704,9 @@ export default function CreateAnnouncementPage() {
                       </label>
                       <select
                         id={`packageSize-${index}`}
-                        name={`package_${index + 1}_packageSize`}
+                        name={`package_${index + 1}_size`}
+                        value={packageSize}
+                        onChange={(e) => setPackageSize(e.target.value)}
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
                         required
                       >

@@ -98,11 +98,30 @@ export default function CreateComplaintClient() {
     setIsSubmitting(true)
 
     try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1500))
-
-      // Redirect to complaints page
-      router.push("/app_client/complaint")
+      const token = sessionStorage.getItem('authToken') || localStorage.getItem('authToken')
+      
+      // Préparer FormData avec les données du formulaire
+      const formDataToSend = new FormData()
+      formDataToSend.append("announce", formData.announce)
+      formDataToSend.append("shipping_price", formData.shippingPrice)
+      formDataToSend.append("description", formData.description)
+      
+      // Ajouter les fichiers
+      files.forEach((file, index) => {
+        formDataToSend.append(`file_${index}`, file)
+      })
+      
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/complaints/create`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        },
+        body: formDataToSend
+      })
+      
+      if (response.ok) {
+        router.push("/app_client/complaint")
+      }
     } catch (error) {
       console.error("Error submitting complaint:", error)
     } finally {

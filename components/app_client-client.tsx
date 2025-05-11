@@ -15,6 +15,15 @@ const sansitaOne = Sansita_One({
 	display: 'swap',
 });
 
+interface Service {
+	id: number;
+	title: string;
+	image: string;
+	description: string;
+	price: string;
+	rating: number;
+}
+
 export default function app_clientClient() {
 	const { t } = useLanguage();
 	const [searchQuery, setSearchQuery] = useState('');
@@ -23,6 +32,33 @@ export default function app_clientClient() {
 	const [showOnboarding, setShowOnboarding] = useState(false);
 	const userMenuRef = useRef<HTMLDivElement>(null);
 	const [userName, setUserName] = useState<string>('');
+	const [services, setServices] = useState<Service[]>([
+		{
+			id: 1,
+			title: t('services.babySitter'),
+			image: '/baby-sitter.jpg',
+			description: t('services.babySitterDesc'),
+			price: '£17/hour',
+			rating: 5,
+		},
+		{
+			id: 2,
+			title: t('services.dogSitter'),
+			image: '/dog-sitter.jpg',
+			description: t('services.dogSitterDesc'),
+			price: '£20/hour',
+			rating: 5,
+		},
+		{
+			id: 3,
+			title: t('services.airportRide'),
+			image: '/airport-ride.jpg',
+			description: t('services.airportRideDesc'),
+			price: '£30 + £2/km',
+			rating: 5,
+		},
+	]);
+	const [isLoading, setIsLoading] = useState(false);
 
 	// Fermer le menu quand on clique en dehors
 	useEffect(() => {
@@ -41,7 +77,7 @@ export default function app_clientClient() {
 		};
 	}, []);
 
-  // Récupérer le nom de l'utilisateur
+	// Récupérer le nom de l'utilisateur
 	useEffect(() => {
 		const token =
 			sessionStorage.getItem('authToken') ||
@@ -76,32 +112,43 @@ export default function app_clientClient() {
 		}
 	}, []);
 
-	const services = [
-		{
-			id: 1,
-			title: t('services.babySitter'),
-			image: '/baby-sitter.jpg',
-			description: t('services.babySitterDesc'),
-			price: '£17/hour',
-			rating: 5,
-		},
-		{
-			id: 2,
-			title: t('services.dogSitter'),
-			image: '/dog-sitter.jpg',
-			description: t('services.dogSitterDesc'),
-			price: '£20/hour',
-			rating: 5,
-		},
-		{
-			id: 3,
-			title: t('services.airportRide'),
-			image: '/airport-ride.jpg',
-			description: t('services.airportRideDesc'),
-			price: '£30 + £2/km',
-			rating: 5,
-		},
-	];
+	// Récupération des services depuis l'API
+	useEffect(() => {
+		const fetchServices = async () => {
+			// On utilise le flag isLoading mais on ne l'affiche pas dans l'UI
+			// puisque nous avons déjà des données statiques
+			setIsLoading(true);
+			try {
+				const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/services`);
+				
+				if (response.ok) {
+					const data = await response.json();
+					
+					if (Array.isArray(data) && data.length > 0) {
+						const formattedServices: Service[] = data.map((service: any) => ({
+							id: service.id,
+							title: service.title || t("services.defaultTitle"),
+							image: service.image || '/placeholder.svg',
+							description: service.description || '',
+							price: `£${service.price || '0'}`,
+							rating: service.rating || 5
+						}));
+						
+						setServices(formattedServices);
+					}
+					// Si aucune donnée n'est retournée, on garde les services statiques par défaut
+				}
+				// Si l'API échoue, on garde les services statiques par défaut
+			} catch (error) {
+				console.error("Error fetching services:", error);
+				// On garde les services statiques par défaut en cas d'erreur
+			} finally {
+				setIsLoading(false);
+			}
+		};
+		
+		fetchServices();
+	}, [t]);
 
 	return (
 		<div className='min-h-screen bg-gray-50'>
@@ -190,14 +237,14 @@ export default function app_clientClient() {
 
 						{/* User Account Menu */}
 						<div className='relative' ref={userMenuRef}>
-            <button
-                className="flex items-center bg-green-50 text-white rounded-full px-4 py-1 hover:bg-green-400 transition-colors"
-                onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
-              >
-                <User className="h-5 w-5 mr-2" />
-                <span className="hidden sm:inline">{userName || t("common.loading")}</span>
-                <ChevronDown className="h-4 w-4 ml-1" />
-              </button>
+							<button
+								className="flex items-center bg-green-50 text-white rounded-full px-4 py-1 hover:bg-green-400 transition-colors"
+								onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
+							>
+								<User className="h-5 w-5 mr-2" />
+								<span className="hidden sm:inline">{userName || t("common.loading")}</span>
+								<ChevronDown className="h-4 w-4 ml-1" />
+							</button>
 
 							{isUserMenuOpen && (
 								<div className='absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-lg z-10 py-2 border border-gray-100'>

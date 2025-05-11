@@ -8,6 +8,7 @@ import Link from "next/link"
 import { User, ChevronDown, Edit, LogOut, Plus, AlertCircle, FileText, CheckCircle } from "lucide-react"
 import LanguageSelector from "@/components/language-selector"
 import { useLanguage } from "@/components/language-context"
+import { formatDate } from '@/app/utils/date-formats'
 
 // Types for our data
 interface ComplaintItem {
@@ -75,6 +76,45 @@ export default function ComplaintClient() {
     if (activeTab === "resolved") return ["done", "rejected"].includes(item.status)
     return true
   })
+
+  useEffect(() => {
+    const fetchComplaints = async () => {
+      try {
+        const token = sessionStorage.getItem('authToken') || localStorage.getItem('authToken');
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/complaints`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          if (Array.isArray(data) && data.length > 0) {
+            // Convertir au format attendu par le composant
+            const formattedComplaints: ComplaintItem[] = data.map((item: any) => ({
+              id: item.id,
+              announce: item.announce_id || "Unknown",
+              shippingPrice: `£${item.shipping_price || 0}`,
+              justificativePieces: item.justificative_pieces?.length || 0,
+              description: item.description || "",
+              status: item.status || "pending",
+              dateSubmitted: formatDate(item.created_at)
+            }));
+            
+            // Ne mettre à jour que si on a des données
+            if (formattedComplaints.length > 0) {
+              setComplaints(formattedComplaints);
+            }
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching complaints:", error);
+        // En cas d'erreur, on garde les plaintes par défaut
+      }
+    };
+    
+    fetchComplaints();
+  }, []);
 
   useEffect(() => {
 		const token =
