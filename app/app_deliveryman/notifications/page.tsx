@@ -1,5 +1,6 @@
 import type { Metadata } from "next"
 import NotificationsClient from "@/components/deliveryman/notifications"
+import DeliverymanLayout from "@/components/deliveryman/layout"
 
 export const metadata: Metadata = {
   title: "Notifications | EcoDeli",
@@ -7,5 +8,9 @@ export const metadata: Metadata = {
 }
 
 export default function NotificationsPage() {
-  return <NotificationsClient />
+  return (
+    <DeliverymanLayout>
+      <NotificationsClient />
+    </DeliverymanLayout>
+  )
 }

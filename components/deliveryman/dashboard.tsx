@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Link from "next/link"
 import Image from "next/image"
 import {
@@ -21,9 +21,11 @@ import {
 } from "lucide-react"
 import { useLanguage } from "@/components/language-context"
 import LanguageSelector from "@/components/language-selector"
+import { userAgent } from "next/server"
 
 export default function DeliverymanDashboard() {
   const { t } = useLanguage()
+  const [first_name, setUserName] = useState("")
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false)
 
@@ -55,6 +57,30 @@ export default function DeliverymanDashboard() {
     },
   ]
 
+  useEffect(() => {
+		const token =
+			sessionStorage.getItem('authToken') ||
+			localStorage.getItem('authToken');
+		if (!token) return;
+
+		fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/me`, {
+			method: 'GET',
+			headers: {
+				'Content-Type': 'application/json',
+				Authorization: `Bearer ${token}`,
+			},
+			credentials: 'include',
+		})
+			.then((res) => {
+				if (!res.ok) throw new Error('Unauthorized');
+				return res.json();
+			})
+			.then((data) => {
+				setUserName(data.firstName);
+			})
+			.catch((err) => console.error('Auth/me failed:', err));
+	}, []);
+
   return (
     <div className="flex h-screen bg-gray-50">
       {/* Sidebar */}
@@ -66,7 +92,7 @@ export default function DeliverymanDashboard() {
         <div className="flex h-full flex-col">
           {/* Logo */}
           <div className="flex h-16 items-center border-b px-6">
-            <Link href="/app_deliveryman/dashboard" className="flex items-center">
+            <Link href="/app_deliveryman" className="flex items-center">
               <Image src="/logo.png" alt="EcoDeli" width={120} height={40} className="h-auto" />
             </Link>
           </div>
@@ -76,7 +102,7 @@ export default function DeliverymanDashboard() {
             <ul className="space-y-1">
               <li>
                 <Link
-                  href="/app_deliveryman/dashboard"
+                  href="/app_deliveryman"
                   className="flex items-center rounded-md bg-green-50 px-4 py-3 text-white"
                 >
                   <BarChart3 className="mr-3 h-5 w-5" />
@@ -156,7 +182,7 @@ export default function DeliverymanDashboard() {
                 className="flex items-center bg-green-50 text-white rounded-full px-4 py-1 hover:bg-green-400 transition-colors"
               >
                 <User className="h-5 w-5 mr-2" />
-                <span className="hidden sm:inline">Charlotte</span>
+                <span className="hidden sm:inline">{first_name}</span>
                 <ChevronDown className="h-4 w-4 ml-1" />
               </button>
 
@@ -172,14 +198,14 @@ export default function DeliverymanDashboard() {
 
                   <div className="border-t border-gray-100 my-1"></div>
 
-                  <Link href="/dashboard" className="flex items-center px-4 py-2 text-gray-700 hover:bg-gray-100">
+                  <Link href="/app_client" className="flex items-center px-4 py-2 text-gray-700 hover:bg-gray-100">
                     <User className="h-4 w-4 mr-2" />
-                    <span>Switch to client account</span>
+                    <span>{t("common.clientSpace")}</span>
                   </Link>
 
                   <div className="border-t border-gray-100 my-1"></div>
 
-                  <div className="px-4 py-1 text-xs text-gray-500">{t("common.registerAs")}</div>
+                  <div className="px-4 py-1 text-xs text-gray-500">{t("common.accessToSpace")}</div>
 
                   <Link href="/register/shopkeeper" className="block px-4 py-2 text-gray-700 hover:bg-gray-100">
                     {t("common.shopkeeper")}
@@ -288,7 +314,7 @@ export default function DeliverymanDashboard() {
                         id: "#ECO-12345",
                         customer: "John Doe",
                         address: "123 Main St, Paris",
-                        status: "Delivered",
+                        status: "delivered",
                         statusClass: "bg-green-100 text-green-800",
                         date: "2025-04-01",
                       },
@@ -296,7 +322,7 @@ export default function DeliverymanDashboard() {
                         id: "#ECO-23456",
                         customer: "Jane Smith",
                         address: "456 Oak Ave, Lyon",
-                        status: "In Transit",
+                        status: "inTransit",
                         statusClass: "bg-yellow-100 text-yellow-800",
                         date: "2025-04-02",
                       },
@@ -304,7 +330,7 @@ export default function DeliverymanDashboard() {
                         id: "#ECO-34567",
                         customer: "Robert Johnson",
                         address: "789 Pine Rd, Marseille",
-                        status: "Pending",
+                        status: "pending",
                         statusClass: "bg-blue-100 text-blue-800",
                         date: "2025-04-03",
                       },
@@ -312,7 +338,7 @@ export default function DeliverymanDashboard() {
                         id: "#ECO-45678",
                         customer: "Emily Davis",
                         address: "321 Cedar Ln, Bordeaux",
-                        status: "Delivered",
+                        status: "delivered",
                         statusClass: "bg-green-100 text-green-800",
                         date: "2025-04-04",
                       },
@@ -320,7 +346,7 @@ export default function DeliverymanDashboard() {
                         id: "#ECO-56789",
                         customer: "Michael Brown",
                         address: "654 Elm Blvd, Nice",
-                        status: "In Transit",
+                        status: "inTransit",
                         statusClass: "bg-yellow-100 text-yellow-800",
                         date: "2025-04-05",
                       },
@@ -333,7 +359,7 @@ export default function DeliverymanDashboard() {
                           <span
                             className={`inline-flex rounded-full px-2 text-xs font-semibold leading-5 ${item.statusClass}`}
                           >
-                            {item.status}
+                            {t(`deliveryman.deliveriess.${item.status}`)}
                           </span>
                         </td>
                         <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">

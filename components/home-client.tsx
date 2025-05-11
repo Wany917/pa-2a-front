@@ -55,7 +55,7 @@ export default function HomeClient() {
         <div className="flex gap-2">
           <Link
             href="/signin"
-            className="px-4 py-2 rounded-md bg-green-100 text-green-50 hover:bg-green-200 transition-colors"
+            className="px-4 py-2 rounded-md bg-green-100 text-green-500 hover:bg-green-200 transition-colors"
           >
             {t("common.signup")}
           </Link>
@@ -247,7 +247,7 @@ export default function HomeClient() {
                 <span className="text-3xl font-bold">£19.99</span>
                 <span className="text-green-100 ml-1">/{t("home.month")}</span>
               </div>
-              <p className="text-green-100 mb-6">{t("home.idealForWeekly")}</p>
+              <p className="text-white mb-6">{t("home.idealForWeekly")}</p>
 
               <ul className="space-y-3 mb-6">
                 <li className="flex items-start">

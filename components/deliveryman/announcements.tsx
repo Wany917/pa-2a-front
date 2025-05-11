@@ -112,7 +112,7 @@ export default function DeliverymanAnnouncements() {
         <div className="flex h-full flex-col">
           {/* Logo */}
           <div className="flex h-16 items-center border-b px-6">
-            <Link href="/app_deliveryman/dashboard" className="flex items-center">
+            <Link href="/app_deliveryman" className="flex items-center">
               <Image src="/logo.png" alt="EcoDeli" width={120} height={40} className="h-auto" />
             </Link>
           </div>
@@ -122,7 +122,7 @@ export default function DeliverymanAnnouncements() {
             <ul className="space-y-1">
               <li>
                 <Link
-                  href="/app_deliveryman/dashboard"
+                  href="/app_deliveryman"
                   className="flex items-center rounded-md px-4 py-3 text-gray-700 hover:bg-gray-100"
                 >
                   <BarChart3 className="mr-3 h-5 w-5" />
@@ -218,14 +218,14 @@ export default function DeliverymanAnnouncements() {
 
                   <div className="border-t border-gray-100 my-1"></div>
 
-                  <Link href="/dashboard" className="flex items-center px-4 py-2 text-gray-700 hover:bg-gray-100">
+                  <Link href="/app_client" className="flex items-center px-4 py-2 text-gray-700 hover:bg-gray-100">
                     <User className="h-4 w-4 mr-2" />
-                    <span>{t("deliveryman.switchToClientAccount")}</span>
+                    <span>{t("common.clientSpace")}</span>
                   </Link>
 
                   <div className="border-t border-gray-100 my-1"></div>
 
-                  <div className="px-4 py-1 text-xs text-gray-500">{t("common.registerAs")}</div>
+                  <div className="px-4 py-1 text-xs text-gray-500">{t("common.accessToSpace")}</div>
 
                   <Link href="/register/shopkeeper" className="block px-4 py-2 text-gray-700 hover:bg-gray-100">
                     {t("common.shopkeeper")}

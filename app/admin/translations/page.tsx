@@ -7,6 +7,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 
 export default function TranslationsAdmin() {
+  const {t } = useLanguage()
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false)
+  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false)
   const [activeLocale, setActiveLocale] = useState("en")
   const [translations, setTranslations] = useState<Record<string, any>>({})
   const [isLoading, setIsLoading] = useState(true)
