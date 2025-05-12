@@ -6,11 +6,10 @@ import { UserTable } from "@/components/back-office/user-table"
 import { Plus } from "lucide-react"
 import Link from "next/link"
 import { useLanguage } from "@/components/language-context"
-import {languageSelector} from "@/components/language-selector"
 
 export function UsersContent() {
   const { t } = useLanguage()
-  const [selectedUser, setSelectedUser] = useState<any>(null)
+  const [selectedUser, setSelectedUser] = useState(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
   const modalRef = useRef<HTMLDivElement>(null)
 
@@ -22,7 +21,7 @@ export function UsersContent() {
       firstName: "Killian",
       email: "kbidaux@myges.fr",
       phone: "0636760421",
-      status: t("users.clickHere"),
+      status: t("admin.clickHere"),
       statusColor: "bg-[#8CD790] text-white",
       justificatives: ["ID Card.pdf", "Driving Licence.pdf"],
     },
@@ -35,7 +34,7 @@ export function UsersContent() {
       firstName: "Killian",
       email: "kbidaux@myges.fr",
       phone: "0636760421",
-      status: t("users.accepted"),
+      status: t("admin.accepted"),
       statusColor: "bg-[#8CD790] text-white",
       justificatives: ["ID Card.pdf", "Service Certificate.pdf"],
     },
@@ -48,7 +47,7 @@ export function UsersContent() {
       firstName: "Killian",
       email: "kbidaux@myges.fr",
       phone: "0636760421",
-      status: t("users.rejected"),
+      status: t("admin.rejected"),
       statusColor: "bg-[#E57373] text-white",
       justificatives: ["SIRET.pdf", "SIREN.pdf"],
     },
@@ -61,7 +60,7 @@ export function UsersContent() {
       firstName: "John",
       email: "johndoe@example.com",
       phone: "0612345678",
-      status: t("users.active"),
+      status: t("admin.active"),
       statusColor: "bg-[#8CD790] text-white",
     },
   ]
@@ -73,7 +72,7 @@ export function UsersContent() {
       firstName: "Jane",
       email: "janesmith@example.com",
       phone: "0698765432",
-      status: t("users.active"),
+      status: t("admin.active"),
       statusColor: "bg-[#8CD790] text-white",
     },
   ]
@@ -84,13 +83,12 @@ export function UsersContent() {
   }
 
   const handleDelete = (userId: number) => {
-    if (window.confirm(t("users.confirmDelete"))) {
-      console.log(t("users.userDeleted", { id: userId }))
+    if (window.confirm(t("admin.confirmDelete"))) {
+      console.log(t("admin.userDeleted") + `: ${userId}`)
       // Ici, ajoutez la logique pour supprimer l'utilisateur
     }
   }
 
-  // Fermer le modal en cliquant à l'extérieur
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (modalRef.current && !modalRef.current.contains(event.target as Node)) {
@@ -111,11 +109,11 @@ export function UsersContent() {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-        <h1 className="text-2xl font-bold">{t("users.title")}</h1>
-        <Link href="/users/add">
+        <h1 className="text-2xl font-bold">{t("admin.usersTitle")}</h1>
+        <Link href="/admin/users/add">
           <Button className="bg-[#8CD790] hover:bg-[#7ac57e] text-white">
             <Plus className="mr-2 h-4 w-4" />
-            {t("users.newAdministrator")}
+            {t("admin.newAccount")}
           </Button>
         </Link>
       </div>
@@ -123,7 +121,7 @@ export function UsersContent() {
       {/* Users Table */}
       <div className="space-y-6">
         <div>
-          <h2 className="text-xl font-semibold mb-4">{t("users.deliveryMan")}</h2>
+          <h2 className="text-xl font-semibold mb-4">{t("admin.deliveryMan")}</h2>
           <UserTable
             data={deliveryManData}
             showJustificative={true}
@@ -133,7 +131,7 @@ export function UsersContent() {
         </div>
 
         <div>
-          <h2 className="text-xl font-semibold mb-4">{t("users.serviceProviders")}</h2>
+          <h2 className="text-xl font-semibold mb-4">{t("admin.serviceProviders")}</h2>
           <UserTable
             data={serviceProvidersData}
             showJustificative={true}
@@ -143,7 +141,7 @@ export function UsersContent() {
         </div>
 
         <div>
-          <h2 className="text-xl font-semibold mb-4">{t("users.shopkeepers")}</h2>
+          <h2 className="text-xl font-semibold mb-4">{t("admin.shopkeepers")}</h2>
           <UserTable
             data={shopkeepersData}
             showJustificative={true}
@@ -153,9 +151,9 @@ export function UsersContent() {
         </div>
 
         <div>
-          <h2 className="text-xl font-semibold mb-4">{t("users.users")}</h2>
+          <h2 className="text-xl font-semibold mb-4">{t("admin.users")}</h2>
           <UserTable
-            data={usersData}
+            data={usersData.map(user => ({ ...user, justificatives: [] }))}
             showJustificative={false} // Pas de justificatifs pour les utilisateurs
             onStatusClick={() => {}} // Pas de clic sur le statut
             onDelete={handleDelete}
@@ -163,9 +161,9 @@ export function UsersContent() {
         </div>
 
         <div>
-          <h2 className="text-xl font-semibold mb-4">{t("users.administrators")}</h2>
+          <h2 className="text-xl font-semibold mb-4">{t("admin.administrators")}</h2>
           <UserTable
-            data={administratorsData}
+            data={administratorsData.map(admin => ({ ...admin, justificatives: [] }))}
             showJustificative={false} // Pas de justificatifs pour les administrateurs
             onStatusClick={() => {}} // Pas de clic sur le statut
             onDelete={handleDelete}

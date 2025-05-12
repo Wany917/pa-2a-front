@@ -4,13 +4,14 @@ import path from "path";
 
 const translationsDir = path.join(process.cwd(), "locales");
 
+
 export async function POST(req: NextRequest) {
-  const { locale, translations } = await req.json();
+  const { locale } = await req.json();
   const file = path.join(translationsDir, `${locale.toLowerCase()}.json`);
   try {
-    await fs.writeFile(file, JSON.stringify(translations, null, 2), "utf-8");
+    await fs.unlink(file);
     return NextResponse.json({ ok: true });
   } catch {
-    return NextResponse.json({ error: "Could not save" }, { status: 500 });
+    return NextResponse.json({ error: "Could not delete" }, { status: 500 });
   }
 }

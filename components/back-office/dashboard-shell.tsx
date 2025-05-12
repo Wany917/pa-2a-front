@@ -1,7 +1,7 @@
 import type React from "react"
 import { cn } from "@/lib/utils"
-import { MainNav } from "@/components/main-nav"
-import { UserNav } from "@/components/user-nav"
+import { MainNav } from "@/components/back-office/main-nav"
+import { UserNav } from "@/components/back-office/user-nav"
 
 interface DashboardShellProps {
   children: React.ReactNode

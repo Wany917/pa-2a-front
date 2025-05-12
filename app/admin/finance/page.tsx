@@ -12,14 +12,12 @@ import {
   ChevronDown,
   LogOut,
   Menu,
-  MessageSquare,
-  Package,
+  Angry,
+  UserRoundCog,
+  BadgeDollarSign,
+  Tags,
+  Languages,
   Edit,
-  CreditCard,
-  ChevronRight,
-  ArrowUp,
-  BellRing,
-  PartyPopper,
   User,
 } from "lucide-react"
 import { useLanguage } from "@/components/language-context"
@@ -40,7 +38,7 @@ export default function FinancePage() {
         <div className="flex h-full flex-col">
           {/* Logo */}
           <div className="flex h-16 items-center border-b px-6">
-            <Link href="/app_deliveryman" className="flex items-center">
+            <Link href="/admin" className="flex items-center">
               <Image src="/logo.png" alt="EcoDeli" width={120} height={40} className="h-auto" />
             </Link>
           </div>
@@ -50,56 +48,56 @@ export default function FinancePage() {
             <ul className="space-y-1">
               <li>
                 <Link
-                  href="/app_deliveryman"
-                  className="flex items-center rounded-md bg-green-50 px-4 py-3 text-white"
+                  href="/admin"
+                  className="flex items-center rounded-md px-4 py-3 text-gray-700 hover:bg-gray-100"
                 >
                   <BarChart3 className="mr-3 h-5 w-5" />
-                  <span>{t("deliveryman.dashboard")}</span>
+                  <span>{t("admin.dashboard")}</span>
                 </Link>
               </li>
               <li>
                 <Link
-                  href="/app_deliveryman/announcements"
+                  href="/admin/users"
                   className="flex items-center rounded-md px-4 py-3 text-gray-700 hover:bg-gray-100"
                 >
-                  <PartyPopper className="mr-3 h-5 w-5" />
-                  <span>{t("deliveryman.announcements")}</span>
+                  <UserRoundCog className="mr-3 h-5 w-5" />
+                  <span>{t("admin.users")}</span>
                 </Link>
               </li>
               <li>
                 <Link
-                  href="/app_deliveryman/deliveries"
+                  href="/admin/services"
                   className="flex items-center rounded-md px-4 py-3 text-gray-700 hover:bg-gray-100"
                 >
-                  <Package className="mr-3 h-5 w-5" />
-                  <span>{t("deliveryman.deliveries")}</span>
+                  <Tags className="mr-3 h-5 w-5" />
+                  <span>{t("admin.services")}</span>
                 </Link>
               </li>
               <li>
                 <Link
-                  href="/app_deliveryman/notifications"
+                  href="/admin/translations"
                   className="flex items-center rounded-md px-4 py-3 text-gray-700 hover:bg-gray-100"
                 >
-                  <BellRing className="mr-3 h-5 w-5" />
-                  <span>{t("deliveryman.notifications")}</span>
+                  <Languages className="mr-3 h-5 w-5" />
+                  <span>{t("admin.translations")}</span>
                 </Link>
               </li>
               <li>
                 <Link
-                  href="/app_deliveryman/messages"
+                  href="/admin/complaints"
                   className="flex items-center rounded-md px-4 py-3 text-gray-700 hover:bg-gray-100"
                 >
-                  <MessageSquare className="mr-3 h-5 w-5" />
-                  <span>{t("deliveryman.messages")}</span>
+                  <Angry className="mr-3 h-5 w-5" />
+                  <span>{t("admin.complaints")}</span>
                 </Link>
               </li>
               <li>
                 <Link
-                  href="/app_deliveryman/payments"
-                  className="flex items-center rounded-md px-4 py-3 text-gray-700 hover:bg-gray-100"
+                  href="/admin/finance"
+                  className="flex items-center rounded-md bg-green-50 px-4 py-3 text-white"
                 >
-                  <CreditCard className="mr-3 h-5 w-5" />
-                  <span>{t("deliveryman.payments")}</span>
+                  <BadgeDollarSign className="mr-3 h-5 w-5" />
+                  <span>{t("admin.finance")}</span>
                 </Link>
               </li>
             </ul>
@@ -137,7 +135,7 @@ export default function FinancePage() {
               {isUserMenuOpen && (
                 <div className="absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-lg z-10 py-2 border border-gray-100">
                   <Link
-                    href="/app_deliveryman/edit-account"
+                    href="/admin/edit-account"
                     className="flex items-center px-4 py-2 text-gray-700 hover:bg-gray-100"
                   >
                     <Edit className="h-4 w-4 mr-2" />
