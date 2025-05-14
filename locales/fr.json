@@ -41,7 +41,8 @@
     "add": "Ajouter",
     "accept": "Accepter",
     "reject": "Rejeter",
-    "appClient": "Accès à votre espace client"
+    "appClient": "Accès à votre espace client",
+    "selectOption": "Sélectionnez une option"
   },
   "navigation": {
     "app_client": "Tableau de bord",
@@ -651,11 +652,11 @@
     "hostingAddress": "Adresse de l'hébergeur",
     "hostingPhone": "Téléphone de l'hébergeur",
     "intellectualProperty": "Propriété intellectuelle",
-    "intellectualPropertyText": "L’ensemble des contenus présents sur ce site (textes, images, graphismes, logo, icônes, etc.) sont la propriété exclusive d’EcoDeli, sauf mention contraire, et sont protégés par les lois françaises et internationales relatives à la propriété intellectuelle. Toute reproduction, distribution, modification, adaptation, retransmission ou publication, même partielle, est strictement interdite sans l’accord écrit préalable de EcoDeli.",
+    "intellectualPropertyText": "L'ensemble des contenus présents sur ce site (textes, images, graphismes, logo, icônes, etc.) sont la propriété exclusive d'EcoDeli, sauf mention contraire, et sont protégés par les lois françaises et internationales relatives à la propriété intellectuelle. Toute reproduction, distribution, modification, adaptation, retransmission ou publication, même partielle, est strictement interdite sans l'accord écrit préalable de EcoDeli.",
     "liability": "Responsabilité",
-    "liabilityText": "EcoDeli s’efforce d’assurer au mieux de ses possibilités l’exactitude et la mise à jour des informations diffusées sur ce site. Toutefois, elle ne saurait être tenue responsable des omissions, inexactitudes ou carences dans la mise à jour, qu’elles soient de son fait ou du fait des tiers partenaires. L’utilisateur reconnaît utiliser ces informations sous sa responsabilité exclusive.",
+    "liabilityText": "EcoDeli s'efforce d'assurer au mieux de ses possibilités l'exactitude et la mise à jour des informations diffusées sur ce site. Toutefois, elle ne saurait être tenue responsable des omissions, inexactitudes ou carences dans la mise à jour, qu'elles soient de son fait ou du fait des tiers partenaires. L'utilisateur reconnaît utiliser ces informations sous sa responsabilité exclusive.",
     "contactUs": "Nous contacter",
-    "contactText": "Pour toute question concernant ces mentions légales, vous pouvez nous contacter par email à l’adresse suivante : contact@ecodeli.com."
+    "contactText": "Pour toute question concernant ces mentions légales, vous pouvez nous contacter par email à l'adresse suivante : contact@ecodeli.com."
   },
   "admin": {
     "dashboard": "Tableau de bord",

@@ -10,14 +10,20 @@ import { User, ChevronDown, Edit, LogOut, Upload, X } from "lucide-react"
 import LanguageSelector from "@/components/language-selector"
 import { useLanguage } from "@/components/language-context"
 
+// Interface pour les annonces
+interface Announcement {
+  id: number
+  title: string
+}
+
 export default function CreateComplaintClient() {
   const router = useRouter()
   const { t } = useLanguage()
   const [first_name, setUserName] = useState("")
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [files, setFiles] = useState<File[]>([])
-  const [dragActive, setDragActive] = useState(false)
+  const [announcements, setAnnouncements] = useState<Announcement[]>([])
+  const [isLoadingAnnouncements, setIsLoadingAnnouncements] = useState(false)
 
   const [formData, setFormData] = useState({
     announce: "",
@@ -49,47 +55,60 @@ export default function CreateComplaintClient() {
 			.catch((err) => console.error('Auth/me failed:', err));
 	}, []);
 
+  // Récupérer les annonces de l'utilisateur
+  useEffect(() => {
+    const fetchAnnouncements = async () => {
+      try {
+        setIsLoadingAnnouncements(true);
+        const token = sessionStorage.getItem('authToken') || localStorage.getItem('authToken');
+        
+        // D'abord, récupérer l'ID de l'utilisateur connecté
+        const userResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/me`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        
+        if (!userResponse.ok) {
+          throw new Error("Impossible de récupérer les informations utilisateur");
+        }
+        
+        const userData = await userResponse.json();
+        const utilisateurId = userData.id;
+        
+        // Ensuite, récupérer les annonces de l'utilisateur
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/annonces/user/${utilisateurId}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          const annoncesData = Array.isArray(data) ? data : data.data || data.annonces || [];
+          
+          if (annoncesData.length > 0) {
+            const formattedAnnouncements = annoncesData.map((item: any) => ({
+              id: item.id,
+              title: item.title || `Annonce #${item.id}`
+            }));
+            setAnnouncements(formattedAnnouncements);
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching announcements:", error);
+      } finally {
+        setIsLoadingAnnouncements(false);
+      }
+    };
+
+    fetchAnnouncements();
+  }, []);
+
   // Handle form input changes
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target
     setFormData((prev) => ({ ...prev, [name]: value }))
-  }
-
-  // Handle file selection
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files) {
-      const newFiles = Array.from(e.target.files)
-      setFiles((prev) => [...prev, ...newFiles])
-    }
-  }
-
-  // Handle file removal
-  const handleRemoveFile = (index: number) => {
-    setFiles((prev) => prev.filter((_, i) => i !== index))
-  }
-
-  // Handle drag events
-  const handleDrag = (e: React.DragEvent) => {
-    e.preventDefault()
-    e.stopPropagation()
-
-    if (e.type === "dragenter" || e.type === "dragover") {
-      setDragActive(true)
-    } else if (e.type === "dragleave") {
-      setDragActive(false)
-    }
-  }
-
-  // Handle drop event
-  const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault()
-    e.stopPropagation()
-    setDragActive(false)
-
-    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-      const newFiles = Array.from(e.dataTransfer.files)
-      setFiles((prev) => [...prev, ...newFiles])
-    }
   }
 
   // Handle form submission
@@ -98,10 +117,32 @@ export default function CreateComplaintClient() {
     setIsSubmitting(true)
 
     try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1500))
+      // Créer une nouvelle réclamation
+      const newComplaint = {
+        id: `c${Date.now()}`,
+        announce: formData.announce,
+        shippingPrice: formData.shippingPrice,
+        justificativePieces: 0,
+        description: formData.description,
+        status: "pending" as const,
+        dateSubmitted: new Date().toISOString().split('T')[0]
+      };
 
-      // Redirect to complaints page
+      // Récupérer les réclamations existantes du localStorage
+      const existingComplaints = localStorage.getItem('userComplaints');
+      let allComplaints = [];
+      
+      if (existingComplaints) {
+        allComplaints = JSON.parse(existingComplaints);
+      }
+      
+      // Ajouter la nouvelle réclamation
+      allComplaints = [newComplaint, ...allComplaints];
+      
+      // Sauvegarder dans le localStorage
+      localStorage.setItem('userComplaints', JSON.stringify(allComplaints));
+
+      // Redirection vers la page des réclamations
       router.push("/app_client/complaint")
     } catch (error) {
       console.error("Error submitting complaint:", error)
@@ -211,17 +252,23 @@ export default function CreateComplaintClient() {
             <form onSubmit={handleSubmit} className="space-y-6">
               <div>
                 <label htmlFor="announce" className="block text-sm font-medium text-gray-700 mb-1">
-                  {t("complaints.announceId")}
+                  {t("complaints.announce")}
                 </label>
-                <input
-                  type="text"
+                <select
                   id="announce"
                   name="announce"
                   value={formData.announce}
                   onChange={handleChange}
                   className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
                   required
-                />
+                >
+                  <option value="">{isLoadingAnnouncements ? t("common.loading") : t("common.selectOption")}</option>
+                  {announcements.map((announcement) => (
+                    <option key={announcement.id} value={announcement.id}>
+                      {announcement.title} (#{announcement.id})
+                    </option>
+                  ))}
+                </select>
               </div>
 
               <div>
@@ -253,65 +300,6 @@ export default function CreateComplaintClient() {
                   required
                   placeholder={t("complaints.pleaseDescribeIssue")}
                 />
-              </div>
-
-              {/* File Upload */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  {t("complaints.supportingDocuments")}
-                </label>
-                <div
-                  className={`border-2 border-dashed rounded-md p-6 ${
-                    dragActive ? "border-green-500 bg-green-50 bg-opacity-10" : "border-gray-300"
-                  }`}
-                  onDragEnter={handleDrag}
-                  onDragLeave={handleDrag}
-                  onDragOver={handleDrag}
-                  onDrop={handleDrop}
-                >
-                  <div className="text-center">
-                    <Upload className="h-10 w-10 text-gray-400 mx-auto mb-3" />
-                    <p className="text-sm text-gray-600 mb-1">{t("complaints.dragAndDrop")}</p>
-                    <p className="text-xs text-gray-500">{t("complaints.uploadInfo")}</p>
-                    <input type="file" multiple onChange={handleFileChange} className="hidden" id="file-upload" />
-                    <button
-                      type="button"
-                      onClick={() => document.getElementById("file-upload")?.click()}
-                      className="mt-4 px-4 py-2 bg-white border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50"
-                    >
-                      {t("complaints.selectFiles")}
-                    </button>
-                  </div>
-                </div>
-
-                {/* File List */}
-                {files.length > 0 && (
-                  <div className="mt-4">
-                    <h4 className="text-sm font-medium text-gray-700 mb-2">{t("complaints.selectedFiles")}:</h4>
-                    <ul className="space-y-2">
-                      {files.map((file, index) => (
-                        <li key={index} className="flex items-center justify-between bg-gray-50 p-2 rounded-md">
-                          <div className="flex items-center">
-                            <div className="w-8 h-8 bg-gray-200 rounded-md flex items-center justify-center mr-3">
-                              <FileIcon extension={file.name.split(".").pop() || ""} />
-                            </div>
-                            <div className="overflow-hidden">
-                              <p className="text-sm font-medium truncate">{file.name}</p>
-                              <p className="text-xs text-gray-500">{formatFileSize(file.size)}</p>
-                            </div>
-                          </div>
-                          <button
-                            type="button"
-                            onClick={() => handleRemoveFile(index)}
-                            className="text-gray-500 hover:text-red-500"
-                          >
-                            <X className="h-5 w-5" />
-                          </button>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
               </div>
 
               <div className="flex justify-end space-x-3 pt-4">

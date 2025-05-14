@@ -13,11 +13,18 @@ import { useLanguage } from "@/components/language-context"
 interface ComplaintItem {
   id: string
   announce: string
+  announceTitle?: string
   shippingPrice: string
   justificativePieces: number
   description: string
   status: "pending" | "in_progress" | "done" | "rejected"
   dateSubmitted: string
+}
+
+// Interface pour les annonces
+interface Announcement {
+  id: number
+  title: string
 }
 
 export default function ComplaintClient() {
@@ -27,46 +34,11 @@ export default function ComplaintClient() {
   const [activeTab, setActiveTab] = useState<"all" | "pending" | "resolved">("all")
   const [showComplaintModal, setShowComplaintModal] = useState(false)
   const [showDetailsModal, setShowDetailsModal] = useState<string | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
+  const [announcements, setAnnouncements] = useState<Announcement[]>([])
 
-  // Mock data for complaints
-  const [complaints, setComplaints] = useState<ComplaintItem[]>([
-    {
-      id: "c1",
-      announce: "000001",
-      shippingPrice: "£20.00",
-      justificativePieces: 2,
-      description:
-        "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
-      status: "done",
-      dateSubmitted: "2025-03-15",
-    },
-    {
-      id: "c2",
-      announce: "000002",
-      shippingPrice: "£35.50",
-      justificativePieces: 1,
-      description: "Package arrived damaged. The box was crushed on one side and the contents were broken.",
-      status: "in_progress",
-      dateSubmitted: "2025-03-28",
-    },
-    {
-      id: "c3",
-      announce: "000003",
-      shippingPrice: "£15.75",
-      justificativePieces: 3,
-      description: "Delivery was made to the wrong address. I had to go pick it up myself from a neighbor.",
-      status: "pending",
-      dateSubmitted: "2025-04-01",
-    },
-  ])
-
-  // New complaint form state
-  const [newComplaint, setNewComplaint] = useState({
-    announce: "",
-    shippingPrice: "",
-    description: "",
-    files: [] as File[],
-  })
+  // État pour les réclamations
+  const [complaints, setComplaints] = useState<ComplaintItem[]>([])
 
   // Filter complaints based on active tab
   const filteredComplaints = complaints.filter((item) => {
@@ -76,6 +48,7 @@ export default function ComplaintClient() {
     return true
   })
 
+  // Récupérer les informations de l'utilisateur
   useEffect(() => {
 		const token =
 			sessionStorage.getItem('authToken') ||
@@ -96,19 +69,80 @@ export default function ComplaintClient() {
 			})
 			.then((data) => {
 				setUserName(data.firstName);
+        fetchUserComplaints(data.id);
+        fetchUserAnnouncements(data.id);
 			})
 			.catch((err) => console.error('Auth/me failed:', err));
 	}, []);
 
-  // Handle file input change
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files) {
-      setNewComplaint((prev) => ({
-        ...prev,
-        files: [...Array.from(e.target.files || [])],
-      }))
+  // Récupérer les annonces de l'utilisateur
+  const fetchUserAnnouncements = async (userId: number) => {
+    try {
+      const token = sessionStorage.getItem('authToken') || localStorage.getItem('authToken');
+      
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/annonces/user/${userId}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        const annoncesData = Array.isArray(data) ? data : data.data || data.annonces || [];
+        
+        if (annoncesData.length > 0) {
+          const formattedAnnouncements = annoncesData.map((item: any) => ({
+            id: item.id,
+            title: item.title || `Annonce #${item.id}`
+          }));
+          setAnnouncements(formattedAnnouncements);
+        }
+      }
+    } catch (error) {
+      console.error("Error fetching announcements:", error);
     }
-  }
+  };
+
+  // Récupérer les réclamations de l'utilisateur
+  const fetchUserComplaints = async (userId: number) => {
+    setIsLoading(true);
+    try {
+      // Provisoire : Récupérer depuis le localStorage
+      const storedComplaints = localStorage.getItem('userComplaints');
+      
+      if (storedComplaints) {
+        const parsedComplaints = JSON.parse(storedComplaints);
+        setComplaints(parsedComplaints);
+      } else {
+        // Si aucune réclamation n'est trouvée dans le localStorage, on utilise des données fictives
+        // Note: Ceci est à remplacer par un appel API réel plus tard
+        const mockComplaints: ComplaintItem[] = [
+          {
+            id: "c1",
+            announce: "000001",
+            shippingPrice: "£20.00",
+            justificativePieces: 0,
+            description: "Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
+            status: "done",
+            dateSubmitted: new Date().toISOString().split("T")[0],
+          }
+        ];
+        setComplaints(mockComplaints);
+        localStorage.setItem('userComplaints', JSON.stringify(mockComplaints));
+      }
+    } catch (error) {
+      console.error("Error fetching complaints:", error);
+      setComplaints([]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Get announcement title by ID
+  const getAnnouncementTitle = (announceId: string) => {
+    const announcement = announcements.find(a => a.id.toString() === announceId);
+    return announcement ? announcement.title : announceId;
+  };
 
   // Handle form submission
   const handleSubmit = (e: React.FormEvent) => {
@@ -136,6 +170,24 @@ export default function ComplaintClient() {
       files: [],
     })
     setShowComplaintModal(false)
+  }
+
+  // New complaint form state
+  const [newComplaint, setNewComplaint] = useState({
+    announce: "",
+    shippingPrice: "",
+    description: "",
+    files: [] as File[],
+  })
+
+  // Handle file input change
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      setNewComplaint((prev) => ({
+        ...prev,
+        files: [...Array.from(e.target.files || [])],
+      }))
+    }
   }
 
   // Get status badge color
@@ -322,63 +374,67 @@ export default function ComplaintClient() {
           <div className="p-4 sm:p-6">
             <h2 className="text-xl font-semibold mb-4">{t("complaints.yourComplaints")}</h2>
 
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b">
-                    <th className="py-3 px-4 text-left text-sm font-medium text-gray-500">
-                      {t("complaints.announce")}
-                    </th>
-                    <th className="py-3 px-4 text-left text-sm font-medium text-gray-500">
-                      {t("complaints.shippingPrice")}
-                    </th>
-                    <th className="py-3 px-4 text-left text-sm font-medium text-gray-500">
-                      {t("complaints.justificativePieces")}
-                    </th>
-                    <th className="py-3 px-4 text-left text-sm font-medium text-gray-500">
-                      {t("complaints.description")}
-                    </th>
-                    <th className="py-3 px-4 text-left text-sm font-medium text-gray-500">{t("complaints.status")}</th>
-                    <th className="py-3 px-4 text-left text-sm font-medium text-gray-500">{t("complaints.action")}</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredComplaints.length > 0 ? (
-                    filteredComplaints.map((complaint) => (
-                      <tr key={complaint.id} className="border-b hover:bg-gray-50">
-                        <td className="py-3 px-4 font-medium">{complaint.announce}</td>
-                        <td className="py-3 px-4">{complaint.shippingPrice}</td>
-                        <td className="py-3 px-4 text-center">{complaint.justificativePieces}</td>
-                        <td className="py-3 px-4 max-w-xs truncate">{complaint.description}</td>
-                        <td className="py-3 px-4">
-                          <span
-                            className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusBadge(
-                              complaint.status,
-                            )}`}
-                          >
-                            {getStatusText(complaint.status)}
-                          </span>
-                        </td>
-                        <td className="py-3 px-4">
-                          <button
-                            onClick={() => setShowDetailsModal(complaint.id)}
-                            className="text-green-500 hover:text-green-700 font-medium"
-                          >
-                            {t("complaints.viewDetails")}
-                          </button>
+            {isLoading ? (
+              <div className="py-8 text-center text-gray-500">
+                {t("common.loading")}
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b">
+                      <th className="py-3 px-4 text-left text-sm font-medium text-gray-500">
+                        {t("complaints.announce")}
+                      </th>
+                      <th className="py-3 px-4 text-left text-sm font-medium text-gray-500">
+                        {t("complaints.shippingPrice")}
+                      </th>
+                      <th className="py-3 px-4 text-left text-sm font-medium text-gray-500">
+                        {t("complaints.description")}
+                      </th>
+                      <th className="py-3 px-4 text-left text-sm font-medium text-gray-500">{t("complaints.status")}</th>
+                      <th className="py-3 px-4 text-left text-sm font-medium text-gray-500">{t("complaints.action")}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredComplaints.length > 0 ? (
+                      filteredComplaints.map((complaint) => (
+                        <tr key={complaint.id} className="border-b hover:bg-gray-50">
+                          <td className="py-3 px-4 font-medium">
+                            {getAnnouncementTitle(complaint.announce)}
+                          </td>
+                          <td className="py-3 px-4">{complaint.shippingPrice}</td>
+                          <td className="py-3 px-4 max-w-xs truncate">{complaint.description}</td>
+                          <td className="py-3 px-4">
+                            <span
+                              className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusBadge(
+                                complaint.status,
+                              )}`}
+                            >
+                              {getStatusText(complaint.status)}
+                            </span>
+                          </td>
+                          <td className="py-3 px-4">
+                            <button
+                              onClick={() => setShowDetailsModal(complaint.id)}
+                              className="text-green-500 hover:text-green-700 font-medium"
+                            >
+                              {t("complaints.viewDetails")}
+                            </button>
+                          </td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td colSpan={5} className="py-6 text-center text-gray-500">
+                          {t("complaints.noComplaints")}
                         </td>
                       </tr>
-                    ))
-                  ) : (
-                    <tr>
-                      <td colSpan={6} className="py-6 text-center text-gray-500">
-                        {t("complaints.noComplaints")}
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </div>
         </div>
       </main>
@@ -410,7 +466,7 @@ export default function ComplaintClient() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                     <div>
                       <p className="text-sm text-gray-500 mb-1">{t("complaints.announceId")}</p>
-                      <p className="font-medium">{complaint.announce}</p>
+                      <p className="font-medium">{getAnnouncementTitle(complaint.announce)}</p>
                     </div>
 
                     <div>
@@ -421,11 +477,6 @@ export default function ComplaintClient() {
                     <div>
                       <p className="text-sm text-gray-500 mb-1">{t("complaints.dateSubmitted")}</p>
                       <p className="font-medium">{new Date(complaint.dateSubmitted).toLocaleDateString()}</p>
-                    </div>
-
-                    <div>
-                      <p className="text-sm text-gray-500 mb-1">{t("complaints.supportingDocuments")}</p>
-                      <p className="font-medium">{complaint.justificativePieces} files</p>
                     </div>
                   </div>
 
