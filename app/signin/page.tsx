@@ -105,12 +105,11 @@ export default function SignupPage() {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            user_info: JSON.stringify(formData),
+            user_info: `{code: {'first_name': '${formData.firstname}', 'last_name': '${formData.name}', 'email': '${formData.email}'}}`
           }),
         }
       )
       if (!genRes.ok) {
-        console.log(JSON.stringify({ user_info: JSON.stringify(formData) }))
         throw new Error("failed to generate code")
       }
       const { code: verificationCode } = await genRes.json()

@@ -65,8 +65,7 @@ export default function DeliverymanDeliveries() {
         const livreurId = userData.id
 
         // Ensuite récupérer les livraisons associées à ce livreur
-        // Note: L'API devrait avoir un endpoint pour cela
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/livraisons/livreur/${livreurId}`, {
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/livraisons/${livreurId}`, {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
@@ -80,64 +79,98 @@ export default function DeliverymanDeliveries() {
         }
 
         const data = await response.json()
+        console.log("Données brutes des livraisons:", data)
+        
+        // Vérifier si data est un tableau ou un objet avec une propriété contenant un tableau
+        const livraisonsArray = Array.isArray(data) ? data : 
+                               data.livraisons ? data.livraisons : 
+                               [data.livraison].filter(Boolean)
         
         // Transformer les données pour correspondre à notre interface
-        const formattedDeliveries = await Promise.all(data.map(async (livraison: any) => {
-          // Pour chaque livraison, récupérer les détails de l'annonce associée
+        const formattedDeliveries = await Promise.all(livraisonsArray.map(async (livraison: any) => {
+          if (!livraison) return null
+          
+          // Pour chaque livraison, extraire l'ID de l'annonce depuis le colis associé
+          const colis = Array.isArray(livraison.colis) && livraison.colis.length > 0 
+                      ? livraison.colis[0] 
+                      : null
+                      
+          const annonceId = colis ? colis.annonceId : null
+          
+          // Récupérer les détails de l'annonce associée si on a un annonceId
           let annonceData: any = {}
           
-          try {
-            const annonceResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/annonces/${livraison.annonceId}`, {
-              method: 'GET',
-              headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
-              },
-              credentials: 'include'
-            })
-            
-            if (annonceResponse.ok) {
-              annonceData = await annonceResponse.json()
+          if (annonceId) {
+            try {
+              const annonceResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/annonces/${annonceId}`, {
+                method: 'GET',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'Authorization': `Bearer ${token}`
+                },
+                credentials: 'include'
+              })
+              
+              if (annonceResponse.ok) {
+                annonceData = await annonceResponse.json()
+                console.log("Données de l'annonce:", annonceData)
+              }
+            } catch (error) {
+              console.error(`Erreur lors de la récupération de l'annonce ${annonceId}:`, error)
             }
-          } catch (error) {
-            console.error("Erreur lors de la récupération de l'annonce:", error)
           }
           
           // Cartographier le statut de l'API vers notre interface
           let status: "paid" | "in_transit" | "delivered" | "pending" = "pending"
-          switch(livraison.statut) {
-            case "en_attente":
+          switch(livraison.status) {
+            case "scheduled":
               status = "pending"
               break
             case "en_cours":
+            case "in_transit":
               status = "in_transit"
               break
             case "livré":
+            case "delivered":
               status = "delivered"
               break
             case "payé":
+            case "paid":
               status = "paid"
               break
           }
           
-          return {
+          // Extraire les informations depuis le colis si disponible
+          const colisDescription = colis?.contentDescription || ''
+          const packageSizeMatch = colisDescription.match(/Package Size: (Small|Medium|Large)/)
+          const packageSize = packageSizeMatch ? packageSizeMatch[1] : 'Unknown'
+          
+          const packageWeight = colis?.weight || 'N/A'
+          
+          const deliveryItem: Delivery = {
             id: livraison.id,
-            annonceId: livraison.annonceId,
+            annonceId: annonceId,
             livreurId: livraison.livreurId,
-            announceName: annonceData.titre || "Livraison sans titre",
-            image: annonceData.image || "/placeholder.svg",
-            whereTo: annonceData.adresseLivraison || livraison.adresseLivraison || "Adresse non spécifiée",
-            price: annonceData.prix ? `€${annonceData.prix}` : "Prix non spécifié",
-            amount: annonceData.quantite || 1,
-            deliveryDate: formatDate(livraison.dateLivraison || annonceData.dateRetraitFin),
+            announceName: annonceData.title || colis?.trackingNumber || "Livraison sans titre",
+            image: annonceData.imagePath ? `${process.env.NEXT_PUBLIC_API_URL}/${annonceData.imagePath}` : "/placeholder.svg",
+            whereTo: livraison.dropoffLocation || colis?.currentAddress || "Adresse non spécifiée",
+            price: annonceData.price ? `€${annonceData.price}` : "Prix non spécifié",
+            amount: 1,
+            deliveryDate: formatDate(livraison.createdAt),
             status: status,
-            isPriority: annonceData.estPrioritaire || false,
-            adresseLivraison: livraison.adresseLivraison,
-            colis: livraison.colis
+            isPriority: annonceData.priority || false,
+            adresseLivraison: livraison.dropoffLocation,
+            colis: colis
           }
+          
+          return deliveryItem
         }))
-
-        setDeliveries(formattedDeliveries)
+        
+        // Filtrer les valeurs null qui pourraient résulter d'erreurs de traitement
+        const validDeliveries = formattedDeliveries.filter(Boolean) as Delivery[]
+        console.log("Livraisons formatées:", validDeliveries)
+        
+        setDeliveries(validDeliveries)
       } catch (error) {
         console.error("Erreur lors de la récupération des livraisons:", error)
         setError("Impossible de charger les livraisons")
@@ -153,8 +186,27 @@ export default function DeliverymanDeliveries() {
   const formatDate = (dateString: string) => {
     if (!dateString) return "Date non spécifiée"
     
-    const date = new Date(dateString)
-    return date.toLocaleDateString()
+    try {
+      const date = new Date(dateString)
+      // Vérifier si la date est valide
+      if (isNaN(date.getTime())) {
+        return "Date invalide"
+      }
+      
+      // Options pour le format de date
+      const options: Intl.DateTimeFormatOptions = { 
+        year: 'numeric', 
+        month: 'long', 
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      }
+      
+      return date.toLocaleDateString('fr-FR', options)
+    } catch (error) {
+      console.error("Erreur lors du formatage de la date:", error)
+      return "Date non spécifiée"
+    }
   }
 
   // Filtrer les livraisons en fonction de la recherche
@@ -267,6 +319,12 @@ export default function DeliverymanDeliveries() {
                       scope="col"
                       className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
                     >
+                      Colis
+                    </th>
+                    <th
+                      scope="col"
+                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                    >
                       {t("deliveryman.deliveriess.whereTo")}
                     </th>
                     <th
@@ -274,12 +332,6 @@ export default function DeliverymanDeliveries() {
                       className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
                     >
                       {t("deliveryman.deliveriess.price")}
-                    </th>
-                    <th
-                      scope="col"
-                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                    >
-                      {t("deliveryman.deliveriess.amount")}
                     </th>
                     <th
                       scope="col"
@@ -326,6 +378,18 @@ export default function DeliverymanDeliveries() {
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="text-sm text-gray-900">
+                            {delivery.colis && (
+                              <div className="flex flex-col">
+                                <span className="font-medium">{delivery.colis.trackingNumber}</span>
+                                <span className="text-xs text-gray-500">
+                                  {delivery.colis.weight} kg • {delivery.colis.length}×{delivery.colis.width}×{delivery.colis.height} cm
+                                </span>
+                              </div>
+                            )}
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
                           <div className="text-sm text-gray-900">{delivery.whereTo}</div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
@@ -336,7 +400,6 @@ export default function DeliverymanDeliveries() {
                             )}
                           </div>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{delivery.amount}</td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{delivery.deliveryDate}</td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <span
