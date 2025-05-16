@@ -9,7 +9,8 @@ export async function GET(
   req: NextRequest,
   { params }: { params: { locale: string } }
 ) {
-  const locale = params.locale.toLowerCase();
+  const awaitedParams = await params;
+  const locale = awaitedParams.locale.toLowerCase();
   const file = path.join(translationsDir, `${locale}.json`);
   try {
     const content = await fs.readFile(file, "utf-8");
@@ -23,7 +24,8 @@ export async function PUT(
   req: NextRequest,
   { params }: { params: { locale: string } }
 ) {
-  const locale = params.locale.toLowerCase();
+  const awaitedParams = await params;
+  const locale = awaitedParams.locale.toLowerCase();
   const file = path.join(translationsDir, `${locale}.json`);
   try {
     await fs.writeFile(file, JSON.stringify({}, null, 2), "utf-8");
