@@ -13,21 +13,28 @@ interface DeliveryData {
   image?: string
   sender?: string
   deliveryAddress?: string
+  pickupLocation?: string
+  dropoffLocation?: string
   price?: string
   deliveryDate?: string
   amount?: number
   storageBox?: string
   size?: string
-  status?: string
+  statusText?: string
   timeAway?: string
   // Champs de l'API
   annonceId?: number
   livreurId?: number
   statut?: string
-  dateLivraison?: string
-  estPartielle?: boolean
-  pointArretPartiel?: string
-  colis?: any
+  status?: string
+  createdAt?: string
+  updatedAt?: string
+  livreur?: any
+  colis?: any[]
+  trackingNumber?: string
+  weight?: string
+  dimensions?: string
+  // champs fusionnés
   annonce?: any
 }
 
@@ -66,48 +73,83 @@ const DeliveryDetailClient = ({ id }: { id: string }) => {
           throw new Error('Erreur lors de la récupération de la livraison')
         }
 
-        const livraisonData = await response.json()
+        const responseData = await response.json()
+        console.log("Données de livraison brutes:", responseData)
         
-        // Récupérer les informations de l'annonce associée
+        // Extraire les données de livraison
+        const livraisonData = responseData.livraison || responseData
+        
+        // Extraire le colis associé (prendre le premier si c'est un tableau)
+        const colis = Array.isArray(livraisonData.colis) && livraisonData.colis.length > 0 
+                    ? livraisonData.colis[0] 
+                    : livraisonData.colis || null
+                    
+        // Extraire l'ID de l'annonce depuis le colis
+        const annonceId = colis?.annonceId
+        
+        // Récupérer les informations de l'annonce associée si on a un ID d'annonce
         let annonceData: any = {}
-        if (livraisonData.annonceId) {
-          const annonceResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/annonces/${livraisonData.annonceId}`, {
-            method: 'GET',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${token}`
-            },
-            credentials: 'include'
-          })
-          
-          if (annonceResponse.ok) {
-            annonceData = await annonceResponse.json()
+        if (annonceId) {
+          try {
+            const annonceResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/annonces/${annonceId}`, {
+              method: 'GET',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+              },
+              credentials: 'include'
+            })
+            
+            if (annonceResponse.ok) {
+              annonceData = await annonceResponse.json()
+              console.log("Données de l'annonce:", annonceData)
+            }
+          } catch (error) {
+            console.error("Erreur lors de la récupération de l'annonce:", error)
           }
         }
+
+        // Extraire des informations du colis
+        const colisDescription = colis?.contentDescription || ''
+        const packageSizeMatch = colisDescription.match(/Package Size: (Small|Medium|Large)/)
+        const packageSize = packageSizeMatch ? packageSizeMatch[1] : 'Medium'
+        
+        // Récupérer le nom complet de l'utilisateur si disponible
+        const client = annonceData.utilisateur ? 
+                      `${annonceData.utilisateur.firstName || ''} ${annonceData.utilisateur.lastName || ''}`.trim() : 
+                      "Client"
 
         // Fusionner les données
         const deliveryData: DeliveryData = {
           id: livraisonData.id,
-          annonceId: livraisonData.annonceId,
           livreurId: livraisonData.livreurId,
-          statut: livraisonData.statut,
-          dateLivraison: livraisonData.dateLivraison,
-          estPartielle: livraisonData.estPartielle,
-          pointArretPartiel: livraisonData.pointArretPartiel,
+          status: livraisonData.status,
+          livreur: livraisonData.livreur,
+          createdAt: livraisonData.createdAt,
+          updatedAt: livraisonData.updatedAt,
           colis: livraisonData.colis,
+          pickupLocation: livraisonData.pickupLocation,
+          dropoffLocation: livraisonData.dropoffLocation,
           annonce: annonceData,
+          
+          // Données du colis
+          trackingNumber: colis?.trackingNumber || "Non spécifié",
+          weight: colis?.weight || "N/A",
+          dimensions: colis ? `${colis.length}×${colis.width}×${colis.height} cm` : "N/A",
+          
           // Champs formatés pour l'affichage
-          name: annonceData.titre || "Livraison sans titre",
-          image: annonceData.image || "/placeholder.svg",
-          sender: annonceData.utilisateur?.prenom || "Client",
-          deliveryAddress: annonceData.adresseLivraison || livraisonData.adresseLivraison || "Adresse non spécifiée",
-          price: annonceData.prix ? `€${annonceData.prix}` : "Prix non spécifié",
-          deliveryDate: formatDateRange(annonceData.dateRetraitDebut, annonceData.dateRetraitFin),
-          amount: annonceData.quantite || 1,
-          storageBox: annonceData.entrepot?.adresse || "Non spécifié",
-          size: getSizeFromWeight(annonceData.poids || 0),
-          status: getStatusText(livraisonData.statut || "en_attente"),
-          timeAway: "1 heure de trajet"
+          name: annonceData.title || colis?.trackingNumber || "Livraison sans titre",
+          image: annonceData.imagePath ? `${process.env.NEXT_PUBLIC_API_URL}/${annonceData.imagePath}` : "/placeholder.svg",
+          sender: client,
+          deliveryAddress: livraisonData.dropoffLocation || colis?.currentAddress || "Adresse non spécifiée",
+          price: annonceData.price ? `€${annonceData.price}` : "Prix non spécifié",
+          deliveryDate: formatDate(livraisonData.createdAt || annonceData.scheduledDate),
+          amount: 1,
+          storageBox: colis?.locationType || "Non spécifié",
+          size: packageSize,
+          statut: mapStatus(livraisonData.status),
+          statusText: getStatusText(mapStatus(livraisonData.status)),
+          timeAway: "Distance estimée: 5 km"
         }
 
         setDelivery(deliveryData)
@@ -124,21 +166,63 @@ const DeliveryDetailClient = ({ id }: { id: string }) => {
     }
   }, [id])
 
-  // Fonction utilitaire pour formater la plage de dates
-  const formatDateRange = (startDate: string, endDate: string) => {
-    if (!startDate || !endDate) return "Date non spécifiée"
-    
-    const start = new Date(startDate)
-    const end = new Date(endDate)
-    
-    return `${start.toLocaleDateString()} - ${end.toLocaleDateString()}`
+  // Fonction pour mapper les statuts API aux statuts attendus par l'interface
+  const mapStatus = (apiStatus: string): string => {
+    switch (apiStatus?.toLowerCase()) {
+      case "scheduled":
+        return "en_attente"
+      case "in_progress":
+        return "en_cours"
+      case "completed":
+        return "livré"
+      case "cancelled":
+        return "annulé"
+      default:
+        return apiStatus || "en_attente"
+    }
   }
 
-  // Fonction pour déterminer la taille en fonction du poids
-  const getSizeFromWeight = (weight: number) => {
-    if (weight <= 1) return "Small"
-    if (weight <= 5) return "Medium"
-    return "Large"
+  // Fonction pour mapper les statuts de l'interface vers les statuts API
+  const getApiStatus = (uiStatus: string): string => {
+    switch (uiStatus?.toLowerCase()) {
+      case "en_attente":
+        return "scheduled"
+      case "en_cours":
+        return "in_progress"
+      case "livré":
+        return "completed"
+      case "annulé":
+        return "cancelled"
+      default:
+        return uiStatus || "scheduled"
+    }
+  }
+
+  // Fonction utilitaire pour formater la date
+  const formatDate = (dateString: string) => {
+    if (!dateString) return "Date non spécifiée"
+    
+    try {
+      const date = new Date(dateString)
+      // Vérifier si la date est valide
+      if (isNaN(date.getTime())) {
+        return "Date invalide"
+      }
+      
+      // Options pour le format de date
+      const options: Intl.DateTimeFormatOptions = { 
+        year: 'numeric', 
+        month: 'long', 
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      }
+      
+      return date.toLocaleDateString('fr-FR', options)
+    } catch (error) {
+      console.error("Erreur lors du formatage de la date:", error)
+      return "Date non spécifiée"
+    }
   }
 
   // Fonction pour obtenir le texte du statut
@@ -203,10 +287,16 @@ const DeliveryDetailClient = ({ id }: { id: string }) => {
         return
       }
       
-      // Ici on pourrait avoir un appel API pour vérifier le code
-      // Pour le moment on simule avec un code fixe
-      if (verificationCode === "123456") {
-        // Mettre à jour le statut de la livraison
+      // Vérifier le code entré avec le code 123456 (pour démonstration)
+      // Dans une vraie application, on pourrait vérifier avec les premiers chiffres 
+      // du numéro de tracking ou faire une vérification via API
+      const trackingCode = delivery.trackingNumber?.replace(/\D/g, '').substring(0, 6)
+      const validCodes = ["123456", trackingCode]
+      
+      if (validCodes.includes(verificationCode)) {
+        console.log("Code validé, mise à jour du statut de la livraison");
+        
+        // Mettre à jour le statut de la livraison avec tous les champs potentiellement requis
         const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/livraisons/${id}`, {
           method: 'PUT',
           headers: {
@@ -214,20 +304,34 @@ const DeliveryDetailClient = ({ id }: { id: string }) => {
             'Authorization': `Bearer ${token}`
           },
           body: JSON.stringify({
-            statut: "livré"
+            status: "completed",
+            // Inclure les autres champs optionnels avec leurs valeurs existantes
+            livreur_id: delivery.livreurId,
+            pickup_location: delivery.pickupLocation,
+            dropoff_location: delivery.dropoffLocation
           }),
           credentials: 'include'
         })
         
+        // Journalisons la réponse complète en cas d'erreur pour diagnostic
         if (!response.ok) {
-          throw new Error("Erreur lors de la mise à jour de la livraison")
+          const errorText = await response.text();
+          console.error("Erreur API:", response.status, errorText);
+          console.error("Payload envoyé:", JSON.stringify({ 
+            status: "completed",
+            livreur_id: delivery.livreurId,
+            pickup_location: delivery.pickupLocation,
+            dropoff_location: delivery.dropoffLocation
+          }));
+          throw new Error(`Erreur lors de la mise à jour de la livraison: ${response.status}`);
         }
         
         // Mettre à jour l'interface
         setDelivery({
           ...delivery,
           statut: "livré",
-          status: "Livré"
+          status: "completed",
+          statusText: "Livré"
         })
         
         alert(t("deliveryman.codeValidated"))
@@ -317,19 +421,26 @@ const DeliveryDetailClient = ({ id }: { id: string }) => {
                 {delivery.deliveryAddress}
               </p>
               <p>
+                <span className="font-medium">{t("deliveryman.pickupLocation")}</span>:{" "}
+                {delivery.pickupLocation}
+              </p>
+              <p>
                 <span className="font-medium">{t("deliveryman.priceForDelivery")}</span>: {delivery.price}
               </p>
               <p>
                 <span className="font-medium">{t("deliveryman.deliveryDate")}</span>: {delivery.deliveryDate}
               </p>
               <p>
-                <span className="font-medium">{t("deliveryman.amount")}</span>: {delivery.amount}
+                <span className="font-medium">{t("deliveryman.trackingNumber")}</span>: {delivery.trackingNumber}
               </p>
               <p>
-                <span className="font-medium">{t("deliveryman.storageBox")}</span>: {delivery.storageBox}
+                <span className="font-medium">{t("deliveryman.weight")}</span>: {delivery.weight} kg
               </p>
               <p>
-                <span className="font-medium">{t("deliveryman.status")}</span>: {delivery.status}
+                <span className="font-medium">{t("deliveryman.dimensions")}</span>: {delivery.dimensions}
+              </p>
+              <p>
+                <span className="font-medium">{t("deliveryman.status")}</span>: {delivery.statusText}
               </p>
 
               <div className="flex items-center mt-4">
@@ -345,7 +456,16 @@ const DeliveryDetailClient = ({ id }: { id: string }) => {
           {delivery.statut === "en_cours" && (
             <div className="bg-white rounded-lg shadow-md p-6">
               <h2 className="text-xl font-bold mb-4">{t("deliveryman.enterCode")}</h2>
-              <p className="text-gray-600 mb-4">{t("deliveryman.enterCodeDescription")}</p>
+              <p className="text-gray-600 mb-6">{t("deliveryman.enterCodeDescription")}</p>
+              
+              {delivery.colis && (
+                <div className="mb-6 bg-gray-100 p-4 rounded-md">
+                  <h3 className="font-medium text-lg mb-2">Informations du colis</h3>
+                  <p className="mb-1"><span className="font-medium">Numéro de suivi:</span> {delivery.trackingNumber}</p>
+                  <p className="mb-1"><span className="font-medium">Poids:</span> {delivery.weight} kg</p>
+                  <p className="mb-1"><span className="font-medium">Dimensions:</span> {delivery.dimensions}</p>
+                </div>
+              )}
 
               <div className="flex justify-center space-x-2 mb-6">
                 {[0, 1, 2, 3, 4, 5].map((index) => (
@@ -377,6 +497,10 @@ const DeliveryDetailClient = ({ id }: { id: string }) => {
               >
                 {isSubmitting ? t("deliveryman.validatingCode") : t("deliveryman.validateCode")}
               </button>
+              
+              <p className="text-xs text-gray-500 mt-4 text-center">
+                Conseil: Pour tester, vous pouvez utiliser le code 123456 ou les 6 premiers chiffres du numéro de suivi.
+              </p>
             </div>
           )}
           
@@ -405,6 +529,9 @@ const DeliveryDetailClient = ({ id }: { id: string }) => {
                     const token = sessionStorage.getItem('authToken') || localStorage.getItem('authToken')
                     if (!token) return
                     
+                    console.log("Démarrage de la livraison, mise à jour du statut");
+                    
+                    // Mettre à jour le statut de la livraison avec tous les champs potentiellement requis
                     const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/livraisons/${id}`, {
                       method: 'PUT',
                       headers: {
@@ -412,19 +539,33 @@ const DeliveryDetailClient = ({ id }: { id: string }) => {
                         'Authorization': `Bearer ${token}`
                       },
                       body: JSON.stringify({
-                        statut: "en_cours"
+                        status: "in_progress",
+                        // Inclure les autres champs optionnels avec leurs valeurs existantes
+                        livreur_id: delivery.livreurId,
+                        pickup_location: delivery.pickupLocation,
+                        dropoff_location: delivery.dropoffLocation
                       }),
                       credentials: 'include'
                     })
                     
+                    // Journalisons la réponse complète en cas d'erreur pour diagnostic
                     if (!response.ok) {
-                      throw new Error("Erreur lors du démarrage de la livraison")
+                      const errorText = await response.text();
+                      console.error("Erreur API:", response.status, errorText);
+                      console.error("Payload envoyé:", JSON.stringify({ 
+                        status: "in_progress",
+                        livreur_id: delivery.livreurId,
+                        pickup_location: delivery.pickupLocation,
+                        dropoff_location: delivery.dropoffLocation
+                      }));
+                      throw new Error(`Erreur lors du démarrage de la livraison: ${response.status}`);
                     }
                     
                     setDelivery({
                       ...delivery,
                       statut: "en_cours",
-                      status: "En cours de livraison"
+                      status: "in_progress",
+                      statusText: "En cours de livraison"
                     })
                     
                     alert(t("deliveryman.deliveryStarted"))

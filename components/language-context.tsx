@@ -13,7 +13,7 @@ export type Language = string;
 interface LanguageContextType {
   language: Language;
   setLanguage: (lang: Language) => void;
-  t: (key: string) => string;
+  t: (key: string, params?: Record<string, any>) => string;
   isLoading: boolean;
   availableLocales: Language[];
   addLocale: (lang: Language) => Promise<void>;
@@ -113,12 +113,21 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const t = (key: string) => {
+  const t = (key: string, params?: Record<string, any>) => {
     if (isLoading) return key;
-    return key
+    let text = key
       .split(".")
       .reduce((acc: any, part) => (acc && acc[part] ? acc[part] : null), translations)
       ?? key;
+    
+    // Replace parameters if any
+    if (params) {
+      Object.entries(params).forEach(([paramKey, paramValue]) => {
+        text = text.replace(`{${paramKey}}`, String(paramValue));
+      });
+    }
+    
+    return text;
   };
 
   return (

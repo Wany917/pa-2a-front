@@ -132,13 +132,30 @@ export default function DeliverymanAnnouncements() {
         return
       }
 
-      const userId = getUserIdFromToken(token)
+      // Au lieu d'extraire l'ID du token, utilisons l'API pour obtenir les informations de l'utilisateur
+      const userResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/me`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        credentials: 'include'
+      })
+
+      if (!userResponse.ok) {
+        throw new Error('Erreur lors de la récupération des informations utilisateur')
+      }
+
+      const userData = await userResponse.json()
+      const userId = userData.id
+
       if (!userId) {
         alert("Impossible de récupérer vos informations d'utilisateur")
         return
       }
 
-      // Créer une livraison à partir de l'annonce
+      // Nous n'utilisons pas PATCH pour éviter les problèmes de CORS
+      // Cette API devrait mettre à jour le statut de l'annonce en "pending" automatiquement
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/annonces/${announcementId}/livraisons`, {
         method: 'POST',
         headers: {
@@ -158,9 +175,14 @@ export default function DeliverymanAnnouncements() {
         throw new Error('Erreur lors de la création de la livraison')
       }
 
-      alert("Livraison acceptée avec succès")
+      const responseData = await response.json();
+      
+      alert("Livraison acceptée avec succès! L'annonce n'est plus visible pour les autres livreurs.")
       // Retirer cette annonce de la liste
       setAnnouncements(prev => prev.filter(a => a.id !== announcementId))
+      
+      // Rediriger vers la page des livraisons
+      window.location.href = '/app_deliveryman/deliveries';
     } catch (error) {
       console.error("Erreur lors de l'acceptation de la livraison:", error)
       alert("Impossible d'accepter cette livraison")
@@ -169,17 +191,27 @@ export default function DeliverymanAnnouncements() {
     }
   }
 
-  // Récupérer l'ID utilisateur à partir du token JWT
+  // Cette fonction n'est plus utilisée, mais on la garde au cas où
   const getUserIdFromToken = (token: string): number | null => {
     try {
-      // Décoder le token JWT (simple décodage sans vérification)
-      const base64Url = token.split('.')[1]
-      const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/')
-      const payload = JSON.parse(window.atob(base64))
-      return payload.id || null
+      // Cette méthode peut être peu fiable selon le format du token
+      // Il est préférable d'utiliser l'API pour obtenir les informations de l'utilisateur
+      const parts = token.split('.');
+      if (parts.length !== 3) {
+        throw new Error('Format de token invalide');
+      }
+      
+      const base64Url = parts[1];
+      const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+      
+      // Décodage Base64 plus sûr
+      const rawPayload = atob(base64);
+      const payload = JSON.parse(rawPayload);
+      
+      return payload.id || null;
     } catch (error) {
       console.error("Erreur lors du décodage du token:", error)
-      return null
+      return null;
     }
   }
 
