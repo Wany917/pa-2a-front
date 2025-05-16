@@ -18,6 +18,7 @@ import {
   ArrowUp,
   BellRing,
   PartyPopper,
+  CheckCircle,
 } from "lucide-react"
 import { useLanguage } from "@/components/language-context"
 import LanguageSelector from "@/components/language-selector"
@@ -28,58 +29,224 @@ export default function DeliverymanDashboard() {
   const [first_name, setUserName] = useState("")
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false)
-
-  // Données pour les cartes statistiques
-  const stats = [
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState("")
+  const [recentDeliveries, setRecentDeliveries] = useState([])
+  const [stats, setStats] = useState([
     {
-      title: t("deliveryman.totalClients"),
-      value: "40,689",
-      change: "+8.5%",
+      title: t("deliveryman.totalDeliveries"),
+      value: "0",
+      change: "0%",
       changeType: "positive",
-      icon: <UserIcon className="h-6 w-6 text-indigo-500" />,
+      icon: <Package className="h-6 w-6 text-indigo-500" />,
       bgColor: "bg-indigo-50",
     },
     {
-      title: t("deliveryman.deliveriesThisWeek"),
-      value: "10,293",
-      change: "+1.3%",
+      title: t("deliveryman.activeDeliveries"),
+      value: "0",
+      change: "0%",
       changeType: "positive",
       icon: <Package className="h-6 w-6 text-amber-500" />,
       bgColor: "bg-amber-50",
     },
     {
-      title: t("deliveryman.totalPendingDeliveries"),
-      value: "200",
-      change: "+1.8%",
+      title: t("deliveryman.completedDeliveries"),
+      value: "0",
+      change: "0%",
       changeType: "positive",
-      icon: <Clock className="h-6 w-6 text-rose-500" />,
+      icon: <Package className="h-6 w-6 text-rose-500" />,
       bgColor: "bg-rose-50",
     },
-  ]
+  ])
 
+  // Récupérer les informations utilisateur et les statistiques
   useEffect(() => {
-		const token =
-			sessionStorage.getItem('authToken') ||
-			localStorage.getItem('authToken');
-		if (!token) return;
+    const fetchDashboardData = async () => {
+      setLoading(true)
+      
+      try {
+        const token =
+          sessionStorage.getItem('authToken') ||
+          localStorage.getItem('authToken')
+        if (!token) {
+          setError("Vous devez être connecté")
+          setLoading(false)
+          return
+        }
 
-		fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/me`, {
-			method: 'GET',
-			headers: {
-				'Content-Type': 'application/json',
-				Authorization: `Bearer ${token}`,
-			},
-			credentials: 'include',
-		})
-			.then((res) => {
-				if (!res.ok) throw new Error('Unauthorized');
-				return res.json();
-			})
-			.then((data) => {
-				setUserName(data.firstName);
-			})
-			.catch((err) => console.error('Auth/me failed:', err));
-	}, []);
+        // Récupérer les informations utilisateur
+        const userResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/me`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          credentials: 'include'
+        })
+
+        if (!userResponse.ok) {
+          throw new Error('Unauthorized')
+        }
+
+        const userData = await userResponse.json()
+        setUserName(userData.firstName)
+
+        // Récupérer les livraisons du livreur
+        const livraisonResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/livraisons/${userData.id}`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          credentials: 'include'
+        })
+
+        if (!livraisonResponse.ok) {
+          throw new Error('Erreur lors de la récupération des livraisons')
+        }
+
+        const livraisonsData = await livraisonResponse.json()
+        const livraisons = Array.isArray(livraisonsData) ? livraisonsData : 
+                          (livraisonsData.livraisons || [])
+        
+        console.log("Données des livraisons:", livraisons)
+        
+        // Préparer les livraisons récentes pour affichage
+        const formattedDeliveries = await Promise.all(livraisons.slice(0, 5).map(async (livraison) => {
+          // Extraire le colis pour trouver l'annonce associée
+          const colis = Array.isArray(livraison.colis) && livraison.colis.length > 0 
+                      ? livraison.colis[0] 
+                      : null
+                      
+          const annonceId = colis?.annonceId
+          
+          // Récupérer les détails de l'annonce si disponible
+          let customerName = "Client"
+          let deliveryAddress = livraison.dropoffLocation || "Adresse non spécifiée"
+          
+          if (annonceId) {
+            try {
+              const annonceResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/annonces/${annonceId}`, {
+                method: 'GET',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'Authorization': `Bearer ${token}`
+                },
+                credentials: 'include'
+              })
+              
+              if (annonceResponse.ok) {
+                const annonceData = await annonceResponse.json()
+                if (annonceData.utilisateur) {
+                  customerName = `${annonceData.utilisateur.firstName || ''} ${annonceData.utilisateur.lastName || ''}`.trim()
+                }
+                if (annonceData.destinationAddress) {
+                  deliveryAddress = annonceData.destinationAddress
+                }
+              }
+            } catch (error) {
+              console.error("Erreur lors de la récupération de l'annonce:", error)
+            }
+          }
+          
+          // Déterminer le statut et la classe CSS correspondante
+          let statusClass = "bg-gray-100 text-gray-800"
+          let statusKey = "pending"
+          
+          switch(livraison.status) {
+            case "scheduled":
+              statusClass = "bg-blue-100 text-blue-800"
+              statusKey = "pending"
+              break
+            case "in_progress":
+              statusClass = "bg-yellow-100 text-yellow-800"
+              statusKey = "inTransit"
+              break
+            case "completed":
+              statusClass = "bg-green-100 text-green-800"
+              statusKey = "delivered"
+              break
+            case "cancelled":
+              statusClass = "bg-red-100 text-red-800"
+              statusKey = "cancelled"
+              break
+          }
+          
+          return {
+            id: `#ECO-${livraison.id}`,
+            customer: customerName,
+            address: deliveryAddress,
+            status: statusKey,
+            statusClass: statusClass,
+            date: formatDate(livraison.createdAt),
+            rawDate: livraison.createdAt
+          }
+        }))
+        
+        // Trier par date (plus récent en premier)
+        formattedDeliveries.sort((a, b) => new Date(b.rawDate).getTime() - new Date(a.rawDate).getTime())
+        
+        setRecentDeliveries(formattedDeliveries)
+        
+        // Calculer les statistiques
+        const totalDeliveries = livraisons.length
+        const activeDeliveries = livraisons.filter(l => l.status === "in_progress" || l.status === "scheduled").length
+        const completedDeliveries = livraisons.filter(l => l.status === "completed").length
+        
+        setStats([
+          {
+            title: t("deliveryman.totalDeliveries"),
+            value: totalDeliveries.toString(),
+            change: "+0%",
+            changeType: "positive",
+            icon: <Package className="h-6 w-6 text-indigo-500" />,
+            bgColor: "bg-indigo-50",
+          },
+          {
+            title: t("deliveryman.activeDeliveries"),
+            value: activeDeliveries.toString(),
+            change: "+0%",
+            changeType: "positive",
+            icon: <Clock className="h-6 w-6 text-amber-500" />,
+            bgColor: "bg-amber-50",
+          },
+          {
+            title: t("deliveryman.completedDeliveries"),
+            value: completedDeliveries.toString(),
+            change: "+0%",
+            changeType: "positive",
+            icon: <CheckCircle className="h-6 w-6 text-green-500" />,
+            bgColor: "bg-green-50",
+          },
+        ])
+      } catch (error) {
+        console.error("Erreur lors du chargement des données du tableau de bord:", error)
+        setError("Impossible de charger les données du tableau de bord")
+      } finally {
+        setLoading(false)
+      }
+    }
+    
+    fetchDashboardData()
+  }, [t]) // Ajout de t comme dépendance car elle est utilisée dans les stats
+
+  // Fonction utilitaire pour formater la date
+  const formatDate = (dateString) => {
+    if (!dateString) return "Date non spécifiée"
+    
+    try {
+      const date = new Date(dateString)
+      // Vérifier si la date est valide
+      if (isNaN(date.getTime())) {
+        return "Date invalide"
+      }
+      
+      return date.toLocaleDateString()
+    } catch (error) {
+      console.error("Erreur lors du formatage de la date:", error)
+      return "Date non spécifiée"
+    }
+  }
 
   return (
     <div className="flex h-screen bg-gray-50">
@@ -287,89 +454,69 @@ export default function DeliverymanDashboard() {
             </div>
 
             <div className="border-t border-gray-200">
-              <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gray-50">
-                    <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                        {t("deliveryman.orderId")}
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                        {t("deliveryman.customer")}
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                        {t("deliveryman.address")}
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                        {t("deliveryman.status")}
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                        {t("deliveryman.date")}
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-200 bg-white">
-                    {[
-                      {
-                        id: "#ECO-12345",
-                        customer: "John Doe",
-                        address: "123 Main St, Paris",
-                        status: "delivered",
-                        statusClass: "bg-green-100 text-green-800",
-                        date: "2025-04-01",
-                      },
-                      {
-                        id: "#ECO-23456",
-                        customer: "Jane Smith",
-                        address: "456 Oak Ave, Lyon",
-                        status: "inTransit",
-                        statusClass: "bg-yellow-100 text-yellow-800",
-                        date: "2025-04-02",
-                      },
-                      {
-                        id: "#ECO-34567",
-                        customer: "Robert Johnson",
-                        address: "789 Pine Rd, Marseille",
-                        status: "pending",
-                        statusClass: "bg-blue-100 text-blue-800",
-                        date: "2025-04-03",
-                      },
-                      {
-                        id: "#ECO-45678",
-                        customer: "Emily Davis",
-                        address: "321 Cedar Ln, Bordeaux",
-                        status: "delivered",
-                        statusClass: "bg-green-100 text-green-800",
-                        date: "2025-04-04",
-                      },
-                      {
-                        id: "#ECO-56789",
-                        customer: "Michael Brown",
-                        address: "654 Elm Blvd, Nice",
-                        status: "inTransit",
-                        statusClass: "bg-yellow-100 text-yellow-800",
-                        date: "2025-04-05",
-                      },
-                    ].map((item) => (
-                      <tr key={item.id} className="hover:bg-gray-50">
-                        <td className="whitespace-nowrap px-6 py-4 text-sm font-medium text-gray-900">{item.id}</td>
-                        <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">{item.customer}</td>
-                        <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">{item.address}</td>
-                        <td className="whitespace-nowrap px-6 py-4 text-sm">
-                          <span
-                            className={`inline-flex rounded-full px-2 text-xs font-semibold leading-5 ${item.statusClass}`}
-                          >
-                            {t(`deliveryman.deliveriess.${item.status}`)}
-                          </span>
-                        </td>
-                        <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">
-                          {new Date(item.date).toLocaleDateString()}
-                        </td>
+              {loading ? (
+                <div className="flex justify-center items-center p-8">
+                  <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-green-500"></div>
+                </div>
+              ) : error ? (
+                <div className="p-8 text-center text-red-500">{error}</div>
+              ) : recentDeliveries.length === 0 ? (
+                <div className="p-8 text-center text-gray-500">
+                  <Package className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+                  <p>{t("deliveryman.noDeliveriesYet")}</p>
+                  <Link 
+                    href="/app_deliveryman/announcements" 
+                    className="mt-2 inline-block text-green-500 hover:text-green-600"
+                  >
+                    {t("deliveryman.browseAnnouncements")}
+                  </Link>
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="min-w-full divide-y divide-gray-200">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                          {t("deliveryman.orderId")}
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                          {t("deliveryman.customer")}
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                          {t("deliveryman.address")}
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                          {t("deliveryman.status")}
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                          {t("deliveryman.date")}
+                        </th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                    </thead>
+                    <tbody className="divide-y divide-gray-200 bg-white">
+                      {recentDeliveries.map((item) => (
+                        <tr 
+                          key={item.id} 
+                          className="hover:bg-gray-50 cursor-pointer"
+                          onClick={() => window.location.href = `/app_deliveryman/delivery/${item.id.replace('#ECO-', '')}`}
+                        >
+                          <td className="whitespace-nowrap px-6 py-4 text-sm font-medium text-gray-900">{item.id}</td>
+                          <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">{item.customer}</td>
+                          <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">{item.address}</td>
+                          <td className="whitespace-nowrap px-6 py-4 text-sm">
+                            <span
+                              className={`inline-flex rounded-full px-2 text-xs font-semibold leading-5 ${item.statusClass}`}
+                            >
+                              {t(`deliveryman.deliveriess.${item.status}`)}
+                            </span>
+                          </td>
+                          <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">{item.date}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
             </div>
           </div>
         </main>

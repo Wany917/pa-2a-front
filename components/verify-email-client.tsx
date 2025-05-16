@@ -97,7 +97,7 @@ export default function VerifyEmailClient() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ 
-          user_info: `{code: {'first_name': '${formData.firstname}', 'last_name': '${formData.name}', 'email': '${formData.email}'}}`, 
+          user_info: {code: {'first_name': formData.firstname, 'last_name': formData.name, 'email': formData.email}}, 
           code: verificationCode 
         }),
         credentials: "include",
@@ -168,7 +168,7 @@ export default function VerifyEmailClient() {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ 
-            user_info: `{code: {'first_name': '${formData.firstname}', 'last_name': '${formData.name}', 'email': '${formData.email}'}}` 
+            user_info: {code: {'first_name': formData.firstname, 'last_name': formData.name, 'email': formData.email}} 
           }),
           credentials: "include",
         }
