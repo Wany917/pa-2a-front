@@ -35,33 +35,33 @@ export default function ResponsiveHeader({ activePage }: HeaderProps) {
 		let path = '';
 
     const token =
-      sessionStorage.getItem('authToken') ||
-      localStorage.getItem('authToken');
+			sessionStorage.getItem('authToken') ||
+			localStorage.getItem('authToken');
     if (!token) return;
 
     let user_id = '';
     
     try {
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/auth/me`,
-        {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${token}`,
-          },
-          credentials: "include",
-        }
-      );
-      
-      if (!response.ok) throw new Error('Failed to fetch user data');
-      
-      const userData = await response.json();
-      user_id = userData.id;
-    } catch (error) {
-      console.error('Error fetching user data:', error);
-      return;
-    }
+		const response = await fetch(
+			`${process.env.NEXT_PUBLIC_API_URL}/auth/me`,
+			{
+				method: "GET",
+				headers: {
+					"Content-Type": "application/json",
+					"Authorization": `Bearer ${token}`,
+				},
+				credentials: "include",
+			}
+		);
+		
+		if (!response.ok) throw new Error('Failed to fetch user data');
+		
+		const userData = await response.json();
+		user_id = userData.id;
+	} catch (error) {
+		console.error('Error fetching user data:', error);
+		return;
+	}
 
 		switch (buttonName) {
 			case 'announcements':
@@ -84,136 +84,136 @@ export default function ResponsiveHeader({ activePage }: HeaderProps) {
 				break;
 			case 'register-delivery-man':
         try {
-          if (!user_id) {
-            console.error('User ID not available');
-            path = '/register/delivery-man';
-            break;
-          }
-          
-          const response = await fetch(
-            `${process.env.NEXT_PUBLIC_API_URL}/justification-pieces/user/${user_id}`,
-            {
-              method: "GET",
-              headers: {
-                "Content-Type": "application/json",
-                "Authorization": `Bearer ${token}`,
-              },
-              credentials: "include",
-            }
-          );
-          
-          if (!response.ok) {
-            throw new Error(`API request failed with status ${response.status}`);
-          }
-          
-          const justificationPieceData = await response.json();
-          
-          if (justificationPieceData.justificationPieces && justificationPieceData.justificationPieces.length > 0) {
-            const hasVerified = justificationPieceData.justificationPieces.some(
-              (piece: any) => piece.verificationStatus === 'verified'
-            );
-            
-            const hasPending = justificationPieceData.justificationPieces.some(
-              (piece: any) => piece.verificationStatus === 'pending'
-            );
-            
-            if (hasVerified) {
-              path = '/app_deliveryman';
-            } else if (hasPending) {
-              path = '/documents-verification/pending-validation/deliveryman';
-            } else {
-              path = '/register/delivery-man';
-            }
-          } else {
-            path = '/register/delivery-man';
-          }
-        } catch (error) {
-          console.error('Error fetching justification pieces:', error);
-          path = '/register/delivery-man';
-        }
+			if (!user_id) {
+				console.error('User ID not available');
+				path = '/register/delivery-man';
 				break;
-			case 'register-shopkeeper':
-        try {
-          if (!user_id) {
-            console.error('User ID not available');
-            path = '/register/shopkeeper';
-            break;
-          }
+			}
 
-          const response = await fetch(
-            `${process.env.NEXT_PUBLIC_API_URL}/commercants/${user_id}/profile`,
-            {
-              method: "GET",
-              headers: {
-                "Content-Type": "application/json",
-              },
-              credentials: "include",
-            }
-          )
+			const response = await fetch(
+				`${process.env.NEXT_PUBLIC_API_URL}/justification-pieces/user/${user_id}`,
+				{
+					method: "GET",
+					headers: {
+						"Content-Type": "application/json",
+						"Authorization": `Bearer ${token}`,
+					},
+					credentials: "include",
+				}
+			);
 
-          const commercantData = await response.json();
+			if (!response.ok) {
+				throw new Error(`API request failed with status ${response.status}`);
+			}
 
-          if (commercantData.commercant && commercantData.commercant.verificationState == 'verified') {
-            path = '/app_shopkeeper';
-          } else if (commercantData.commercant && commercantData.commercant.verificationState == 'pending') {
-            path = '/documents-verification/pending-validation/shopkeeper';
-          } else {
-            path = '/register/shopkeeper';
-          }
-        } catch (error) {
-          console.error('Error fetching user data:', error);
-          path = '/register/shopkeeper';
-        }
+			const justificationPieceData = await response.json();
+			
+			if (justificationPieceData.justificationPieces && justificationPieceData.justificationPieces.length > 0) {
+				const hasVerified = justificationPieceData.justificationPieces.some(
+				(piece: any) => piece.verificationStatus === 'verified'
+				);
+				
+				const hasPending = justificationPieceData.justificationPieces.some(
+				(piece: any) => piece.verificationStatus === 'pending'
+				);
+				
+				if (hasVerified) {
+					path = '/app_deliveryman';
+				} else if (hasPending) {
+					path = '/documents-verification/pending-validation/deliveryman';
+				} else {
+					path = '/register/delivery-man';
+				}
+			} else {
+				path = '/register/delivery-man';
+			}
+			} catch (error) {
+				console.error('Error fetching justification pieces:', error);
+				path = '/register/delivery-man';
+			}
+					break;
+				case 'register-shopkeeper':
+			try {
+				if (!user_id) {
+					console.error('User ID not available');
+					path = '/register/shopkeeper';
+					break;
+				}
+
+				const response = await fetch(
+					`${process.env.NEXT_PUBLIC_API_URL}/commercants/${user_id}/profile`,
+					{
+					method: "GET",
+					headers: {
+						"Content-Type": "application/json",
+					},
+					credentials: "include",
+					}
+				)
+
+				const commercantData = await response.json();
+
+				if (commercantData.commercant && commercantData.commercant.verificationState == 'verified') {
+					path = '/app_shopkeeper';
+				} else if (commercantData.commercant && commercantData.commercant.verificationState == 'pending') {
+					path = '/documents-verification/pending-validation/shopkeeper';
+				} else {
+					path = '/register/shopkeeper';
+				}
+			} catch (error) {
+				console.error('Error fetching user data:', error);
+				path = '/register/shopkeeper';
+			}
+					break;
+				case 'register-service-provider':
+					try {
+			if (!user_id) {
+				console.error('User ID not available');
+				path = '/register/service-provider';
 				break;
-			case 'register-service-provider':
-				try {
-          if (!user_id) {
-            console.error('User ID not available');
-            path = '/register/service-provider';
-            break;
-          }
-          
-          const response = await fetch(
-            `${process.env.NEXT_PUBLIC_API_URL}/justification-pieces/user/${user_id}`,
-            {
-              method: "GET",
-              headers: {
-                "Content-Type": "application/json",
-                "Authorization": `Bearer ${token}`,
-              },
-              credentials: "include",
-            }
-          );
-          
-          if (!response.ok) {
-            throw new Error(`API request failed with status ${response.status}`);
-          }
-          
-          const justificationPieceData = await response.json();
-          
-          if (justificationPieceData.justificationPieces && justificationPieceData.justificationPieces.length > 0) {
-            const hasVerified = justificationPieceData.justificationPieces.some(
-              (piece: any) => piece.verificationStatus === 'verified'
-            );
-            
-            const hasPending = justificationPieceData.justificationPieces.some(
-              (piece: any) => piece.verificationStatus === 'pending'
-            );
-            
-            if (hasVerified) {
-              path = '/app_service-provider';
-            } else if (hasPending) {
-              path = '/documents-verification/pending-validation/service-provider';
-            } else {
-              path = '/register/service-provider';
-            }
-          } else {
-            path = '/register/service-provider';
-          }
-        } catch (error) {
-          console.error('Error fetching justification pieces:', error);
-          path = '/register/service-provider';
-        }
+			}
+			
+			const response = await fetch(
+				`${process.env.NEXT_PUBLIC_API_URL}/justification-pieces/user/${user_id}`,
+				{
+				method: "GET",
+				headers: {
+					"Content-Type": "application/json",
+					"Authorization": `Bearer ${token}`,
+				},
+				credentials: "include",
+				}
+			);
+			
+			if (!response.ok) {
+				throw new Error(`API request failed with status ${response.status}`);
+			}
+			
+			const justificationPieceData = await response.json();
+			
+			if (justificationPieceData.justificationPieces && justificationPieceData.justificationPieces.length > 0) {
+				const hasVerified = justificationPieceData.justificationPieces.some(
+				(piece: any) => piece.verificationStatus === 'verified'
+				);
+				
+				const hasPending = justificationPieceData.justificationPieces.some(
+				(piece: any) => piece.verificationStatus === 'pending'
+				);
+				
+				if (hasVerified) {
+					path = '/app_service-provider';
+				} else if (hasPending) {
+					path = '/documents-verification/pending-validation/service-provider';
+				} else {
+					path = '/register/service-provider';
+				}
+			} else {
+				path = '/register/service-provider';
+			}
+			} catch (error) {
+				console.error('Error fetching justification pieces:', error);
+				path = '/register/service-provider';
+			}
 				break;
 			case 'logout':
 				path = '/logout';
