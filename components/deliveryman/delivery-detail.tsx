@@ -6,6 +6,21 @@ import Link from "next/link"
 import { useLanguage } from "@/components/language-context"
 import LanguageSelector from "@/components/language-selector"
 import { Package, ChevronDown } from "lucide-react"
+import { useApiCall, useApiCallWithSuccess } from "@/hooks/use-api-call"
+import { useLivreurWebSocket } from "@/hooks/use-livreur-websocket"
+import { livreurService } from "@/services/livreurService"
+
+interface MultiRoleUser {
+  id: number
+  firstName: string
+  lastName: string
+  email: string
+  livreur?: {
+    id: number
+    availabilityStatus: 'available' | 'busy' | 'offline'
+    rating: string
+  }
+}
 
 interface DeliveryData {
   id: string | number
@@ -30,143 +45,120 @@ interface DeliveryData {
   createdAt?: string
   updatedAt?: string
   livreur?: any
-  colis?: any[]
   trackingNumber?: string
   weight?: string
   dimensions?: string
   // champs fusionnés
   annonce?: any
+  clientInfo?: {
+    firstName: string
+    lastName: string
+  }
 }
 
 const DeliveryDetailClient = ({ id }: { id: string }) => {
   const { t } = useLanguage()
   const [delivery, setDelivery] = useState<DeliveryData | null>(null)
-  const [loading, setLoading] = useState(true)
+  const [user, setUser] = useState<MultiRoleUser | null>(null)
   const [code, setCode] = useState<string[]>(Array(6).fill("")) // État pour les 6 chiffres
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState("")
   const inputRefs = useRef<(HTMLInputElement | null)[]>([])
 
-  useEffect(() => {
-    // Récupération des données de livraison depuis l'API
-    const fetchDelivery = async () => {
-      setLoading(true)
-      try {
-        const token = sessionStorage.getItem('authToken') || localStorage.getItem('authToken')
-        if (!token) {
-          setError("Vous devez être connecté")
-          setLoading(false)
-          return
-        }
+  const { execute: executeGetProfile, loading: profileLoading } = useApiCall<MultiRoleUser>()
+  const { execute: executeGetDelivery, loading: deliveryLoading } = useApiCall<any>()
+  const { execute: executeUpdateStatus } = useApiCallWithSuccess('Statut mis à jour avec succès !')
+  
+  const loading = profileLoading || deliveryLoading
 
-        // Récupérer les détails de la livraison
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/livraisons/${id}`, {
+  const loadDeliveryData = async () => {
+    try {
+      console.log('Chargement des détails de la livraison:', id)
+      
+      const deliveryResponse: any = await executeGetDelivery(
+        fetch(`${process.env.NEXT_PUBLIC_API_URL}/livraisons/${id}`, {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
+            'Authorization': `Bearer ${sessionStorage.getItem('authToken') || localStorage.getItem('authToken')}`
           },
           credentials: 'include'
+        }).then(res => {
+          if (!res.ok) throw new Error('Erreur lors de la récupération de la livraison')
+          return res.json()
         })
+      )
+      
+      console.log("Données de livraison récupérées:", deliveryResponse)
+      
+      const livraisonData = deliveryResponse.livraison || deliveryResponse
+      
+      const deliveryData: DeliveryData = {
+        id: livraisonData.id,
+        livreurId: livraisonData.livreurId,
+        status: livraisonData.status,
+        annonceId: livraisonData.annonceId,
+        livreur: livraisonData.livreur,
+        createdAt: livraisonData.createdAt || livraisonData.created_at,
+        updatedAt: livraisonData.updatedAt || livraisonData.updated_at,
+        pickupLocation: livraisonData.pickupLocation || livraisonData.pickup_location,
+        dropoffLocation: livraisonData.dropoffLocation || livraisonData.dropoff_location,
+        annonce: livraisonData.annonce,
+        
+        clientInfo: livraisonData.client ? {
+          firstName: livraisonData.client.firstName || livraisonData.client.first_name || '',
+          lastName: livraisonData.client.lastName || livraisonData.client.last_name || ''
+        } : undefined,
+        
+        name: livraisonData.annonce?.title || `Livraison #${livraisonData.id}`,
+        image: livraisonData.annonce?.imagePath ? `${process.env.NEXT_PUBLIC_API_URL}/${livraisonData.annonce.imagePath}` : "/placeholder.svg",
+        sender: livraisonData.client ? `${livraisonData.client.firstName || livraisonData.client.first_name || ''} ${livraisonData.client.lastName || livraisonData.client.last_name || ''}`.trim() : "Client",
+        deliveryAddress: livraisonData.dropoffLocation || livraisonData.dropoff_location || "Adresse non spécifiée",
+        price: livraisonData.annonce?.price ? `€${livraisonData.annonce.price}` : "Prix non spécifié",
+        deliveryDate: formatDate(livraisonData.createdAt || livraisonData.created_at),
+        amount: 1,
+        storageBox: "Consigne standard",
+        size: "Medium",
+        statut: mapStatus(livraisonData.status),
+        statusText: getStatusText(mapStatus(livraisonData.status)),
+        timeAway: "Distance estimée: 5 km",
+        trackingNumber: `TRACK-${livraisonData.id}`,
+        weight: "2.5 kg",
+        dimensions: "30×20×15 cm"
+      }
 
-        if (!response.ok) {
-          throw new Error('Erreur lors de la récupération de la livraison')
+      setDelivery(deliveryData)
+      console.log('Livraison formatée:', deliveryData)
+      
+    } catch (error) {
+      console.error("Erreur lors du chargement de la livraison:", error)
+    }
+  }
+
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        const userProfile = await executeGetProfile(livreurService.getProfile())
+        
+        if (!userProfile?.livreur?.id) {
+          console.error('Utilisateur non-livreur:', userProfile)
+          return
         }
-
-        const responseData = await response.json()
-        console.log("Données de livraison brutes:", responseData)
         
-        // Extraire les données de livraison
-        const livraisonData = responseData.livraison || responseData
+        setUser(userProfile)
         
-        // Extraire le colis associé (prendre le premier si c'est un tableau)
-        const colis = Array.isArray(livraisonData.colis) && livraisonData.colis.length > 0 
-                    ? livraisonData.colis[0] 
-                    : livraisonData.colis || null
-                    
-        // Extraire l'ID de l'annonce depuis le colis
-        const annonceId = colis?.annonceId
+        await loadDeliveryData()
         
-        // Récupérer les informations de l'annonce associée si on a un ID d'annonce
-        let annonceData: any = {}
-        if (annonceId) {
-          try {
-            const annonceResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/annonces/${annonceId}`, {
-              method: 'GET',
-              headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
-              },
-              credentials: 'include'
-            })
-            
-            if (annonceResponse.ok) {
-              annonceData = await annonceResponse.json()
-              console.log("Données de l'annonce:", annonceData)
-            }
-          } catch (error) {
-            console.error("Erreur lors de la récupération de l'annonce:", error)
-          }
-        }
-
-        // Extraire des informations du colis
-        const colisDescription = colis?.contentDescription || ''
-        const packageSizeMatch = colisDescription.match(/Package Size: (Small|Medium|Large)/)
-        const packageSize = packageSizeMatch ? packageSizeMatch[1] : 'Medium'
-        
-        // Récupérer le nom complet de l'utilisateur si disponible
-        const client = annonceData.utilisateur ? 
-                      `${annonceData.utilisateur.firstName || ''} ${annonceData.utilisateur.lastName || ''}`.trim() : 
-                      "Client"
-
-        // Fusionner les données
-        const deliveryData: DeliveryData = {
-          id: livraisonData.id,
-          livreurId: livraisonData.livreurId,
-          status: livraisonData.status,
-          livreur: livraisonData.livreur,
-          createdAt: livraisonData.createdAt,
-          updatedAt: livraisonData.updatedAt,
-          colis: livraisonData.colis,
-          pickupLocation: livraisonData.pickupLocation,
-          dropoffLocation: livraisonData.dropoffLocation,
-          annonce: annonceData,
-          
-          // Données du colis
-          trackingNumber: colis?.trackingNumber || "Non spécifié",
-          weight: colis?.weight || "N/A",
-          dimensions: colis ? `${colis.length}×${colis.width}×${colis.height} cm` : "N/A",
-          
-          // Champs formatés pour l'affichage
-          name: annonceData.title || colis?.trackingNumber || "Livraison sans titre",
-          image: annonceData.imagePath ? `${process.env.NEXT_PUBLIC_API_URL}/${annonceData.imagePath}` : "/placeholder.svg",
-          sender: client,
-          deliveryAddress: livraisonData.dropoffLocation || colis?.currentAddress || "Adresse non spécifiée",
-          price: annonceData.price ? `€${annonceData.price}` : "Prix non spécifié",
-          deliveryDate: formatDate(livraisonData.createdAt || annonceData.scheduledDate),
-          amount: 1,
-          storageBox: colis?.locationType || "Non spécifié",
-          size: packageSize,
-          statut: mapStatus(livraisonData.status),
-          statusText: getStatusText(mapStatus(livraisonData.status)),
-          timeAway: "Distance estimée: 5 km"
-        }
-
-        setDelivery(deliveryData)
       } catch (error) {
-        console.error("Error fetching delivery:", error)
-        setError("Impossible de charger les détails de la livraison")
-      } finally {
-        setLoading(false)
+        console.error("Erreur lors du chargement initial:", error)
       }
     }
-
+    
     if (id) {
-      fetchDelivery()
+      loadData()
     }
   }, [id])
 
-  // Fonction pour mapper les statuts API aux statuts attendus par l'interface
   const mapStatus = (apiStatus: string): string => {
     switch (apiStatus?.toLowerCase()) {
       case "scheduled":
@@ -182,7 +174,6 @@ const DeliveryDetailClient = ({ id }: { id: string }) => {
     }
   }
 
-  // Fonction pour mapper les statuts de l'interface vers les statuts API
   const getApiStatus = (uiStatus: string): string => {
     switch (uiStatus?.toLowerCase()) {
       case "en_attente":
@@ -198,18 +189,15 @@ const DeliveryDetailClient = ({ id }: { id: string }) => {
     }
   }
 
-  // Fonction utilitaire pour formater la date
   const formatDate = (dateString: string) => {
     if (!dateString) return "Date non spécifiée"
     
     try {
       const date = new Date(dateString)
-      // Vérifier si la date est valide
       if (isNaN(date.getTime())) {
         return "Date invalide"
       }
       
-      // Options pour le format de date
       const options: Intl.DateTimeFormatOptions = { 
         year: 'numeric', 
         month: 'long', 
@@ -225,7 +213,6 @@ const DeliveryDetailClient = ({ id }: { id: string }) => {
     }
   }
 
-  // Fonction pour obtenir le texte du statut
   const getStatusText = (status: string) => {
     switch (status) {
       case "en_attente":
@@ -287,16 +274,12 @@ const DeliveryDetailClient = ({ id }: { id: string }) => {
         return
       }
       
-      // Vérifier le code entré avec le code 123456 (pour démonstration)
-      // Dans une vraie application, on pourrait vérifier avec les premiers chiffres 
-      // du numéro de tracking ou faire une vérification via API
       const trackingCode = delivery.trackingNumber?.replace(/\D/g, '').substring(0, 6)
       const validCodes = ["123456", trackingCode]
       
       if (validCodes.includes(verificationCode)) {
         console.log("Code validé, mise à jour du statut de la livraison");
         
-        // Mettre à jour le statut de la livraison avec tous les champs potentiellement requis
         const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/livraisons/${id}`, {
           method: 'PUT',
           headers: {
@@ -305,7 +288,6 @@ const DeliveryDetailClient = ({ id }: { id: string }) => {
           },
           body: JSON.stringify({
             status: "completed",
-            // Inclure les autres champs optionnels avec leurs valeurs existantes
             livreur_id: delivery.livreurId,
             pickup_location: delivery.pickupLocation,
             dropoff_location: delivery.dropoffLocation
@@ -313,7 +295,6 @@ const DeliveryDetailClient = ({ id }: { id: string }) => {
           credentials: 'include'
         })
         
-        // Journalisons la réponse complète en cas d'erreur pour diagnostic
         if (!response.ok) {
           const errorText = await response.text();
           console.error("Erreur API:", response.status, errorText);
@@ -326,7 +307,6 @@ const DeliveryDetailClient = ({ id }: { id: string }) => {
           throw new Error(`Erreur lors de la mise à jour de la livraison: ${response.status}`);
         }
         
-        // Mettre à jour l'interface
         setDelivery({
           ...delivery,
           statut: "livré",
@@ -380,7 +360,6 @@ const DeliveryDetailClient = ({ id }: { id: string }) => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
       <header className="bg-white p-4 flex justify-between items-center shadow-sm">
         <Link href="/app_deliveryman" className="flex items-center">
           <Image src="/logo.png" alt="EcoDeli" width={120} height={40} className="h-auto" />
@@ -402,7 +381,6 @@ const DeliveryDetailClient = ({ id }: { id: string }) => {
         <h1 className="text-2xl font-bold mb-6">{t("deliveryman.deliveryDetails")}</h1>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Left column - Delivery information */}
           <div className="bg-white rounded-lg shadow-md p-6">
             <div className="flex justify-center mb-6">
               <div className="relative w-full max-w-md h-64">
@@ -452,21 +430,11 @@ const DeliveryDetailClient = ({ id }: { id: string }) => {
             </div>
           </div>
 
-          {/* Right column - Code validation (uniquement affiché si la livraison est en cours) */}
           {delivery.statut === "en_cours" && (
             <div className="bg-white rounded-lg shadow-md p-6">
               <h2 className="text-xl font-bold mb-4">{t("deliveryman.enterCode")}</h2>
               <p className="text-gray-600 mb-6">{t("deliveryman.enterCodeDescription")}</p>
               
-              {delivery.colis && (
-                <div className="mb-6 bg-gray-100 p-4 rounded-md">
-                  <h3 className="font-medium text-lg mb-2">Informations du colis</h3>
-                  <p className="mb-1"><span className="font-medium">Numéro de suivi:</span> {delivery.trackingNumber}</p>
-                  <p className="mb-1"><span className="font-medium">Poids:</span> {delivery.weight} kg</p>
-                  <p className="mb-1"><span className="font-medium">Dimensions:</span> {delivery.dimensions}</p>
-                </div>
-              )}
-
               <div className="flex justify-center space-x-2 mb-6">
                 {[0, 1, 2, 3, 4, 5].map((index) => (
                   <input
@@ -504,7 +472,6 @@ const DeliveryDetailClient = ({ id }: { id: string }) => {
             </div>
           )}
           
-          {/* Message si la livraison est déjà terminée */}
           {delivery.statut === "livré" && (
             <div className="bg-white rounded-lg shadow-md p-6">
               <h2 className="text-xl font-bold mb-4 text-green-600">{t("deliveryman.deliveryCompleted")}</h2>
@@ -516,7 +483,6 @@ const DeliveryDetailClient = ({ id }: { id: string }) => {
             </div>
           )}
           
-          {/* Si la livraison est en attente, afficher un bouton pour commencer */}
           {delivery.statut === "en_attente" && (
             <div className="bg-white rounded-lg shadow-md p-6">
               <h2 className="text-xl font-bold mb-4">{t("deliveryman.startDelivery")}</h2>
@@ -531,7 +497,6 @@ const DeliveryDetailClient = ({ id }: { id: string }) => {
                     
                     console.log("Démarrage de la livraison, mise à jour du statut");
                     
-                    // Mettre à jour le statut de la livraison avec tous les champs potentiellement requis
                     const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/livraisons/${id}`, {
                       method: 'PUT',
                       headers: {
@@ -540,7 +505,6 @@ const DeliveryDetailClient = ({ id }: { id: string }) => {
                       },
                       body: JSON.stringify({
                         status: "in_progress",
-                        // Inclure les autres champs optionnels avec leurs valeurs existantes
                         livreur_id: delivery.livreurId,
                         pickup_location: delivery.pickupLocation,
                         dropoff_location: delivery.dropoffLocation
@@ -548,7 +512,6 @@ const DeliveryDetailClient = ({ id }: { id: string }) => {
                       credentials: 'include'
                     })
                     
-                    // Journalisons la réponse complète en cas d'erreur pour diagnostic
                     if (!response.ok) {
                       const errorText = await response.text();
                       console.error("Erreur API:", response.status, errorText);

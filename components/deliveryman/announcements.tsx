@@ -19,8 +19,25 @@ import {
 import { useLanguage } from "@/components/language-context"
 import LanguageSelector from "@/components/language-selector"
 import DeliverymanLayout from "./layout"
+import { useApiCall, useApiCallWithSuccess } from "@/hooks/use-api-call"
+import { useLivreurWebSocket } from "@/hooks/use-livreur-websocket"
+import { livreurService } from "@/services/livreurService"
+import { clientService } from "@/services/clientService"
 
-// Type pour les annonces
+// ✅ AMÉLIORÉ - Interface pour utilisateur multi-rôles
+interface MultiRoleUser {
+  id: number
+  firstName: string
+  lastName: string
+  email: string
+  livreur?: {
+    id: number
+    availabilityStatus: 'available' | 'busy' | 'offline'
+    rating: string
+  }
+}
+
+// Type pour les annonces (conservé à l'identique)
 interface Announcement {
   id: string | number
   title: string
@@ -40,70 +57,116 @@ interface Announcement {
 export default function DeliverymanAnnouncements() {
   const { t } = useLanguage()
   const [announcements, setAnnouncements] = useState<Announcement[]>([])
-  const [loading, setLoading] = useState<boolean>(false)
-  const [error, setError] = useState<string | null>(null)
+  const [user, setUser] = useState<MultiRoleUser | null>(null)
   const [loadingAccept, setLoadingAccept] = useState<{id: number, loading: boolean}>({ id: 0, loading: false })
 
-  // Récupérer les annonces disponibles
-  useEffect(() => {
-    const fetchAnnouncements = async () => {
-      setLoading(true)
-      try {
-        const token = sessionStorage.getItem('authToken') || localStorage.getItem('authToken')
-        if (!token) {
-          setError("Vous devez être connecté")
-          setLoading(false)
-          return
-        }
+  // ✅ NOUVEAUX HOOKS - Architecture améliorée
+  const { execute: executeGetProfile, loading: profileLoading } = useApiCall<MultiRoleUser>()
+  const { execute: executeGetAnnouncements, loading: announcementsLoading } = useApiCall<any>()
+  const { execute: executeAcceptDelivery } = useApiCallWithSuccess('Livraison acceptée avec succès !')
+  
+  // ✅ NOUVEAU - WebSocket pour notifications temps réel
+  const websocket = useLivreurWebSocket({
+    userId: user?.livreur?.id || 0,
+    onNewDeliveryAvailable: (data) => {
+      console.log('Nouvelle livraison disponible:', data)
+      // Recharger les annonces pour montrer la nouvelle
+      loadAnnouncements()
+    },
+    onDeliveryAcceptedSuccess: (data) => {
+      console.log('Livraison acceptée avec succès:', data)
+      // Recharger les annonces pour retirer celle acceptée
+      loadAnnouncements()
+    },
+    enableNotifications: true,
+    enableLocationTracking: false,
+  })
 
-        // Ici nous récupérons toutes les annonces qui n'ont pas encore de livraison
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/annonces`, {
+  const loadAnnouncements = async () => {
+    try {
+      console.log('Chargement des annonces disponibles...')
+      
+      const announcesResponse: any = await executeGetAnnouncements(
+        fetch(`${process.env.NEXT_PUBLIC_API_URL}/annonces`, {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
+            'Authorization': `Bearer ${sessionStorage.getItem('authToken') || localStorage.getItem('authToken')}`
           },
           credentials: 'include'
+        }).then(res => {
+          if (!res.ok) throw new Error('Erreur lors de la récupération des annonces')
+          return res.json()
         })
+      )
+      console.log('Annonces récupérées:', announcesResponse)
+      
+      // Extraire les annonces de la réponse
+      let annoncesData: any[] = []
+      if (Array.isArray(announcesResponse)) {
+        annoncesData = announcesResponse
+      } else if (announcesResponse?.annonces?.data && Array.isArray(announcesResponse.annonces.data)) {
+        annoncesData = announcesResponse.annonces.data
+      } else if (announcesResponse?.data && Array.isArray(announcesResponse.data)) {
+        annoncesData = announcesResponse.data
+      } else if (announcesResponse?.annonces && Array.isArray(announcesResponse.annonces)) {
+        annoncesData = announcesResponse.annonces
+      }
+      
+      console.log('Données annonces extraites:', annoncesData)
+      
+      // Transformer les données pour correspondre à notre interface (même logique qu'avant)
+      const formattedAnnouncements: Announcement[] = annoncesData
+        .filter((annonce: any) => annonce.state === 'open') // Ne montrer que les annonces ouvertes
+        .map((annonce: any) => ({
+          id: annonce.id,
+          title: annonce.title || "Annonce sans titre",
+          description: annonce.description,
+          image: annonce.imagePath ? `${process.env.NEXT_PUBLIC_API_URL}/${annonce.imagePath}` : "/placeholder.svg",
+          client: annonce.utilisateur ? `${annonce.utilisateur.firstName || annonce.utilisateur.first_name || ''} ${annonce.utilisateur.lastName || annonce.utilisateur.last_name || ''}`.trim() : "Client",
+          address: annonce.destinationAddress || annonce.destination_address || "Adresse non spécifiée",
+          price: `€${annonce.price || 0}`,
+          deliveryDate: formatDate(annonce.scheduledDate || annonce.scheduled_date),
+          amount: 1, // Par défaut 1 puisque ce n'est pas dans l'API
+          storageBox: annonce.storageBoxId || "Non spécifié",
+          size: getSizeFromWeight(5) as "Small" | "Medium" | "Large", // ✅ CORRIGÉ - Cast du type
+          isPriority: annonce.priority,
+          utilisateurId: annonce.utilisateurId || annonce.user_id
+        }))
 
-        if (!response.ok) {
-          throw new Error('Erreur lors de la récupération des annonces')
+      setAnnouncements(formattedAnnouncements)
+      console.log('Annonces formatées:', formattedAnnouncements)
+      
+    } catch (error) {
+      console.error("Erreur lors de la récupération des annonces:", error)
+      // ✅ Les erreurs sont gérées automatiquement par les hooks
+    }
+  }
+
+  // ✅ NOUVEAU - Chargement initial avec gestion du profil utilisateur
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        // 1. Charger le profil utilisateur d'abord
+        const userProfile = await executeGetProfile(livreurService.getProfile())
+        
+        // Vérifier que l'utilisateur est bien un livreur
+        if (!userProfile?.livreur?.id) {
+          console.error('Utilisateur non-livreur:', userProfile)
+          return
         }
-
-        const data = await response.json()
         
-        // Extraire le tableau d'annonces de la réponse
-        const annoncesData = data.annonces || []
+        setUser(userProfile)
         
-        // Transformer les données pour correspondre à notre interface
-        const formattedAnnouncements = annoncesData
-          .filter((annonce: any) => annonce.state === 'open') // Ne montrer que les annonces ouvertes
-          .map((annonce: any) => ({
-            id: annonce.id,
-            title: annonce.title || "Annonce sans titre",
-            description: annonce.description,
-            image: annonce.imagePath ? `${process.env.NEXT_PUBLIC_API_URL}/${annonce.imagePath}` : "/placeholder.svg",
-            client: annonce.utilisateur ? `${annonce.utilisateur.firstName} ${annonce.utilisateur.lastName}` : "Client",
-            address: annonce.destinationAddress || "Adresse non spécifiée",
-            price: `€${annonce.price || 0}`,
-            deliveryDate: formatDate(annonce.scheduledDate),
-            amount: 1, // Par défaut 1 puisque ce n'est pas dans l'API
-            storageBox: annonce.storageBoxId || "Non spécifié",
-            size: getSizeFromWeight(5), // Valeur par défaut
-            isPriority: annonce.priority,
-            utilisateurId: annonce.utilisateurId
-          }))
-
-        setAnnouncements(formattedAnnouncements)
+        // 2. Charger les annonces
+        await loadAnnouncements()
+        
       } catch (error) {
-        console.error("Erreur lors de la récupération des annonces:", error)
-        setError("Impossible de charger les annonces")
-      } finally {
-        setLoading(false)
+        console.error("Erreur lors du chargement initial:", error)
       }
     }
-
-    fetchAnnouncements()
+    
+    loadData()
   }, [])
 
   // Fonction utilitaire pour formater la date
@@ -121,68 +184,51 @@ export default function DeliverymanAnnouncements() {
     return "Large"
   }
 
-  // Accepter une livraison
+  // ✅ AMÉLIORÉ - Accepter une livraison avec nouvelle architecture
   const handleAcceptDelivery = async (announcementId: number) => {
     setLoadingAccept({ id: announcementId, loading: true })
     
     try {
-      const token = sessionStorage.getItem('authToken') || localStorage.getItem('authToken')
-      if (!token) {
-        alert("Vous devez être connecté pour accepter une livraison")
+      // Vérifier que l'utilisateur est bien un livreur
+      if (!user?.livreur?.id) {
+        alert("Vous devez être connecté en tant que livreur")
         return
       }
 
-      // Au lieu d'extraire l'ID du token, utilisons l'API pour obtenir les informations de l'utilisateur
-      const userResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/me`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        credentials: 'include'
-      })
-
-      if (!userResponse.ok) {
-        throw new Error('Erreur lors de la récupération des informations utilisateur')
-      }
-
-      const userData = await userResponse.json()
-      const userId = userData.id
-
-      if (!userId) {
-        alert("Impossible de récupérer vos informations d'utilisateur")
-        return
-      }
-
-      // Nous n'utilisons pas PATCH pour éviter les problèmes de CORS
-      // Cette API devrait mettre à jour le statut de l'annonce en "pending" automatiquement
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/annonces/${announcementId}/livraisons`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        credentials: 'include',
-        body: JSON.stringify({
-          livreur_id: userId,
-          status: 'scheduled',
-          pickup_location: "À récupérer",
-          dropoff_location: "À livrer"
-        })
-      })
-
-      if (!response.ok) {
-        throw new Error('Erreur lors de la création de la livraison')
-      }
-
-      const responseData = await response.json();
+      // ✅ NOUVEAU - Utiliser le service livreur pour accepter la livraison
+      console.log('Acceptation de la livraison pour l\'annonce:', announcementId)
       
-      alert("Livraison acceptée avec succès! L'annonce n'est plus visible pour les autres livreurs.")
+      // Créer la livraison via l'API
+      const response = await executeAcceptDelivery(
+        fetch(`${process.env.NEXT_PUBLIC_API_URL}/annonces/${announcementId}/livraisons`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${sessionStorage.getItem('authToken') || localStorage.getItem('authToken')}`
+          },
+          credentials: 'include',
+          body: JSON.stringify({
+            livreur_id: user.livreur.id,
+            status: 'scheduled',
+            pickup_location: "À récupérer",
+            dropoff_location: "À livrer"
+          })
+        }).then(res => {
+          if (!res.ok) throw new Error('Erreur lors de la création de la livraison')
+          return res.json()
+        })
+      )
+      
+      console.log('Livraison créée:', response)
+      
       // Retirer cette annonce de la liste
       setAnnouncements(prev => prev.filter(a => a.id !== announcementId))
       
-      // Rediriger vers la page des livraisons
-      window.location.href = '/app_deliveryman/deliveries';
+      // ✅ NOUVEAU - Redirection plus élégante
+      setTimeout(() => {
+        window.location.href = '/app_deliveryman/deliveries'
+      }, 1000)
+      
     } catch (error) {
       console.error("Erreur lors de l'acceptation de la livraison:", error)
       alert("Impossible d'accepter cette livraison")
@@ -191,29 +237,8 @@ export default function DeliverymanAnnouncements() {
     }
   }
 
-  // Cette fonction n'est plus utilisée, mais on la garde au cas où
-  const getUserIdFromToken = (token: string): number | null => {
-    try {
-      // Cette méthode peut être peu fiable selon le format du token
-      // Il est préférable d'utiliser l'API pour obtenir les informations de l'utilisateur
-      const parts = token.split('.');
-      if (parts.length !== 3) {
-        throw new Error('Format de token invalide');
-      }
-      
-      const base64Url = parts[1];
-      const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-      
-      // Décodage Base64 plus sûr
-      const rawPayload = atob(base64);
-      const payload = JSON.parse(rawPayload);
-      
-      return payload.id || null;
-    } catch (error) {
-      console.error("Erreur lors du décodage du token:", error)
-      return null;
-    }
-  }
+  // ✅ Variables de chargement unifiées
+  const loading = profileLoading || announcementsLoading
 
   return (
     <DeliverymanLayout>
@@ -224,10 +249,6 @@ export default function DeliverymanAnnouncements() {
         {loading ? (
           <div className="flex justify-center items-center h-64">
             <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-green-500"></div>
-          </div>
-        ) : error ? (
-          <div className="bg-red-100 text-red-700 p-4 rounded-md">
-            {error}
           </div>
         ) : (
           <>

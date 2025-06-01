@@ -136,33 +136,75 @@ export default function ResponsiveHeader({ activePage }: HeaderProps) {
         try {
           if (!user_id) {
             console.error('User ID not available');
-            path = '/register/shopkeeper';
+            path = '/documents-verification/shopkeeper';
             break;
           }
 
-          const response = await fetch(
-            `${process.env.NEXT_PUBLIC_API_URL}/commercants/${user_id}/profile`,
+          const userResponse = await fetch(
+            `${process.env.NEXT_PUBLIC_API_URL}/auth/me`,
             {
               method: "GET",
               headers: {
                 "Content-Type": "application/json",
+                "Authorization": `Bearer ${token}`,
               },
               credentials: "include",
             }
-          )
+          );
 
-          const commercantData = await response.json();
+          if (!userResponse.ok) {
+            throw new Error('Erreur lors de la récupération du profil utilisateur');
+          }
 
-          if (commercantData.commercant && commercantData.commercant.verificationState == 'verified') {
-            path = '/app_shopkeeper';
-          } else if (commercantData.commercant && commercantData.commercant.verificationState == 'pending') {
-            path = '/documents-verification/pending-validation/shopkeeper';
+          const userData = await userResponse.json();
+          console.log('Données utilisateur complètes:', userData);
+
+          if (userData.commercant?.id) {
+            console.log('Utilisateur a un profil commerçant:', userData.commercant);
+            
+            if (userData.commercant.verificationState === 'verified' || userData.commercant.status === 'validated') {
+              path = '/app_shopkeeper';
+            } else {
+              path = '/documents-verification/pending-validation/shopkeeper';
+            }
           } else {
-            path = '/register/shopkeeper';
+            try {
+              const justificationResponse = await fetch(
+                `${process.env.NEXT_PUBLIC_API_URL}/justification-pieces/user/${user_id}`,
+                {
+                  method: "GET",
+                  headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${token}`,
+                  },
+                  credentials: "include",
+                }
+              );
+
+              if (justificationResponse.ok) {
+                const justificationData = await justificationResponse.json();
+                console.log('Pièces justificatives:', justificationData);
+                
+                const hasShopkeeperPending = justificationData.some((piece: any) => 
+                  piece.document_type === 'shopkeeper_verification' && piece.status === 'pending'
+                );
+
+                if (hasShopkeeperPending) {
+                  path = '/documents-verification/pending-validation/shopkeeper';
+                } else {
+                  path = '/documents-verification/shopkeeper';
+                }
+              } else {
+                path = '/documents-verification/shopkeeper';
+              }
+            } catch (justificationError) {
+              console.log('Endpoint justification-pieces non disponible');
+              path = '/documents-verification/shopkeeper';
+            }
           }
         } catch (error) {
-          console.error('Error fetching user data:', error);
-          path = '/register/shopkeeper';
+          console.error('Erreur lors de la vérification du statut commerçant:', error);
+          path = '/documents-verification/shopkeeper';
         }
 				break;
 			case 'register-service-provider':
@@ -417,9 +459,9 @@ export default function ResponsiveHeader({ activePage }: HeaderProps) {
 									className='block px-4 py-2 text-gray-700 hover:bg-gray-100 w-full text-left'
 									onClick={() =>
 										navigateTo(
-                      'register-shopkeeper', 
-                      true
-                    )
+											'register-shopkeeper',
+											true
+										)
 									}
 								>
 									{t('common.shopkeeper')}
