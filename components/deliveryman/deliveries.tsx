@@ -10,8 +10,25 @@ import {
 } from "lucide-react"
 import { useLanguage } from "@/components/language-context"
 import DeliverymanLayout from "./layout"
+// ✅ NOUVEAUX IMPORTS - Architecture moderne
+import { useApiCall } from "@/hooks/use-api-call"
+import { useLivreurWebSocket } from "@/hooks/use-livreur-websocket"
+import { livreurService } from "@/services/livreurService"
 
-// Type pour les livraisons
+// ✅ AMÉLIORÉ - Interface pour utilisateur multi-rôles
+interface MultiRoleUser {
+  id: number
+  firstName: string
+  lastName: string
+  email: string
+  livreur?: {
+    id: number
+    availabilityStatus: 'available' | 'busy' | 'offline'
+    rating: string
+  }
+}
+
+// ✅ AMÉLIORÉ - Type pour les livraisons basé sur les vraies données
 interface Delivery {
   id: string | number
   image?: string
@@ -20,166 +37,140 @@ interface Delivery {
   price?: string
   amount?: number
   deliveryDate?: string
-  status: "paid" | "in_transit" | "delivered" | "pending"
+  status: "paid" | "in_transit" | "delivered" | "pending" | "scheduled" | "completed"
   isPriority?: boolean
   annonceId?: number
   livreurId?: number
   adresseLivraison?: string
-  colis?: any
+  pickupLocation?: string
+  dropoffLocation?: string
+  clientInfo?: {
+    firstName: string
+    lastName: string
+  }
 }
 
 export default function DeliverymanDeliveries() {
   const { t } = useLanguage()
   const [searchQuery, setSearchQuery] = useState("")
   const [deliveries, setDeliveries] = useState<Delivery[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState("")
+  const [user, setUser] = useState<MultiRoleUser | null>(null)
 
-  // Récupérer les livraisons du livreur
+  // ✅ NOUVEAUX HOOKS - Architecture moderne
+  const { execute: executeGetProfile, loading: profileLoading } = useApiCall<MultiRoleUser>()
+  const { execute: executeGetLivraisons, loading: livraisonsLoading } = useApiCall<any>()
+  
+  // ✅ Variables de chargement unifiées
+  const loading = profileLoading || livraisonsLoading
+
+  // ✅ NOUVEAU - Fonction de chargement avec vraies données
+  const loadDeliveries = async () => {
+    try {
+      console.log('Chargement des livraisons du livreur...')
+      
+      // Récupérer les livraisons via notre service moderne
+      const livraisonsResponse: any = await executeGetLivraisons(livreurService.getMyLivraisons())
+      console.log('Livraisons récupérées:', livraisonsResponse)
+      
+      // ✅ NOUVEAU - Extraire les livraisons de la structure de réponse
+      let livraisons: any[] = []
+      
+      if (Array.isArray(livraisonsResponse)) {
+        livraisons = livraisonsResponse
+      } else if (livraisonsResponse?.livraisons?.data && Array.isArray(livraisonsResponse.livraisons.data)) {
+        livraisons = livraisonsResponse.livraisons.data
+      } else if (livraisonsResponse?.data && Array.isArray(livraisonsResponse.data)) {
+        livraisons = livraisonsResponse.data
+      } else {
+        console.warn('Structure de réponse livraisons inattendue:', livraisonsResponse)
+        livraisons = []
+      }
+      
+      console.log('Livraisons extraites:', livraisons, 'Nombre:', livraisons.length)
+      
+      // ✅ NOUVEAU - Transformer avec les vraies données du backend
+      const formattedDeliveries: Delivery[] = livraisons.map((livraison: any) => {
+        
+        // Mapper le statut API vers notre interface
+        let status: "paid" | "in_transit" | "delivered" | "pending" | "scheduled" | "completed" = "pending"
+        switch(livraison.status) {
+          case "scheduled":
+            status = "scheduled"
+            break
+          case "in_progress":
+          case "en_cours":
+          case "in_transit":
+            status = "in_transit"
+            break
+          case "completed":
+          case "livré":
+          case "delivered":
+            status = "delivered"
+            break
+          case "paid":
+          case "payé":
+            status = "paid"
+            break
+          default:
+            status = "pending"
+        }
+        
+        const deliveryItem: Delivery = {
+          id: livraison.id,
+          annonceId: livraison.annonceId,
+          livreurId: livraison.livreurId,
+          announceName: livraison.annonce?.title || `Livraison #${livraison.id}`,
+          image: livraison.annonce?.imagePath ? `${process.env.NEXT_PUBLIC_API_URL}/${livraison.annonce.imagePath}` : "/placeholder.svg",
+          whereTo: livraison.dropoffLocation || livraison.dropoff_location || "Adresse de livraison",
+          pickupLocation: livraison.pickupLocation || livraison.pickup_location || "Point de retrait",
+          price: livraison.annonce?.price ? `€${livraison.annonce.price}` : "Prix non spécifié",
+          amount: 1,
+          deliveryDate: formatDate(livraison.createdAt || livraison.created_at),
+          status: status,
+          isPriority: livraison.annonce?.priority || false,
+          adresseLivraison: livraison.dropoffLocation || livraison.dropoff_location,
+          clientInfo: livraison.client ? {
+            firstName: livraison.client.firstName || livraison.client.first_name || '',
+            lastName: livraison.client.lastName || livraison.client.last_name || ''
+          } : undefined
+        }
+        
+        return deliveryItem
+      })
+      
+      console.log('Livraisons formatées:', formattedDeliveries)
+      setDeliveries(formattedDeliveries)
+      
+    } catch (error) {
+      console.error("Erreur lors de la récupération des livraisons:", error)
+      // ✅ Les erreurs sont gérées automatiquement par les hooks
+    }
+  }
+
+  // ✅ NOUVEAU - Chargement initial avec gestion du profil
   useEffect(() => {
-    const fetchDeliveries = async () => {
-      setLoading(true)
+    const loadData = async () => {
       try {
-        const token = sessionStorage.getItem('authToken') || localStorage.getItem('authToken')
-        if (!token) {
-          setError("Vous devez être connecté")
-          setLoading(false)
+        // 1. Charger le profil utilisateur d'abord
+        const userProfile = await executeGetProfile(livreurService.getProfile())
+        
+        // Vérifier que l'utilisateur est bien un livreur
+        if (!userProfile?.livreur?.id) {
+          console.error('Utilisateur non-livreur:', userProfile)
           return
         }
-
-        // D'abord récupérer les informations de l'utilisateur connecté
-        const userResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/me`, {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-          },
-          credentials: 'include'
-        })
-
-        if (!userResponse.ok) {
-          throw new Error('Erreur lors de la récupération des informations utilisateur')
-        }
-
-        const userData = await userResponse.json()
-        const livreurId = userData.id
-
-        // Ensuite récupérer les livraisons associées à ce livreur
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/livraisons/${livreurId}`, {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-          },
-          credentials: 'include'
-        })
-
-        if (!response.ok) {
-          throw new Error('Erreur lors de la récupération des livraisons')
-        }
-
-        const data = await response.json()
-        console.log("Données brutes des livraisons:", data)
         
-        // Vérifier si data est un tableau ou un objet avec une propriété contenant un tableau
-        const livraisonsArray = Array.isArray(data) ? data : 
-                               data.livraisons ? data.livraisons : 
-                               [data.livraison].filter(Boolean)
+        setUser(userProfile)
         
-        // Transformer les données pour correspondre à notre interface
-        const formattedDeliveries = await Promise.all(livraisonsArray.map(async (livraison: any) => {
-          if (!livraison) return null
-          
-          // Pour chaque livraison, extraire l'ID de l'annonce depuis le colis associé
-          const colis = Array.isArray(livraison.colis) && livraison.colis.length > 0 
-                      ? livraison.colis[0] 
-                      : null
-                      
-          const annonceId = colis ? colis.annonceId : null
-          
-          // Récupérer les détails de l'annonce associée si on a un annonceId
-          let annonceData: any = {}
-          
-          if (annonceId) {
-            try {
-              const annonceResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/annonces/${annonceId}`, {
-                method: 'GET',
-                headers: {
-                  'Content-Type': 'application/json',
-                  'Authorization': `Bearer ${token}`
-                },
-                credentials: 'include'
-              })
-              
-              if (annonceResponse.ok) {
-                annonceData = await annonceResponse.json()
-                console.log("Données de l'annonce:", annonceData)
-              }
-            } catch (error) {
-              console.error(`Erreur lors de la récupération de l'annonce ${annonceId}:`, error)
-            }
-          }
-          
-          // Cartographier le statut de l'API vers notre interface
-          let status: "paid" | "in_transit" | "delivered" | "pending" = "pending"
-          switch(livraison.status) {
-            case "scheduled":
-              status = "pending"
-              break
-            case "en_cours":
-            case "in_transit":
-              status = "in_transit"
-              break
-            case "livré":
-            case "delivered":
-              status = "delivered"
-              break
-            case "payé":
-            case "paid":
-              status = "paid"
-              break
-          }
-          
-          // Extraire les informations depuis le colis si disponible
-          const colisDescription = colis?.contentDescription || ''
-          const packageSizeMatch = colisDescription.match(/Package Size: (Small|Medium|Large)/)
-          const packageSize = packageSizeMatch ? packageSizeMatch[1] : 'Unknown'
-          
-          const packageWeight = colis?.weight || 'N/A'
-          
-          const deliveryItem: Delivery = {
-            id: livraison.id,
-            annonceId: annonceId,
-            livreurId: livraison.livreurId,
-            announceName: annonceData.title || colis?.trackingNumber || "Livraison sans titre",
-            image: annonceData.imagePath ? `${process.env.NEXT_PUBLIC_API_URL}/${annonceData.imagePath}` : "/placeholder.svg",
-            whereTo: livraison.dropoffLocation || colis?.currentAddress || "Adresse non spécifiée",
-            price: annonceData.price ? `€${annonceData.price}` : "Prix non spécifié",
-            amount: 1,
-            deliveryDate: formatDate(livraison.createdAt),
-            status: status,
-            isPriority: annonceData.priority || false,
-            adresseLivraison: livraison.dropoffLocation,
-            colis: colis
-          }
-          
-          return deliveryItem
-        }))
+        // 2. Charger les livraisons
+        await loadDeliveries()
         
-        // Filtrer les valeurs null qui pourraient résulter d'erreurs de traitement
-        const validDeliveries = formattedDeliveries.filter(Boolean) as Delivery[]
-        console.log("Livraisons formatées:", validDeliveries)
-        
-        setDeliveries(validDeliveries)
       } catch (error) {
-        console.error("Erreur lors de la récupération des livraisons:", error)
-        setError("Impossible de charger les livraisons")
-      } finally {
-        setLoading(false)
+        console.error("Erreur lors du chargement initial:", error)
       }
     }
-
-    fetchDeliveries()
+    
+    loadData()
   }, [])
 
   // Fonction utilitaire pour formater la date
@@ -205,7 +196,7 @@ export default function DeliverymanDeliveries() {
       return date.toLocaleDateString('fr-FR', options)
     } catch (error) {
       console.error("Erreur lors du formatage de la date:", error)
-      return "Date non spécifiée"
+      return "Date invalide"
     }
   }
 
@@ -292,10 +283,6 @@ export default function DeliverymanDeliveries() {
           <div className="flex justify-center items-center h-64">
             <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-green-500"></div>
           </div>
-        ) : error ? (
-          <div className="bg-red-100 text-red-700 p-4 rounded-md">
-            {error}
-          </div>
         ) : (
           /* Deliveries Table */
           <div className="bg-white rounded-lg shadow-sm overflow-hidden">
@@ -314,12 +301,6 @@ export default function DeliverymanDeliveries() {
                       className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
                     >
                       {t("deliveryman.deliveriess.announceName")}
-                    </th>
-                    <th
-                      scope="col"
-                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                    >
-                      Colis
                     </th>
                     <th
                       scope="col"
@@ -375,18 +356,6 @@ export default function DeliverymanDeliveries() {
                                 </span>
                               )}
                             </div>
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm text-gray-900">
-                            {delivery.colis && (
-                              <div className="flex flex-col">
-                                <span className="font-medium">{delivery.colis.trackingNumber}</span>
-                                <span className="text-xs text-gray-500">
-                                  {delivery.colis.weight} kg • {delivery.colis.length}×{delivery.colis.width}×{delivery.colis.height} cm
-                                </span>
-                              </div>
-                            )}
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">

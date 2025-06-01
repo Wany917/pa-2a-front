@@ -417,9 +417,9 @@ export default function ResponsiveHeader({ activePage }: HeaderProps) {
 									className='block px-4 py-2 text-gray-700 hover:bg-gray-100 w-full text-left'
 									onClick={() =>
 										navigateTo(
-                      'register-shopkeeper', 
-                      true
-                    )
+											'register-shopkeeper',
+											true
+										)
 									}
 								>
 									{t('common.shopkeeper')}
