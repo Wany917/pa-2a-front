@@ -22,15 +22,13 @@ class ClientService {
 		return apiClient.post('/annonces/create', data);
 	}
 
-	async getMyAnnonces(): Promise<ApiResponse<Annonce[]>> {
-		// Récupérer d'abord l'utilisateur connecté
-		const userResponse = await apiClient.get<{ user: User }>('/auth/me');
-		const userId = userResponse.data.user.id;
-		
+	async getMyAnnonces(): Promise<ApiResponse<{ annonces: Annonce[] }>> {
+		const userResponse = await apiClient.get<User>('/auth/me');
+		const userId = userResponse.data.id;
 		return apiClient.get(`/annonces/user/${userId}`);
 	}
 
-	async getAnnonceById(id: number): Promise<ApiResponse<Annonce>> {
+	async getAnnonceById(id: number): Promise<ApiResponse<{ annonce: Annonce }>> {
 		return apiClient.get(`/annonces/${id}`);
 	}
 
@@ -47,7 +45,7 @@ class ClientService {
 		priceMin?: number;
 		priceMax?: number;
 		location?: string;
-	}): Promise<PaginatedResponse<Annonce>> {
+	}): Promise<ApiResponse<Annonce[]>> {
 		return apiClient.get('/annonces/search', { params: { query, ...filters } });
 	}
 
@@ -57,10 +55,25 @@ class ClientService {
 	}
 
 	async getMyLivraisons(): Promise<ApiResponse<Livraison[]>> {
-		const userResponse = await apiClient.get<{ user: User }>('/auth/me');
-		const userId = userResponse.data.user.id;
+		const userResponse = await apiClient.get<User>('/auth/me');
+		const userId = userResponse.data.id;
 		
-		return apiClient.get(`/livraisons/client/${userId}`);
+		const response = await apiClient.get(`/livraisons/client/${userId}`);
+		
+		// Transformer la réponse paginée en format attendu
+		if (response.success && (response.data as any)?.livraisons?.data) {
+			return {
+				success: true,
+				data: (response.data as any).livraisons.data,
+				message: response.message
+			};
+		}
+		
+		return {
+			success: false,
+			data: [],
+			message: response.message || "Aucune livraison trouvée"
+		};
 	}
 
 	async getLivraisonById(id: number): Promise<ApiResponse<Livraison>> {
@@ -89,8 +102,8 @@ class ClientService {
 	}
 
 	async getMyColis(): Promise<ApiResponse<Colis[]>> {
-		const userResponse = await apiClient.get<{ user: User }>('/auth/me');
-		const userId = userResponse.data.user.id;
+		const userResponse = await apiClient.get<User>('/auth/me');
+		const userId = userResponse.data.id; // Correction ici aussi
 		
 		return apiClient.get(`/colis/user/${userId}`);
 	}
@@ -104,7 +117,25 @@ class ClientService {
 			description?: string;
 		}>;
 	}>> {
-		return apiClient.get(`/colis/${trackingNumber}`);
+		const response = await apiClient.get(`/colis/${trackingNumber}`);
+		
+		// Transformer la réponse pour correspondre au format attendu
+		if (response.success && (response.data as any)?.colis) {
+			return {
+				success: true,
+				data: {
+					colis: (response.data as any).colis,
+					history: (response.data as any).locationHistory || []
+				},
+				message: response.message
+			};
+		}
+		
+		return {
+			success: false,
+			data: { colis: {} as Colis, history: [] },
+			message: response.message || "Colis non trouvé"
+		};
 	}
 
 	async updateColisLocation(id: number, location: {
@@ -122,8 +153,21 @@ class ClientService {
 		priceMax?: number;
 		location?: string;
 		availability?: boolean;
-	}): Promise<PaginatedResponse<any>> {
-		return apiClient.get('/services/search', { params: { query, ...filters } });
+	}): Promise<ApiResponse<any[]>> {
+		const params: Record<string, string | number> = {};
+		if (query) params.q = query;
+		if (filters) {
+			Object.entries(filters).forEach(([key, value]) => {
+				if (value !== undefined) {
+					if (typeof value === 'boolean') {
+						params[key] = value.toString();
+					} else {
+						params[key] = value;
+					}
+				}
+			});
+		}
+		return apiClient.get('/services/search', { params });
 	}
 
 	async getServiceById(id: number): Promise<ApiResponse<any>> {
@@ -144,8 +188,8 @@ class ClientService {
 	}
 
 	async getMyComplaints(): Promise<ApiResponse<Complaint[]>> {
-		const userResponse = await apiClient.get<{ user: User }>('/auth/me');
-		const userId = userResponse.data.user.id;
+		const userResponse = await apiClient.get<User>('/auth/me');
+		const userId = userResponse.data.id; // Correction ici aussi
 		
 		return apiClient.get(`/complaints/user/${userId}`);
 	}
@@ -207,8 +251,8 @@ class ClientService {
 		date: string;
 		reference?: string;
 	}>>> {
-		const userResponse = await apiClient.get<{ user: User }>('/auth/me');
-		const userId = userResponse.data.user.id;
+		const userResponse = await apiClient.get<User>('/auth/me');
+		const userId = userResponse.data.id; // Correction ici aussi
 		
 		return apiClient.get(`/payments/user/${userId}`);
 	}
@@ -250,8 +294,8 @@ class ClientService {
 			date: string;
 		}>;
 	}>> {
-		const userResponse = await apiClient.get<{ user: User }>('/auth/me');
-		const userId = userResponse.data.user.id;
+		const userResponse = await apiClient.get<User>('/auth/me');
+		const userId = userResponse.data.id; // Correction ici aussi
 		
 		return apiClient.get(`/clients/${userId}/stats`);
 	}
@@ -264,6 +308,27 @@ class ClientService {
 
 		return apiClient.uploadFile('/files/upload', formData);
 	}
+
+  // Nouvelle méthode pour envoyer un email de suivi
+  async sendTrackingEmail(data: {
+    email: string;
+    trackingId: string;
+    packageName: string;
+    recipientName: string;
+    estimatedDelivery: string;
+  }): Promise<ApiResponse<any>> {
+    return apiClient.post('/send-email', {
+      to: data.email,
+      subject: "Votre colis est en route !",
+      body: {
+        templateType: "tracking",
+        trackingId: data.trackingId,
+        packageName: data.packageName,
+        recipientName: data.recipientName,
+        estimatedDelivery: data.estimatedDelivery
+      }
+    });
+  }
 }
 
-export const clientService = new ClientService(); 
+export const clientService = new ClientService();

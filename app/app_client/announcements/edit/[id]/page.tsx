@@ -15,22 +15,24 @@ export default function EditAnnouncementPage() {
   const { id } = params
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [announcement, setAnnouncement] = useState({
-    title: "",
-    deliveryAddress: "",
-    price: "",
-    deliveryDate: "",
+    title: "Pair of running shoes",
+    deliveryAddress: "11 rue Erand, Paris 75012",
+    price: "20",
+    deliveryDate: "2025-05-15",
     amount: "1",
-    storageBox: "Storage box 1",
+    storageBox: "", // Changé pour être vide par défaut
     packageSize: "Medium",
     weight: "2.5",
     priorityShipping: false,
+    hasStorageBox: false, // Nouveau champ pour déterminer si un storage box est utilisé
   })
 
   const [image, setImage] = useState<File | null>(null)
   const [imagePreview, setImagePreview] = useState<string | null>(null)
 
-  // Chargement des données de l'annonce depuis l'API
+  // ✅ CORRIGÉ - Chargement des données de l'annonce via API
   useEffect(() => {
+    // Chargement des données de l'annonce depuis l'API
     const fetchAnnouncementData = async () => {
       try {
         const token = sessionStorage.getItem('authToken') || localStorage.getItem('authToken');
@@ -42,22 +44,63 @@ export default function EditAnnouncementPage() {
         
         if (response.ok) {
           const data = await response.json();
+          const annonceData = data.annonce || data; // Adaptation au format de l'API
+          
+          console.log("Données annonce reçues:", annonceData);
+          
+          // Extraire les informations de taille, poids et quantité depuis la description
+          let packageSize = "Medium"; // Valeur par défaut
+          let weight = "2.5"; // Valeur par défaut
+          let amount = "1"; // Valeur par défaut
+          
+          if (annonceData.description) {
+            // Rechercher les motifs dans la description
+            const sizeMatch = annonceData.description.match(/Package Size: (\w+)/);
+            if (sizeMatch && sizeMatch[1]) {
+              packageSize = sizeMatch[1];
+            }
+            
+            const weightMatch = annonceData.description.match(/Weight: ([\d.]+) kg/);
+            if (weightMatch && weightMatch[1]) {
+              weight = weightMatch[1];
+            }
+            
+            const amountMatch = annonceData.description.match(/Amount: (\d+)/);
+            if (amountMatch && amountMatch[1]) {
+              amount = amountMatch[1];
+            }
+            
+            console.log("Extracted from description:", { packageSize, weight, amount });
+          }
+          
+          // Déterminer si l'annonce utilise un storage box
+          const hasStorageBox = !!annonceData.storageBoxId;
+          
           // Mise à jour des données du formulaire avec les valeurs reçues de l'API
           setAnnouncement({
-            title: data.title || "Untitled Announcement",
-            deliveryAddress: data.destination_address || "",
-            price: data.price?.toString() || "0",
-            deliveryDate: data.scheduled_date ? 
-              new Date(data.scheduled_date).toISOString().split('T')[0] : 
+            title: annonceData.title || "Untitled Announcement",
+            deliveryAddress: annonceData.destinationAddress || "",
+            price: annonceData.price?.toString() || "0",
+            deliveryDate: annonceData.scheduledDate ? 
+              new Date(annonceData.scheduledDate).toISOString().split('T')[0] : 
               new Date().toISOString().split('T')[0],
-            amount: data.amount?.toString() || "1",
-            storageBox: data.storage_box || "Storage box 1",
-            packageSize: data.colis?.length > 0 ? data.colis[0].size || "Medium" : "Medium",
-            weight: data.colis?.length > 0 ? data.colis[0].weight?.toString() || "2.5" : "2.5",
-            priorityShipping: data.priority || false,
+            amount: amount, // Utiliser la valeur extraite
+            storageBox: annonceData.storageBoxId ? `Storage box ${annonceData.storageBoxId}` : "",
+            packageSize: packageSize, // Utiliser la valeur extraite
+            weight: weight, // Utiliser la valeur extraite
+            priorityShipping: annonceData.priority || false,
+            hasStorageBox: hasStorageBox, // Nouveau champ
           });
           
-          // Si une image est disponible, on pourrait faire un autre appel pour la récupérer
+          // Si une image est disponible, construire l'URL complète
+          if (annonceData.imagePath) {
+            const imageUrl = annonceData.imagePath.startsWith('http') 
+              ? annonceData.imagePath 
+              : `${process.env.NEXT_PUBLIC_API_URL}/${annonceData.imagePath}`;
+            
+            console.log("Image URL constructed:", imageUrl);
+            setImagePreview(imageUrl);
+          }
         } else {
           console.error("Error fetching announcement:", await response.text());
         }
@@ -97,26 +140,50 @@ export default function EditAnnouncementPage() {
       formData.append("destination_address", announcement.deliveryAddress)
       formData.append("price", announcement.price)
       
-      // Correction du format de date pour respecter le format attendu par le backend
-      const dateObj = new Date(announcement.deliveryDate)
-      const formattedDate = dateObj.toISOString().replace('T', ' ').split('.')[0];
-      formData.append("scheduled_date", formattedDate)
+      // Utiliser directement le format YYYY-MM-DD de l'input HTML
+      if (announcement.deliveryDate) {
+        console.log("Date envoyée (YYYY-MM-DD):", announcement.deliveryDate);
+        formData.append("scheduled_date", announcement.deliveryDate);
+      }
       
-      // Ces champs ne sont pas tous directement pris en charge par l'API, mais on peut les envoyer
-      // comme métadonnées dans la description ou les gérer côté serveur
-      formData.append("amount", announcement.amount)
-      formData.append("storage_box", announcement.storageBox)
-      formData.append("package_size", announcement.packageSize)
-      formData.append("weight", announcement.weight)
+      // Gestion du box de stockage - seulement si hasStorageBox est true
+      if (announcement.hasStorageBox && announcement.storageBox && announcement.storageBox.includes("Storage box")) {
+        const boxId = announcement.storageBox.replace("Storage box ", "").trim();
+        if (!isNaN(Number(boxId))) {
+          formData.append("storage_box_id", boxId);
+        }
+      }
+      
+      // Priorité d'expédition
       formData.append("priority", announcement.priorityShipping.toString())
+      
+      // Description détaillée avec les informations du colis
+      const description = `Package Size: ${announcement.packageSize}
+Weight: ${announcement.weight} kg
+Amount: ${announcement.amount}`;
+      formData.append("description", description)
+      
+      console.log("Données formulaire envoyées:", {
+        title: announcement.title,
+        price: announcement.price,
+        scheduledDate: announcement.deliveryDate,
+        destination: announcement.deliveryAddress,
+        storageBox: announcement.hasStorageBox ? announcement.storageBox : "Aucun",
+        priority: announcement.priorityShipping,
+        description: description,
+        hasImage: !!image
+      });
 
       // Ajout de l'image si disponible
       if (image) {
+        console.log("Ajout de l'image au formulaire:", image.name, image.type, image.size);
         formData.append("image", image)
+      } else {
+        console.log("Aucune nouvelle image n'a été sélectionnée");
       }
 
       // Envoi de la requête PUT pour mettre à jour l'annonce
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/annonces/${id}`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/annonces/${id}/with-string-dates`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`
@@ -153,10 +220,18 @@ export default function EditAnnouncementPage() {
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (file) {
+      console.log("Image sélectionnée:", file.name, file.type, file.size);
       setImage(file)
+      
+      // Créer un aperçu de l'image
       const reader = new FileReader()
       reader.onloadend = () => {
-        setImagePreview(reader.result as string)
+        const preview = reader.result as string;
+        console.log("Aperçu d'image généré");
+        setImagePreview(preview)
+      }
+      reader.onerror = (error) => {
+        console.error("Erreur lors de la lecture de l'image:", error);
       }
       reader.readAsDataURL(file)
     }
@@ -284,21 +359,38 @@ export default function EditAnnouncementPage() {
                 </div>
 
                 <div>
-                  <label htmlFor="storageBox" className="block text-sm font-medium text-gray-700 mb-1">
-                    {t("announcements.storageBox")}
-                  </label>
-                  <select
-                    id="storageBox"
-                    value={announcement.storageBox}
-                    onChange={handleChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
-                    required
-                  >
-                    <option value="">{t("common.selectYourStorageBox")}</option>
-                    <option value="Storage box 1">Storage box 1</option>
-                    <option value="Storage box 2">Storage box 2</option>
-                    <option value="Storage box 3">Storage box 3</option>
-                  </select>
+                  <div className="flex items-center mb-2">
+                    <input
+                      type="checkbox"
+                      id="hasStorageBox"
+                      checked={announcement.hasStorageBox}
+                      onChange={handleCheckboxChange}
+                      className="h-4 w-4 text-green-500 focus:ring-green-500 border-gray-300 rounded"
+                    />
+                    <label htmlFor="hasStorageBox" className="ml-2 block text-sm text-gray-700">
+                      Utiliser un storage box
+                    </label>
+                  </div>
+                  
+                  {announcement.hasStorageBox && (
+                    <div>
+                      <label htmlFor="storageBox" className="block text-sm font-medium text-gray-700 mb-1">
+                        {t("announcements.storageBox")}
+                      </label>
+                      <select
+                        id="storageBox"
+                        value={announcement.storageBox}
+                        onChange={handleChange}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                        required={announcement.hasStorageBox}
+                      >
+                        <option value="">{t("common.selectYourStorageBox")}</option>
+                        <option value="Storage box 1">Storage box 1</option>
+                        <option value="Storage box 2">Storage box 2</option>
+                        <option value="Storage box 3">Storage box 3</option>
+                      </select>
+                    </div>
+                  )}
                 </div>
               </div>
 

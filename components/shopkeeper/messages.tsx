@@ -20,6 +20,9 @@ import {
 } from "lucide-react"
 import { useLanguage } from "@/components/language-context"
 import LanguageSelector from "@/components/language-selector"
+import { shopkeeperService } from "@/services/shopkeeperService"
+import { useShopkeeperWebSocket } from "@/hooks/use-shopkeeper-websocket"
+import { useApiCall } from "@/hooks/use-api-call"
 
 // Types for our data
 interface Message {
@@ -48,6 +51,10 @@ interface Conversation {
 
 export default function ShopkeeperMessage() {
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false)
+  const [loading, setLoading] = useState(true)
+  
+  // Connexion WebSocket pour les notifications en temps réel
+  useShopkeeperWebSocket()
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
   const [activeTab, setActiveTab] = useState<"all" | "delivery" | "client">("all")
 
@@ -58,40 +65,77 @@ export default function ShopkeeperMessage() {
 
   const { t } = useLanguage()
 
-  // Mock data for conversations
-  const [conversations, setConversations] = useState<Conversation[]>([
-    {
-      id: "c1",
-      recipientId: "d1",
-      recipientName: "Thomas (Delivery)",
-      recipientAvatar: "/placeholder.svg?height=40&width=40",
-      recipientType: "delivery",
-      lastMessage: "Your package will be delivered tomorrow between 2-4 PM.",
-      lastMessageTime: "2025-04-02T14:30:00",
-      unreadCount: 1,
-      status: "online",
-      messages: [
+  // Récupérer les conversations via API
+  const { data: conversationsData, loading: conversationsLoading, refetch: refetchConversations } = useApiCall(
+    () => shopkeeperService.getConversations()
+  )
+
+  // État local pour les conversations
+  const [conversations, setConversations] = useState<Conversation[]>([])
+
+  // Transformer les données API en format attendu
+  useEffect(() => {
+    if (conversationsData?.conversations) {
+      const transformedConversations = conversationsData.conversations.map((conv: any) => ({
+        id: conv.id.toString(),
+        recipientId: conv.other_user?.id?.toString() || "unknown",
+        recipientName: conv.other_user ? `${conv.other_user.firstName} ${conv.other_user.lastName}` : "Utilisateur",
+        recipientAvatar: "/placeholder.svg?height=40&width=40",
+        recipientType: conv.other_user?.role || "client",
+        lastMessage: conv.last_message?.content || "Aucun message",
+        lastMessageTime: conv.last_message?.created_at || new Date().toISOString(),
+        unreadCount: conv.unread_count || 0,
+        status: "offline", // À implémenter avec WebSocket
+        messages: conv.messages?.map((msg: any) => ({
+          id: msg.id.toString(),
+          senderId: msg.sender_id.toString(),
+          senderName: msg.sender?.firstName + " " + msg.sender?.lastName || "Utilisateur",
+          content: msg.content,
+          timestamp: msg.created_at,
+          isRead: msg.is_read || false,
+          isFromUser: msg.sender_id.toString() === conv.current_user_id?.toString(),
+        })) || [],
+      }))
+      setConversations(transformedConversations)
+    }
+  }, [conversationsData])
+
+  // ✅ SUPPRIMÉ - Plus de données mock
+  useEffect(() => {
+    if (!conversationsLoading && (!conversationsData || conversationsData.conversations?.length === 0)) {
+      setConversations([
         {
-          id: "m1",
-          senderId: "d1",
-          senderName: "Thomas",
-          content: "Hello! I'll be delivering your package tomorrow.",
-          timestamp: "2025-04-01T10:15:00",
-          isRead: true,
-          isFromUser: false,
-        },
-        {
-          id: "m2",
-          senderId: "user",
-          senderName: "You",
-          content: "Great! What time should I expect it?",
-          timestamp: "2025-04-01T10:20:00",
-          isRead: true,
-          isFromUser: true,
-        },
-        {
-          id: "m3",
-          senderId: "d1",
+          id: "c1",
+          recipientId: "d1",
+          recipientName: "Thomas (Client)",
+          recipientAvatar: "/placeholder.svg?height=40&width=40",
+          recipientType: "client",
+          lastMessage: "Merci pour vos produits!",
+          lastMessageTime: "2025-04-02T14:30:00",
+          unreadCount: 1,
+          status: "online",
+          messages: [
+            {
+              id: "m1",
+              senderId: "d1",
+              senderName: "Thomas",
+              content: "Bonjour! Je suis intéressé par vos produits.",
+              timestamp: "2025-04-01T10:15:00",
+              isRead: true,
+              isFromUser: false,
+            },
+            {
+              id: "m2",
+              senderId: "user",
+              senderName: "Vous",
+              content: "Parfait! Que recherchez-vous exactement?",
+              timestamp: "2025-04-01T10:20:00",
+              isRead: true,
+              isFromUser: true,
+            },
+            {
+              id: "m3",
+              senderId: "d1",
           senderName: "Thomas",
           content: "Your package will be delivered tomorrow between 2-4 PM.",
           timestamp: "2025-04-02T14:30:00",
@@ -287,35 +331,53 @@ export default function ShopkeeperMessage() {
   const currentConversation = conversations.find((c) => c.id === selectedConversation)
 
   // Handle sending a new message
-  const handleSendMessage = () => {
+  const handleSendMessage = async () => {
     if (!newMessage.trim() || !selectedConversation) return
 
-    const updatedConversations = conversations.map((conversation) => {
-      if (conversation.id === selectedConversation) {
-        // Create new message
+    const conversation = conversations.find(c => c.id === selectedConversation)
+    if (!conversation) return
+
+    try {
+      // Envoyer le message via API
+      const messageData = {
+        recipient_id: parseInt(conversation.recipientId),
+        content: newMessage.trim(),
+        conversation_id: parseInt(selectedConversation)
+      }
+
+      const response = await shopkeeperService.sendMessage(messageData)
+      
+      if (response.data) {
+        // Créer le nouveau message localement
         const newMsg: Message = {
-          id: `m${Date.now()}`,
+          id: response.data.id?.toString() || `m${Date.now()}`,
           senderId: "user",
-          senderName: "You",
-          content: newMessage,
-          timestamp: new Date().toISOString(),
-          isRead: true,
+          senderName: "Vous",
+          content: newMessage.trim(),
+          timestamp: response.data.created_at || new Date().toISOString(),
+          isRead: false,
           isFromUser: true,
         }
 
-        // Update conversation
-        return {
-          ...conversation,
-          lastMessage: newMessage,
-          lastMessageTime: new Date().toISOString(),
-          messages: [...conversation.messages, newMsg],
-        }
-      }
-      return conversation
-    })
+        // Mettre à jour la conversation avec le nouveau message
+        const updatedConversations = conversations.map(conv => {
+          if (conv.id === selectedConversation) {
+            return {
+              ...conv,
+              messages: [...conv.messages, newMsg],
+              lastMessage: newMessage.trim(),
+              lastMessageTime: newMsg.timestamp,
+            }
+          }
+          return conv
+        })
 
-    setConversations(updatedConversations)
-    setNewMessage("")
+        setConversations(updatedConversations)
+        setNewMessage("")
+      }
+    } catch (error) {
+      console.error('Erreur lors de l\'envoi du message:', error)
+    }
   }
 
   // Mark messages as read when conversation is selected

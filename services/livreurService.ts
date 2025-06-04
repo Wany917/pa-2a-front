@@ -322,6 +322,22 @@ class LivreurService {
 			return false;
 		}
 	}
+
+	// ✅ NOUVEAU - Upload de documents justificatifs
+	async uploadDocument(formData: FormData): Promise<ApiResponse<any>> {
+		const id = await this.getLivreurId();
+		return apiClient.post(`/livreurs/${id}/documents`, formData, {
+			headers: {
+				'Content-Type': 'multipart/form-data',
+			},
+		});
+	}
+
+	// ✅ NOUVEAU - Mise à jour du profil livreur
+	async updateLivreurProfile(data: any): Promise<ApiResponse<any>> {
+		const id = await this.getLivreurId();
+		return apiClient.put(`/livreurs/${id}`, data);
+	}
 }
 
-export const livreurService = new LivreurService(); 
+export const livreurService = new LivreurService();

@@ -90,56 +90,49 @@ export default function DeliverymanNotifications() {
     try {
       console.log('Chargement des notifications...')
       
-      // ✅ NOUVEAU - Simuler des notifications car l'API peut ne pas avoir d'endpoint spécifique
-      // En attendant un vrai endpoint, on crée des notifications basées sur les nouvelles livraisons
-      const mockNotifications: Notification[] = [
-        {
-          id: 1,
-          type: 'new_delivery',
-          productName: 'Nouvelle livraison disponible',
-          description: 'Une livraison prioritaire est disponible dans votre zone',
-          sender: 'Marie Dupont',
-          deliveryAddress: '123 Rue de la République, Paris',
-          price: '€15.50',
-          urgent: true,
-          isRead: false,
-          createdAt: new Date(Date.now() - 1000 * 60 * 30).toISOString(), // 30 min ago
-          image: '/placeholder.svg'
-        },
-        {
-          id: 2,
-          type: 'status_update',
-          productName: 'Livraison #12345',
-          description: 'Le client a confirmé la réception de sa commande',
-          sender: 'Système',
-          deliveryAddress: '456 Avenue des Champs, Lyon',
-          price: '€8.75',
-          urgent: false,
-          isRead: false,
-          createdAt: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(), // 2h ago
-          image: '/placeholder.svg'
-        },
-        {
-          id: 3,
-          type: 'message',
-          productName: 'Message client',
-          description: 'Le client souhaite modifier l\'adresse de livraison',
-          sender: 'Pierre Martin',
-          deliveryAddress: '789 Boulevard Saint-Germain, Marseille',
-          price: '€12.00',
-          urgent: false,
-          isRead: true,
-          createdAt: new Date(Date.now() - 1000 * 60 * 60 * 5).toISOString(), // 5h ago
-          image: '/placeholder.svg'
+      // ✅ NOUVEAU - Essayer de récupérer les vraies notifications depuis l'API
+      try {
+        const notificationsResponse = await livreurService.getMyLivraisons();
+        console.log('Notifications API récupérées:', notificationsResponse);
+        
+        // Transformer les livraisons en notifications
+        const apiNotifications: Notification[] = (notificationsResponse.data?.livraisons || notificationsResponse.data || [])
+          .slice(0, 5) // Limiter à 5 notifications récentes
+          .map((livraison: any, index: number) => ({
+            id: livraison.id || index + 1,
+            type: livraison.status === 'pending' ? 'new_delivery' : 'status_update',
+            productName: livraison.title || livraison.description || `Livraison #${livraison.id}`,
+            description: livraison.status === 'pending' 
+              ? 'Nouvelle livraison disponible dans votre zone'
+              : `Statut mis à jour: ${livraison.status}`,
+            sender: livraison.clientName || livraison.client?.firstName || 'Client',
+            deliveryAddress: livraison.deliveryAddress || livraison.destination || 'Adresse non spécifiée',
+            price: livraison.price ? `€${livraison.price}` : '€0.00',
+            urgent: livraison.priority === 'high' || livraison.urgent || false,
+            isRead: livraison.isRead || false,
+            createdAt: livraison.createdAt || livraison.created_at || new Date().toISOString(),
+            image: livraison.image || '/placeholder.svg'
+          }));
+        
+        if (apiNotifications.length > 0) {
+          setNotifications(apiNotifications);
+          return;
         }
-      ]
+      } catch (apiError) {
+        console.warn('Erreur API notifications, utilisation des données de fallback:', apiError);
+      }
       
-      setNotifications(mockNotifications)
-      console.log('Notifications chargées:', mockNotifications)
+      // ✅ SUPPRIMÉ - Plus de données mock
+       console.warn('⚠️ Aucune donnée de livraison disponible pour générer des notifications')
+       setNotifications([])
       
     } catch (error) {
-      console.error("Erreur lors du chargement des notifications:", error)
-      // ✅ Les erreurs sont gérées automatiquement par les hooks
+      console.error("❌ Erreur lors du chargement des notifications:", error)
+      setNotifications([])
+      // ✅ Afficher une alerte d'erreur à l'utilisateur
+      if (typeof window !== 'undefined') {
+        alert('⚠️ Erreur de connexion: Impossible de charger les notifications. Veuillez vérifier votre connexion internet.')
+      }
     }
   }
 

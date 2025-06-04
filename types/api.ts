@@ -6,13 +6,21 @@ export interface User {
 	last_name: string;
 	phone_number?: string;
 	address?: string;
+	city?: string;
+	state?: 'active' | 'inactive' | 'banned' | 'closed';
 	is_verified: boolean;
 	created_at: string;
 	updated_at: string;
 }
 
+// Alias pour compatibilité avec le backend
+export type Utilisateurs = User;
+
+// Types d'utilisateurs spécifiques
 export interface Client extends User {
 	type: 'client';
+	loyalty_points: number;
+	preferred_payment_method?: string;
 }
 
 export interface Livreur extends User {
@@ -22,18 +30,21 @@ export interface Livreur extends User {
 	license_number?: string;
 	current_latitude?: number;
 	current_longitude?: number;
+	rating?: number; // Corrigé de string à number
+	total_deliveries?: number;
 }
 
 export interface Commercant extends User {
 	type: 'commercant';
-	business_name?: string;
+	store_name?: string;
 	business_address?: string;
 	business_type?: string;
 }
 
 export interface Prestataire extends User {
 	type: 'prestataire';
-	speciality?: string;
+	service_type?: string;
+	rating?: number;
 	experience_years?: number;
 	service_area?: string;
 }
@@ -41,25 +52,31 @@ export interface Prestataire extends User {
 // Types d'annonces
 export interface Annonce {
 	id: number;
+	utilisateur_id: number;
 	title: string;
-	description: string;
+	description?: string;
 	price: number;
-	tags: string[];
+	tags?: string[];
+	state: 'open' | 'pending' | 'closed';
 	scheduled_date?: string;
-	destination_address: string;
-	starting_address: string;
-	priority: boolean;
+	actual_delivery_date?: string;
+	destination_address?: string;
+	starting_address?: string;
 	image_path?: string;
-	status: 'active' | 'inactive' | 'completed' | 'cancelled';
-	user_id: number;
+	priority: boolean;
+	storage_box_id?: string;
 	created_at: string;
 	updated_at: string;
+	// Relations
+	utilisateur?: User;
+	colis?: Colis[];
+	services?: Service[];
 }
 
 // Types de livraisons
 export interface Livraison {
 	id: number;
-	annonce_id: number;
+	annonce_id?: number;
 	livreur_id?: number;
 	client_id: number;
 	pickup_location: string;
@@ -77,6 +94,8 @@ export interface Livraison {
 	annonce?: Annonce;
 	livreur?: Livreur;
 	client?: Client;
+	colis?: Colis[];
+	historique_livraison?: HistoriqueLivraison[];
 }
 
 // Types de colis
@@ -236,14 +255,15 @@ export interface PaginatedResponse<T> extends ApiResponse<T[]> {
 // Types pour les requêtes
 export interface CreateAnnonceRequest {
 	title: string;
-	description: string;
+	description?: string;
 	price: number;
-	tags: string[];
+	tags?: string[];
 	scheduled_date?: string;
-	destination_address: string;
-	starting_address: string;
-	priority: boolean;
+	destination_address?: string;
+	starting_address?: string;
+	priority?: boolean;
 	image_path?: string;
+	utilisateur_id: number;
 }
 
 export interface CreateLivraisonRequest {
@@ -348,4 +368,161 @@ export interface UseApiCallState<T> {
 export interface UseApiCallResult<T> extends UseApiCallState<T> {
 	execute: (apiCall: Promise<any>) => Promise<T>;
 	reset: () => void;
-} 
+}
+
+// Interface Client corrigée
+export interface Client {
+  id: number;
+  loyalty_points: number;
+  preferred_payment_method?: string;
+  created_at: string;
+  updated_at: string;
+  // Relations
+  user?: Utilisateurs;
+}
+
+// Interface Livreur corrigée
+export interface Livreur {
+  id: number;
+  availability_status: 'available' | 'busy' | 'offline';
+  vehicle_type?: string;
+  license_number?: string;
+  current_latitude?: number;
+  current_longitude?: number;
+  rating?: number;
+  created_at: string;
+  updated_at: string;
+  // Relations
+  user?: Utilisateurs;
+}
+
+// Interface Annonce corrigée selon le modèle backend
+export interface Annonce {
+  id: number;
+  utilisateur_id: number;
+  title: string;
+  description?: string;
+  price: number;
+  tags?: string[];
+  state: 'open' | 'pending' | 'closed';
+  scheduled_date?: string;
+  actual_delivery_date?: string;
+  destination_address?: string;
+  starting_address?: string;
+  image_path?: string;
+  priority: boolean;
+  storage_box_id?: string;
+  created_at: string;
+  updated_at: string;
+  // Relations
+  utilisateur?: Utilisateurs;
+  colis?: Colis[];
+  services?: Service[];
+}
+
+// Interface Livraison corrigée
+export interface Livraison {
+  id: number;
+  livreur_id?: number;
+  client_id: number;
+  pickup_location: string;
+  dropoff_location: string;
+  status: 'scheduled' | 'in_progress' | 'completed' | 'cancelled';
+  created_at: string;
+  updated_at: string;
+  // Relations
+  livreur?: Livreur;
+  client?: Client;
+  colis?: Colis[];
+  historique_livraison?: HistoriqueLivraison[];
+}
+
+// Nouvelles interfaces pour le backend
+export interface HistoriqueLivraison {
+  id: number;
+  livraison_id: number;
+  status: string;
+  timestamp: string;
+  location?: string;
+  notes?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface LivreurPosition {
+  id: number;
+  livreur_id: number;
+  livraison_id?: number;
+  latitude: number;
+  longitude: number;
+  accuracy?: number;
+  speed?: number;
+  heading?: number;
+  timestamp: string;
+  created_at: string;
+  updated_at: string;
+}
+
+// Modèles backend (renommés pour éviter les conflits)
+export interface ClientModel {
+  id: number;
+  loyalty_points: number;
+  preferred_payment_method?: string;
+  created_at: string;
+  updated_at: string;
+  // Relations
+  user?: Utilisateurs;
+}
+
+export interface LivreurModel {
+  id: number;
+  availability_status: 'available' | 'busy' | 'offline';
+  vehicle_type?: string;
+  license_number?: string;
+  current_latitude?: number;
+  current_longitude?: number;
+  rating?: number;
+  created_at: string;
+  updated_at: string;
+  // Relations
+  user?: Utilisateurs;
+}
+
+export interface AnnonceModel {
+  id: number;
+  utilisateur_id: number;
+  title: string;
+  description?: string;
+  price: number;
+  tags?: string[];
+  state: 'open' | 'pending' | 'closed';
+  scheduled_date?: string;
+  actual_delivery_date?: string;
+  destination_address?: string;
+  starting_address?: string;
+  image_path?: string;
+  priority: boolean;
+  storage_box_id?: string;
+  created_at: string;
+  updated_at: string;
+  // Relations
+  utilisateur?: Utilisateurs;
+  colis?: Colis[];
+  services?: Service[];
+}
+
+export interface LivraisonModel {
+  id: number;
+  livreur_id?: number;
+  client_id: number;
+  pickup_location: string;
+  dropoff_location: string;
+  status: 'scheduled' | 'in_progress' | 'completed' | 'cancelled';
+  created_at: string;
+  updated_at: string;
+  // Relations
+  livreur?: LivreurModel;
+  client?: ClientModel;
+  colis?: Colis[];
+  historique_livraison?: HistoriqueLivraison[];
+}

@@ -44,11 +44,12 @@
     "appClient": "Accede a tu espacio cliente"
   },
   "navigation": {
-    "app_client": "Panel",
+    "app_client": "Panel de control",
     "myAnnouncements": "Mis anuncios",
     "myPayments": "Mis pagos",
     "messages": "Mensajes",
-    "makeComplaint": "Hacer una reclamación",
+    "makeComplaint": "Hacer una queja",
+    "tracking": "Seguimiento de paquetes",
     "backToApp_Client": "Volver al inicio",
     "backToComplaints": "Volver a reclamaciones",
     "backToCalendar": "Volver al calendario"

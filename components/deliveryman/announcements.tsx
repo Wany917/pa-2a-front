@@ -124,7 +124,7 @@ export default function DeliverymanAnnouncements() {
           description: annonce.description,
           image: annonce.imagePath ? `${process.env.NEXT_PUBLIC_API_URL}/${annonce.imagePath}` : "/placeholder.svg",
           client: annonce.utilisateur ? `${annonce.utilisateur.firstName || annonce.utilisateur.first_name || ''} ${annonce.utilisateur.lastName || annonce.utilisateur.last_name || ''}`.trim() : "Client",
-          address: annonce.destinationAddress || annonce.destination_address || "Adresse non spécifiée",
+          address: annonce.destinationAddress || "Adresse non spécifiée",
           price: `€${annonce.price || 0}`,
           deliveryDate: formatDate(annonce.scheduledDate || annonce.scheduled_date),
           amount: 1, // Par défaut 1 puisque ce n'est pas dans l'API
@@ -186,19 +186,38 @@ export default function DeliverymanAnnouncements() {
 
   // ✅ AMÉLIORÉ - Accepter une livraison avec nouvelle architecture
   const handleAcceptDelivery = async (announcementId: number) => {
+    const announcement = announcements.find(a => a.id === announcementId)
+    if (!announcement) return
+    
+    // ✅ CORRIGÉ - Vérifications AVANT la confirmation
+    if (!user?.livreur?.id) {
+      alert("Vous devez être connecté en tant que livreur")
+      return
+    }
+    
+    // ✅ CORRIGÉ - Confirmation APRÈS les vérifications
+    const confirmMessage = `🚚 CONFIRMER LA LIVRAISON\n\n` +
+      `Client: ${announcement.client}\n` +
+      `Adresse: ${announcement.address}\n` +
+      `Prix: ${announcement.price}\n\n` +
+      `Voulez-vous vraiment accepter cette livraison ?`
+    
+    const userConfirmed = window.confirm(confirmMessage)
+    
+    if (!userConfirmed) {
+      console.log('Livraison annulée par l\'utilisateur')
+      return // Arrêter ici si l'utilisateur annule
+    }
+    
+    // Seulement si l'utilisateur a confirmé, on continue
     setLoadingAccept({ id: announcementId, loading: true })
     
     try {
-      // Vérifier que l'utilisateur est bien un livreur
-      if (!user?.livreur?.id) {
-        alert("Vous devez être connecté en tant que livreur")
-        return
-      }
 
       // ✅ NOUVEAU - Utiliser le service livreur pour accepter la livraison
       console.log('Acceptation de la livraison pour l\'annonce:', announcementId)
       
-      // Créer la livraison via l'API
+      // ✅ CORRIGÉ - Utiliser les vraies données de l'annonce au lieu de données mockées
       const response = await executeAcceptDelivery(
         fetch(`${process.env.NEXT_PUBLIC_API_URL}/annonces/${announcementId}/livraisons`, {
           method: 'POST',
@@ -210,8 +229,8 @@ export default function DeliverymanAnnouncements() {
           body: JSON.stringify({
             livreur_id: user.livreur.id,
             status: 'scheduled',
-            pickup_location: "À récupérer",
-            dropoff_location: "À livrer"
+            pickup_location: announcement.storageBox || "Point de collecte",
+            dropoff_location: announcement.address || "Adresse de livraison"
           })
         }).then(res => {
           if (!res.ok) throw new Error('Erreur lors de la création de la livraison')
@@ -221,7 +240,7 @@ export default function DeliverymanAnnouncements() {
       
       console.log('Livraison créée:', response)
       
-      // Retirer cette annonce de la liste
+      // ✅ AMÉLIORÉ - Retirer cette annonce de la liste immédiatement
       setAnnouncements(prev => prev.filter(a => a.id !== announcementId))
       
       // ✅ NOUVEAU - Redirection plus élégante

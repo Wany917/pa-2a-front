@@ -4,13 +4,13 @@ import { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { User, Menu, X, LogOut, Edit, ChevronDown } from 'lucide-react';
+import { User, Menu, X, LogOut, Edit, ChevronDown, Package } from 'lucide-react';
 import LanguageSelector from '@/components/language-selector';
 import { useScreenSize, MobileOnly, TabletUp } from '../utils/responsive-utils';
 import { useLanguage } from '@/components/language-context';
 
 interface HeaderProps {
-	activePage?: 'announcements' | 'payments' | 'messages' | 'complaint';
+	activePage?: 'announcements' | 'payments' | 'messages' | 'complaint' | 'tracking';
 }
 
 export default function ResponsiveHeader({ activePage }: HeaderProps) {
@@ -75,6 +75,9 @@ export default function ResponsiveHeader({ activePage }: HeaderProps) {
 				break;
 			case 'complaint':
 				path = '/app_client/complaint';
+				break;
+			case 'tracking':
+				path = '/app_client/tracking';
 				break;
 			case 'home':
 				path = '/app_client';
@@ -361,6 +364,17 @@ export default function ResponsiveHeader({ activePage }: HeaderProps) {
 						>
 							{t('navigation.makeComplaint')}
 						</button>
+						<button
+							onClick={() => navigateTo('tracking')}
+							className={`flex items-center ${
+								activePage === 'tracking'
+									? 'text-green-500 font-medium border-b-2 border-green-500'
+									: 'text-gray-700 hover:text-green-500'
+							}`}
+						>
+							<Package className="h-4 w-4 mr-1" />
+							{t('navigation.tracking')}
+						</button>
 					</nav>
 				</TabletUp>
 
@@ -516,6 +530,21 @@ export default function ResponsiveHeader({ activePage }: HeaderProps) {
 								}
 							>
 								{t('navigation.makeComplaint')}
+							</button>
+						</li>
+						<li>
+							<button
+								className={`py-2 flex items-center ${
+									activePage === 'tracking'
+										? 'text-green-500 font-medium'
+										: 'text-gray-700'
+								}`}
+								onClick={() =>
+									navigateTo('tracking', true)
+								}
+							>
+								<Package className="h-4 w-4 mr-1" />
+								{t('navigation.tracking')}
 							</button>
 						</li>
 					</ul>

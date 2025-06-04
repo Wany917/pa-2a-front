@@ -48,20 +48,44 @@ export default function ChangePasswordPage() {
     }
 
     try {
-      // Simuler une mise à jour
-      await new Promise((resolve) => setTimeout(resolve, 1500))
-      console.log("Password updated")
-      setSuccess(t("auth.passwordUpdatedSuccessfully"))
+      // ✅ CORRIGÉ - Mise à jour du mot de passe via API
+      const token = sessionStorage.getItem('authToken') || localStorage.getItem('authToken');
+      if (!token) {
+        setError(t("auth.notAuthenticated"));
+        setIsSubmitting(false);
+        return;
+      }
+
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/change-password`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          currentPassword: formData.currentPassword,
+          newPassword: formData.newPassword
+        })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Erreur lors de la mise à jour');
+      }
+
+      console.log("Password updated successfully");
+      setSuccess(t("auth.passwordUpdatedSuccessfully"));
       setFormData({
         currentPassword: "",
         newPassword: "",
         confirmNewPassword: "",
-      })
-    } catch (error) {
-      console.error("Error updating password:", error)
-      setError(t("auth.errorUpdatingPassword"))
+      });
+    } catch (error: any) {
+      console.error("Error updating password:", error);
+      setError(error.message || t("auth.errorUpdatingPassword"));
     } finally {
-      setIsSubmitting(false)
+      setIsSubmitting(false);
     }
   }
 

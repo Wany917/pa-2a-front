@@ -6,6 +6,8 @@ import Link from "next/link"
 import { User, ChevronDown, Edit, LogOut, Star, CreditCard } from "lucide-react"
 import LanguageSelector from "@/components/language-selector"
 import { useLanguage } from "@/components/language-context"
+import { clientService } from '@/services/clientService'
+import { useApiCall } from '@/hooks/use-api-call'
 
 // Types for our data
 interface DeliveryItem {
@@ -41,65 +43,51 @@ export default function PaymentsPage() {
   const [tempRating, setTempRating] = useState<number>(0)
   const [hoveredRating, setHoveredRating] = useState<number>(0)
 
-  // Mock data for deliveries
-  const [deliveries, setDeliveries] = useState<DeliveryItem[]>([
-    {
-      id: "d1",
-      image: "/placeholder.svg?height=50&width=50",
-      name: "Pair of running shoes",
-      destination: "11 rue Erand, Paris 75012",
-      price: "£20.00",
-      amount: 1,
-      deliveryDate: "26th May",
-      status: "paid",
-      rating: 0, // Ajouter cette propriété
-    },
-    {
-      id: "d2",
-      image: "/placeholder.svg?height=50&width=50",
-      name: "Headphones",
-      destination: "45 rue Erand, Paris 75017",
-      price: "£14.00",
-      amount: 1,
-      deliveryDate: "3rd June",
-      status: "unpaid",
-      rating: 0, // Ajouter cette propriété
-    },
-  ])
+  // Récupérer les données de livraisons et services via API
+  const { data: deliveriesData, loading: deliveriesLoading } = useApiCall(
+    () => clientService.getMyDeliveries()
+  )
+  
+  const { data: servicesData, loading: servicesLoading } = useApiCall(
+    () => clientService.getMyServices()
+  )
 
-  // Mock data for services
-  const [services, setServices] = useState<ServiceItem[]>([
-    {
-      id: "s1",
-      image: "/placeholder.svg?height=50&width=50",
-      name: "Baby-sitter",
-      provider: "Florence",
-      price: "£68.00",
-      date: "24th May 2025",
-      rating: 0,
-      status: "paid",
-    },
-    {
-      id: "s2",
-      image: "/placeholder.svg?height=50&width=50",
-      name: "Dog-sitter",
-      provider: "Charlotte",
-      price: "£60.00",
-      date: "28th February 2025",
-      rating: 0,
-      status: "paid",
-    },
-    {
-      id: "s3",
-      image: "/placeholder.svg?height=50&width=50",
-      name: "Ride to the airport",
-      provider: "Samy",
-      price: "£50.00",
-      date: "2nd January 2025",
-      rating: 0,
-      status: "unpaid",
-    },
-  ])
+  // Transformer les données API en format attendu
+  const [deliveries, setDeliveries] = useState<DeliveryItem[]>([])
+  const [services, setServices] = useState<ServiceItem[]>([])
+
+  useEffect(() => {
+    if (deliveriesData?.livraisons) {
+      const transformedDeliveries = deliveriesData.livraisons.map((delivery: any) => ({
+        id: delivery.id.toString(),
+        image: "/placeholder.svg?height=50&width=50",
+        name: delivery.annonce?.title || "Livraison",
+        destination: delivery.destinationAddress || "Adresse non spécifiée",
+        price: `€${delivery.price || 0}`,
+        amount: 1,
+        deliveryDate: new Date(delivery.scheduled_date).toLocaleDateString('fr-FR'),
+        status: delivery.payment_status === 'paid' ? 'paid' : 'unpaid',
+        rating: delivery.rating || 0,
+      }))
+      setDeliveries(transformedDeliveries)
+    }
+  }, [deliveriesData])
+
+  useEffect(() => {
+    if (servicesData?.interventions) {
+      const transformedServices = servicesData.interventions.map((service: any) => ({
+        id: service.id.toString(),
+        image: "/placeholder.svg?height=50&width=50",
+        name: service.service_type || "Service",
+        provider: service.prestataire?.user?.firstName + " " + service.prestataire?.user?.lastName || "Prestataire",
+        price: `€${service.price || 0}`,
+        date: new Date(service.scheduled_date).toLocaleDateString('fr-FR'),
+        rating: service.rating || 0,
+        status: service.payment_status === 'paid' ? 'paid' : 'unpaid',
+      }))
+      setServices(transformedServices)
+    }
+  }, [servicesData])
 
   // Filter items based on active tab
   const filteredDeliveries = deliveries.filter((item) => {

@@ -50,9 +50,11 @@
     "myPayments": "Mes paiements",
     "messages": "Messages",
     "makeComplaint": "Faire une réclamation",
+    "tracking": "Suivi de colis",
     "backToApp_Client": "Retour à la page d'accueil",
     "backToComplaints": "Retour aux réclamations",
     "backToCalendar": "Retour au calendrier"
+
   },
   "app_client": {
     "welcome": "Découvrez ce qu'EcoDeli et ses partenaires ont à vous offrir",

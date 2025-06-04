@@ -3,11 +3,13 @@
 import { useState, useRef, useEffect } from "react"
 import Image from "next/image"
 import Link from "next/link"
-import { Plus } from "lucide-react"
+import { Plus, Package } from "lucide-react"
 import ResponsiveHeader from "../responsive-header"
 import { useLanguage } from "@/components/language-context"
 import { useRouter } from "next/navigation"
 import { formatDateRange } from '@/app/utils/date-formats'
+import { clientService } from '@/services/clientService'
+import { useApiCall } from '@/hooks/use-api-call'
 
 interface Announcement {
   id: number;
@@ -18,7 +20,8 @@ interface Announcement {
   deliveryDate: string;
   amount: number;
   storageBox: string;
-  shoppingList?: string | null;
+  shoppingList?: string;
+  hasColis?: boolean;
 }
 
 export default function AnnouncementsPage() {
@@ -26,6 +29,7 @@ export default function AnnouncementsPage() {
   const router = useRouter()
   const [announcements, setAnnouncements] = useState<Announcement[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [creatingColisFor, setCreatingColisFor] = useState<number | null>(null)
 
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [showShoppingForm, setShowShoppingForm] = useState(false)
@@ -34,6 +38,7 @@ export default function AnnouncementsPage() {
   const [shopList, setShopList] = useState("")
   const [shopDeliveryAddress, setShopDeliveryAddress] = useState("")
   const [shopDeliveryDate, setShopDeliveryDate] = useState("")
+  const [error, setError] = useState<string | null>(null)
 
   // Ref pour détecter le clic en dehors du modal
   const modalRef = useRef<HTMLDivElement>(null)
@@ -81,75 +86,95 @@ export default function AnnouncementsPage() {
     }
   }
 
-  const fetchAnnouncements = async () => {
+  const handleCreateColis = async (announcementId: number) => {
     try {
-      setIsLoading(true);
+      setCreatingColisFor(announcementId)
       const token = sessionStorage.getItem('authToken') || localStorage.getItem('authToken');
       
-      // D'abord, récupérer l'ID de l'utilisateur connecté
-      const userResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/me`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-      
-      if (!userResponse.ok) {
-        throw new Error("Impossible de récupérer les informations utilisateur");
+      // Récupérer les détails de l'annonce pour extraire les informations du colis
+      const announcement = announcements.find(a => a.id === announcementId)
+      if (!announcement) {
+        throw new Error("Annonce non trouvée")
       }
+
+      // Préparer les données du colis avec des dimensions par défaut
+      const colisData = {
+        annonce_id: announcementId,
+        weight: 2.5, // Poids par défaut en kg
+        length: 30,  // Longueur par défaut en cm
+        width: 20,   // Largeur par défaut en cm  
+        height: 15,  // Hauteur par défaut en cm
+        content_description: announcement.shoppingList || 
+                           `Colis pour l'annonce: ${announcement.title}`
+      }
+
+      console.log("Création d'un colis pour l'annonce:", announcementId, colisData)
       
-      const userData = await userResponse.json();
-      console.log("Données utilisateur:", userData);
-      const utilisateurId = userData.id;
-      console.log("ID utilisateur:", utilisateurId);
-      
-      // Ensuite, utiliser la route correcte pour récupérer les annonces de l'utilisateur
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/annonces/user/${utilisateurId}`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/colis/create`, {
+        method: 'POST',
         headers: {
-          'Authorization': `Bearer ${token}`
-        }
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(colisData)
       });
       
       if (response.ok) {
-        const data = await response.json();
-        console.log("Données brutes des annonces:", data);
+        const responseData = await response.json()
+        console.log("Colis créé avec succès:", responseData)
         
-        // Vérifier si les données sont dans un objet imbriqué
-        const annoncesData = Array.isArray(data) ? data : data.data || data.annonces || [];
-        console.log("Données d'annonces à utiliser:", annoncesData);
+        const trackingNumber = responseData.trackingNumber || responseData.colis?.trackingNumber
         
-        if (annoncesData.length > 0) {
-          // Convertir au format attendu par le composant
-          const formattedAnnouncements = annoncesData.map((item: any) => {
-            console.log("Traitement de l'annonce:", item);
-            return {
-              id: item.id,
-              title: item.title || "Package",
-              image: "/announcements.jpg", // Utiliser image par défaut
-              deliveryAddress: item.destination_address || "Not specified",
-              price: `£${item.price || 0}`,
-              deliveryDate: formatDateRange(item.scheduled_date),
-              amount: 1,
-              storageBox: item.storage_location || "Storage box 1",
-              shoppingList: item.description || null
-            };
-          });
-          setAnnouncements(formattedAnnouncements);
-        } else {
-          // Aucune annonce trouvée
-          setAnnouncements([]);
-          console.log("Aucune annonce trouvée pour l'utilisateur");
-        }
+        // Mettre à jour l'annonce pour indiquer qu'un colis a été créé
+        setAnnouncements(prev => prev.map(ann => 
+          ann.id === announcementId 
+            ? { ...ann, hasColis: true }
+            : ann
+        ))
+        
+        alert(`✅ Colis créé avec succès!\nNuméro de tracking: ${trackingNumber}`)
+        
+        // Optionnel : rediriger vers la page de tracking
+        // router.push(`/app_client/tracking/colis/${trackingNumber}`)
       } else {
-        // Gérer l'erreur de requête
-        const errorText = await response.text();
-        console.error("Erreur lors de la récupération des annonces:", errorText);
-        console.error("Status:", response.status);
-        console.error("URL:", response.url);
+        const errorData = await response.json()
+        console.error("Erreur lors de la création du colis:", errorData)
+        alert(`❌ Erreur lors de la création du colis: ${errorData.error || 'Erreur inconnue'}`)
+      }
+    } catch (error) {
+      console.error("Erreur:", error)
+      alert("❌ Erreur lors de la création du colis")
+    } finally {
+      setCreatingColisFor(null)
+    }
+  }
+
+  const { data: announcementsData, loading: announcementsLoading, execute: loadAnnouncements } = useApiCall();
+
+  const fetchAnnouncements = async () => {
+    try {
+      const response = await loadAnnouncements(clientService.getMyAnnonces());
+      if (response?.annonces && Array.isArray(response.annonces)) {
+        // Convertir au format attendu par le composant
+        const formattedAnnouncements = response.annonces.map((item: any) => ({
+          id: item.id,
+          title: item.title || "Package",
+          image: item.imagePath ? `${process.env.NEXT_PUBLIC_API_URL}/${item.imagePath}` : "/announcements.jpg",
+          deliveryAddress: item.destinationAddress || "Not specified",
+          price: `£${item.price || 0}`,
+          deliveryDate: formatDateRange(item.scheduledDate),
+          amount: 1,
+          storageBox: item.storageBoxId ? `Storage box ${item.storageBoxId}` : "No storage box",
+          shoppingList: item.description,
+          hasColis: false
+        }));
+        setAnnouncements(formattedAnnouncements);
+      } else {
+        setAnnouncements([]);
       }
     } catch (error) {
       console.error("Error fetching announcements:", error);
-    } finally {
-      setIsLoading(false);
+      setAnnouncements([]);
     }
   };
 
@@ -171,22 +196,17 @@ export default function AnnouncementsPage() {
       }
       
       const userData = await userResponse.json();
-      const utilisateurId = userData.id;
+      const utilisateur_id = userData.id;
       
       const formData = new FormData();
-      // Ajouter l'ID utilisateur requis
-      formData.append("utilisateur_id", utilisateurId.toString());
+      formData.append("utilisateur_id", utilisateur_id.toString());
       formData.append("title", shopTitle);
       formData.append("price", shopPrice);
-      formData.append("description", shopList);
-      formData.append("destination_address", shopDeliveryAddress);
+      formData.append("shopping_list", shopList);
+      formData.append("delivery_address", shopDeliveryAddress);
+      formData.append("delivery_date", shopDeliveryDate);
       
-      // Formater correctement la date pour respecter le format attendu par le backend
-      const now = new Date();
-      const formattedDate = now.toISOString().replace('T', ' ').split('.')[0];
-      formData.append("scheduled_date", formattedDate);
-      
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/annonces/create`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/annonces/shopping-list`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`
@@ -202,9 +222,11 @@ export default function AnnouncementsPage() {
         fetchAnnouncements();
       } else {
         const errorData = await response.json();
-        console.error("Erreur lors de la création de l'annonce:", JSON.stringify(errorData));
+        setError(`Erreur: ${errorData.error || "Impossible de créer la liste de courses"}`);
+        console.error("Erreur lors de la création de la liste de courses:", JSON.stringify(errorData));
       }
-    } catch (error) {
+    } catch (error: any) {
+      setError(error.message || "Une erreur est survenue");
       console.error("Erreur:", error);
     }
   };
@@ -212,6 +234,11 @@ export default function AnnouncementsPage() {
   useEffect(() => {
     fetchAnnouncements();
   }, []);
+
+  // Mettre à jour isLoading basé sur l'état du hook
+  useEffect(() => {
+    setIsLoading(announcementsLoading);
+  }, [announcementsLoading]);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -232,6 +259,18 @@ export default function AnnouncementsPage() {
           </button>
         </div>
 
+        {error && (
+          <div className="bg-red-100 text-red-700 p-4 mb-6 rounded-lg">
+            {error}
+            <button 
+              className="ml-2 text-red-900 font-bold"
+              onClick={() => setError(null)}
+            >
+              ×
+            </button>
+          </div>
+        )}
+
         {isLoading ? (
           <div className="flex justify-center items-center py-8">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-500"></div>
@@ -244,7 +283,7 @@ export default function AnnouncementsPage() {
               className="bg-green-400 text-white px-4 py-2 rounded-full flex items-center mx-auto hover:bg-green-500 transition-colors"
             >
               <Plus className="h-4 w-4 mr-1" />
-              {t("announcements.makeFirstAnnouncement")}
+              {t("announcements.createYourFirst")}
             </button>
           </div>
         ) : (
@@ -252,55 +291,66 @@ export default function AnnouncementsPage() {
             {announcements.map((announcement) => (
               <div key={announcement.id} className="bg-white rounded-lg shadow-md overflow-hidden">
                 <div className="h-48 relative bg-green-200">
-                  <Image
-                    src={announcement.image || "/announcements.jpg"}
+                  <Image 
+                    src={announcement.image || "/announcements.jpg"} 
                     alt={announcement.title}
-                    width={200}
-                    height={150}
-                    className="object-contain mx-auto h-full"
+                    fill
+                    style={{ objectFit: "contain" }}
+                    className="mx-auto h-full"
                   />
                 </div>
 
                 <div className="p-4">
                   <h2 className="text-lg font-semibold mb-2">{announcement.title}</h2>
-
+                  
                   <div className="space-y-1 text-sm mb-4">
-                    <p>
-                      <span className="font-medium">{t("announcements.deliveryAddress")}:</span>{" "}
-                      {announcement.deliveryAddress}
-                    </p>
-                    <p>
-                      <span className="font-medium">{t("announcements.priceForDelivery")}:</span> {announcement.price}
-                    </p>
-                    <p>
-                      <span className="font-medium">{t("announcements.deliveryDate")}:</span> {announcement.deliveryDate}
-                    </p>
-                    <p>
-                      <span className="font-medium">{t("announcements.amount")}:</span> {announcement.amount}
-                    </p>
-                    <p>
-                      <span className="font-medium">{t("announcements.storageBox")}:</span> {announcement.storageBox}
-                    </p>
+                    <p><span className="font-medium">{t("announcements.deliveryAddress")}:</span> {announcement.deliveryAddress}</p>
+                    <p><span className="font-medium">{t("announcements.priceForDelivery")}:</span> {announcement.price}</p>
+                    <p><span className="font-medium">{t("announcements.deliveryDate")}:</span> {announcement.deliveryDate}</p>
+                    {announcement.storageBox && (
+                      <p><span className="font-medium">{t("announcements.storageBox")}:</span> {announcement.storageBox}</p>
+                    )}
                     {announcement.shoppingList && (
-                      <p>
-                        <span className="font-medium">{t("announcements.shoppingList")}:</span>{" "}
-                        {announcement.shoppingList}
-                      </p>
+                      <div>
+                        <strong>{t("announcements.shoppingList")}:</strong>
+                        <p className="text-sm italic">{announcement.shoppingList}</p>
+                      </div>
                     )}
                   </div>
-
-                  <div className="flex flex-wrap gap-2">
-                    <Link
-                      href={`/app_client/announcements/edit/${announcement.id}`}
-                      className="bg-green-100 text-green-600 px-3 py-1 rounded-md text-sm hover:bg-green-200 transition-colors"
-                    >
-                      {t("common.edit")}
-                    </Link>
+                  
+                  <div className="space-y-2">
+                    <div className="flex space-x-2">
+                      <Link 
+                        href={`/app_client/announcements/edit/${announcement.id}`}
+                        className="flex-1 bg-green-100 hover:bg-green-200 text-green-800 py-2 px-3 rounded text-center text-sm transition-colors"
+                      >
+                        {t("common.edit")}
+                      </Link>
+                      <button 
+                        onClick={() => handleDelete(announcement.id)}
+                        className="flex-1 bg-red-100 hover:bg-red-200 text-red-800 py-2 px-3 rounded text-sm transition-colors"
+                      >
+                        {t("common.delete")}
+                      </button>
+                    </div>
+                    
+                    {/* Bouton Créer Colis */}
                     <button
-                      className="bg-red-100 text-red-600 px-3 py-1 rounded-md text-sm hover:bg-red-200 transition-colors"
-                      onClick={() => handleDelete(announcement.id)}
+                      onClick={() => handleCreateColis(announcement.id)}
+                      disabled={creatingColisFor === announcement.id || announcement.hasColis}
+                      className={`w-full py-2 px-3 rounded text-sm transition-colors flex items-center justify-center ${
+                        announcement.hasColis 
+                          ? 'bg-gray-100 text-gray-500 cursor-not-allowed' 
+                          : 'bg-blue-100 hover:bg-blue-200 text-blue-800'
+                      }`}
                     >
-                      {t("announcements.delete")}
+                      <Package className="h-4 w-4 mr-2" />
+                      {creatingColisFor === announcement.id 
+                        ? "Création..." 
+                        : announcement.hasColis 
+                          ? "Colis créé" 
+                          : "Créer colis"
+                      }
                     </button>
                   </div>
                 </div>
@@ -310,7 +360,7 @@ export default function AnnouncementsPage() {
         )}
       </main>
 
-      {/* Modal de choix */}
+      {/* Modal pour créer une nouvelle annonce */}
       {showCreateModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
           <div ref={modalRef} className="bg-white rounded-lg p-6 w-full max-w-md">
@@ -356,11 +406,21 @@ export default function AnnouncementsPage() {
                   className="w-full px-3 py-2 border rounded"
                   required
                 />
+                <div className="flex items-center justify-between">
+                  {t("announcements.deliveryDate")}
+                </div>  
+                <input
+                  type="date"
+                  value={shopDeliveryDate}
+                  onChange={(e) => setShopDeliveryDate(e.target.value)}
+                  className="w-full px-3 py-2 border rounded"
+                  required
+                />
                 <input
                   value={shopPrice}
                   onChange={(e) => setShopPrice(e.target.value)}
-                  placeholder={t("announcements.listPrice")}
                   type="number"
+                  placeholder={t("announcements.listPrice")}
                   className="w-full px-3 py-2 border rounded"
                   required
                 />

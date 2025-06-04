@@ -244,7 +244,7 @@ export default function DeliverymanEditAccount() {
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="px-4 py-2 bg-green-50 text-white rounded-md hover:bg-green-600 transition-colors disabled:opacity-70 flex items-center"
+                  className="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 transition-colors disabled:opacity-70 flex items-center"
                 >
                   {isSubmitting ? (
                     <>

@@ -91,103 +91,123 @@ export default function MessageDetailPage() {
 		return unsubscribe;
 	}, [id]);
 
-	// Simuler le chargement des données
+	// ✅ CORRIGÉ - Chargement des données de conversation via API
 	useEffect(() => {
-		const timer = setTimeout(() => {
-			// appel API ici
-			if (id === '1') {
-				setConversation({
-					id: 1,
-					name: 'John Doe',
-					avatar: '/placeholder.svg?height=40&width=40',
-					status: 'online',
-					messages: [
-						{
-							id: 1,
-							sender: 'them',
-							text: "Hello! I'm your delivery person for today.",
-							time: '10:15 AM',
-						},
-						{
-							id: 2,
-							sender: 'them',
-							text: "I've just picked up your package and will deliver it within the next hour.",
-							time: '10:16 AM',
-						},
-						{
-							id: 3,
-							sender: 'me',
-							text: 'Great! Thank you for the update.',
-							time: '10:20 AM',
-						},
-						{
-							id: 4,
-							sender: 'them',
-							text: 'Your package has been delivered successfully.',
-							time: '10:30 AM',
-						},
-					],
+		const loadConversation = async () => {
+			if (!userId || !id) return;
+			
+			try {
+				const token = sessionStorage.getItem('authToken') || localStorage.getItem('authToken');
+				if (!token) {
+					setIsLoading(false);
+					return;
+				}
+
+				// Récupérer la conversation spécifique
+				const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/messages/conversation/${id}`, {
+					method: 'GET',
+					headers: {
+						'Content-Type': 'application/json',
+						'Authorization': `Bearer ${token}`
+					},
+					credentials: 'include'
 				});
-			} else if (id === '2') {
-				setConversation({
-					id: 2,
-					name: 'Marie Dupont',
-					avatar: '/placeholder.svg?height=40&width=40',
-					status: 'away',
-					messages: [
-						{
-							id: 1,
-							sender: 'me',
-							text: 'Hi Marie, I need a babysitter for tomorrow at 3 PM. Are you available?',
-							time: 'Yesterday, 2:15 PM',
-						},
-						{
-							id: 2,
-							sender: 'them',
-							text: "Hello! Yes, I'm available tomorrow at 3 PM.",
-							time: 'Yesterday, 2:30 PM',
-						},
-						{
-							id: 3,
-							sender: 'me',
-							text: 'Perfect! How long can you stay?',
-							time: 'Yesterday, 2:35 PM',
-						},
-						{
-							id: 4,
-							sender: 'them',
-							text: "I'll be there at 3 PM to take care of your kids.",
-							time: 'Yesterday, 2:40 PM',
-						},
-					],
-				});
-			} else {
+
+				if (!response.ok) {
+					console.error('Erreur lors de la récupération de la conversation');
+					setConversation(null);
+					setIsLoading(false);
+					return;
+				}
+
+				const conversationData = await response.json();
+				console.log('Conversation récupérée:', conversationData);
+
+				// Formater les données pour l'interface
+				if (conversationData) {
+					const formattedConversation = {
+						id: conversationData.id,
+						name: conversationData.participant_name || conversationData.participantName || 'Utilisateur',
+						avatar: conversationData.participant_avatar || '/placeholder.svg?height=40&width=40',
+						status: conversationData.participant_status || 'offline',
+						messages: (conversationData.messages || []).map((msg: any) => ({
+							id: msg.id,
+							sender: msg.sender_id === parseInt(userId) ? 'me' : 'them',
+							text: msg.content || msg.message,
+							time: new Date(msg.created_at || msg.timestamp).toLocaleTimeString([], {
+								hour: '2-digit',
+								minute: '2-digit'
+							})
+						}))
+					};
+					
+					setConversation(formattedConversation);
+				} else {
+					setConversation(null);
+				}
+			} catch (error) {
+				console.error('Erreur lors du chargement de la conversation:', error);
 				setConversation(null);
+			} finally {
+				setIsLoading(false);
 			}
-			setIsLoading(false);
-		}, 1000);
-
-		return () => clearTimeout(timer);
-	}, [id]);
-
-	const handleSendMessage = (e: React.FormEvent) => {
-		e.preventDefault();
-		if (!message.trim()) return;
-
-		// Dans une application réelle, vous enverriez le message à l'API ici
-		const newMessage = {
-			id: conversation.messages.length + 1,
-			sender: 'me',
-			text: message,
-			time: 'Just now',
 		};
 
-		setConversation({
-			...conversation,
-			messages: [...conversation.messages, newMessage],
-		});
+		loadConversation();
+	}, [id, userId]);}]},"query_language":"French"}}}
 
-		setMessage('');
+	// ✅ CORRIGÉ - Envoi de message via API
+	const handleSendMessage = async (e: React.FormEvent) => {
+		e.preventDefault();
+		if (!message.trim() || !conversation || !userId) return;
+
+		try {
+			const token = sessionStorage.getItem('authToken') || localStorage.getItem('authToken');
+			if (!token) return;
+
+			// Envoyer le message via API
+			const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/messages/send`, {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json',
+					'Authorization': `Bearer ${token}`
+				},
+				credentials: 'include',
+				body: JSON.stringify({
+					conversation_id: id,
+					content: message.trim(),
+					receiver_id: conversation.participant_id || conversation.id
+				})
+			});
+
+			if (!response.ok) {
+				console.error('Erreur lors de l\'envoi du message');
+				return;
+			}
+
+			const sentMessage = await response.json();
+			console.log('Message envoyé:', sentMessage);
+
+			// Ajouter le message à la conversation locale
+			const newMessage = {
+				id: sentMessage.id || Date.now(),
+				sender: 'me',
+				text: message.trim(),
+				time: new Date().toLocaleTimeString([], {
+					hour: '2-digit',
+					minute: '2-digit'
+				})
+			};
+
+			setConversation({
+				...conversation,
+				messages: [...conversation.messages, newMessage],
+			});
+
+			setMessage('');
+		} catch (error) {
+			console.error('Erreur lors de l\'envoi du message:', error);
+		}
 	};
 
 	if (isLoading) {

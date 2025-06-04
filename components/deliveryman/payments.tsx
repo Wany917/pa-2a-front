@@ -6,6 +6,8 @@ import { useRouter } from "next/navigation"
 import { useLanguage } from "@/components/language-context"
 import LanguageSelector from "@/components/language-selector"
 import Link from "next/link"
+import { useApiCall } from "@/hooks/use-api-call"
+import { livreurService } from "@/services/livreurService"
 import {
   BarChart3,
   ChevronDown,
@@ -24,13 +26,27 @@ import {
   Filter,
 } from "lucide-react"
 
+interface MultiRoleUser {
+  id: number
+  firstName: string
+  lastName: string
+  email: string
+  livreur?: {
+    id: number
+    vehicle_type?: string
+    availability_status: string
+  }
+}
+
 interface Payment {
   id: string
   orderName: string
   client: string
   date: string
-  amount: string
-  status: "paid" | "pending"
+  amount: number
+  status: "completed" | "pending"
+  description?: string
+  reference?: string
 }
 
 export default function PaymentsDeliveryman() {
@@ -43,99 +59,85 @@ export default function PaymentsDeliveryman() {
   const [statusFilter, setStatusFilter] = useState<"all" | "paid" | "pending">("all")
   const [first_name, setUserName] = useState("")
 
+  // Hooks API modernes
+  const { execute: executeGetProfile, loading: profileLoading } = useApiCall<MultiRoleUser>()
+  const { execute: executeGetPayments, loading: paymentsLoading } = useApiCall<any>()
+
+  // Charger les données utilisateur
   useEffect(() => {
-    const token =
-      sessionStorage.getItem('authToken') ||
-      localStorage.getItem('authToken');
-    if (!token) return;
+    loadUserData()
+  }, [])
 
-    fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/me`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
-      },
-      credentials: 'include',
-    })
-      .then((res) => {
-        if (!res.ok) throw new Error('Unauthorized');
-        return res.json();
-      })
-      .then((data) => {
-        setUserName(data.firstName);
-      })
-      .catch((err) => console.error('Auth/me failed:', err));
-  }, []);
+  const loadUserData = async () => {
+    try {
+      const userProfile = await executeGetProfile(
+        livreurService.getProfile().then(res => res.data)
+      )
+      if (userProfile) {
+        setUserName(userProfile.firstName)
+        await loadPayments()
+      }
+    } catch (error) {
+      console.error('Erreur lors du chargement du profil:', error)
+      alert('Erreur de connexion lors du chargement du profil utilisateur')
+    }
+  }
 
-  // Données fictives des paiements
-  const mockPayments: Payment[] = [
-    {
-      id: "INV-2023-001",
-      orderName: "Pair of running shoes",
-      client: "John Smith",
-      date: "2023-05-15",
-      amount: "£20.00",
-      status: "paid",
-    },
-    {
-      id: "INV-2023-002",
-      orderName: "Kitchen supplies",
-      client: "Emma Johnson",
-      date: "2023-05-18",
-      amount: "£35.50",
-      status: "paid",
-    },
-    {
-      id: "INV-2023-003",
-      orderName: "Gardening tools",
-      client: "Robert Davis",
-      date: "2023-05-20",
-      amount: "£42.75",
-      status: "pending",
-    },
-    {
-      id: "INV-2023-004",
-      orderName: "Books collection",
-      client: "Olivia Wilson",
-      date: "2023-05-22",
-      amount: "£28.90",
-      status: "pending",
-    },
-    {
-      id: "INV-2023-005",
-      orderName: "Electronics package",
-      client: "Michael Brown",
-      date: "2023-05-25",
-      amount: "£150.00",
-      status: "paid",
-    },
-  ]
+  const loadPayments = async () => {
+    try {
+      // ✅ CORRIGÉ - Utiliser les livraisons comme données de paiement
+      const paymentsResponse = await executeGetPayments(
+        livreurService.getMyLivraisons()
+      )
+      
+      if (paymentsResponse?.livraisons || paymentsResponse?.data) {
+        const livraisons = paymentsResponse.livraisons || paymentsResponse.data || paymentsResponse
+        
+        // Convertir les livraisons en paiements
+        const formattedPayments: Payment[] = livraisons.map((livraison: any, index: number) => ({
+          id: livraison.id?.toString() || `payment-${index}`,
+          orderName: livraison.description || `Livraison #${livraison.id || index}`,
+          client: livraison.client_name || livraison.clientName || 'Client inconnu',
+          date: livraison.created_at || livraison.date || new Date().toISOString(),
+          amount: parseFloat(livraison.price || livraison.amount || '0'),
+          status: livraison.status === 'delivered' ? 'completed' : 'pending',
+          description: livraison.description || '',
+          reference: livraison.reference || livraison.id?.toString() || ''
+        }))
+        
+        setPayments(formattedPayments)
+      } else {
+        console.warn('Aucune donnée de paiement trouvée')
+        setPayments([])
+      }
+    } catch (error) {
+      console.error('Erreur lors du chargement des paiements:', error)
+      alert('Erreur de connexion lors du chargement des paiements')
+      setPayments([])
+    }
+  }
 
-  // Filtrer les paiements
-  const filteredPayments = mockPayments.filter((payment) => {
-    // Filtre de recherche
-    const matchesSearch =
-      searchQuery === "" ||
-      payment.orderName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      payment.client.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      payment.id.toLowerCase().includes(searchQuery.toLowerCase())
+  // ✅ SUPPRIMÉ - Plus de données mock
 
-    // Filtre de statut
-    const matchesStatus =
-      statusFilter === "all" || payment.status === statusFilter
-
+  // ✅ NOUVEAU - Utiliser les données réelles des paiements
+  const filteredPayments = payments.filter((payment) => {
+    const matchesSearch = payment.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                         payment.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                         payment.reference?.toLowerCase().includes(searchQuery.toLowerCase())
+    
+    const matchesStatus = statusFilter === "all" || payment.status === statusFilter
+    
     return matchesSearch && matchesStatus
   })
 
-  // Calcul du total des paiements
-  const totalPaid = mockPayments
-    .filter((payment) => payment.status === "paid")
-    .reduce((sum, payment) => sum + parseFloat(payment.amount.replace("£", "")), 0)
+  // Calculer les totaux à partir des données réelles
+  const totalPaid = payments
+    .filter(payment => payment.status === "completed")
+    .reduce((sum, payment) => sum + payment.amount, 0)
 
-  // Calcul du total en attente
-  const totalPending = mockPayments
-    .filter((payment) => payment.status === "pending")
-    .reduce((sum, payment) => sum + parseFloat(payment.amount.replace("£", "")), 0)
+  const totalPending = payments
+    .filter(payment => payment.status === "pending")
+    .reduce((sum, payment) => sum + payment.amount, 0)
 
   return (
     <div className="space-y-6">

@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-import { useState } from "react"
+import { useState, useEffect} from "react"
 import Link from "next/link"
 import Image from "next/image"
 import {
@@ -28,55 +28,12 @@ import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { shopkeeperService } from '@/services/shopkeeperService'
+import { useShopkeeperWebSocket } from '@/hooks/use-shopkeeper-websocket'
+import { useApiCall } from '@/hooks/use-api-call'
 
-// Données fictives pour les prestations à venir
-const upcomingServices = [
-  {
-    id: 1,
-    client: "Sophie Martin",
-    service: "Dog-sitter",
-    date: "2025-04-23",
-    time: "14:00 - 16:00",
-    location: "15 rue de Paris, 75001 Paris",
-    status: "Confirmed",
-  },
-  {
-    id: 2,
-    client: "Thomas Dubois",
-    service: "Dog-sitter",
-    date: "2025-04-24",
-    time: "10:00 - 12:00",
-    location: "8 avenue Victor Hugo, 75016 Paris",
-    status: "Pending",
-  },
-  {
-    id: 3,
-    client: "Marie Leroy",
-    service: "Dog-sitter",
-    date: "2025-04-25",
-    time: "15:30 - 17:30",
-    location: "22 boulevard Saint-Michel, 75005 Paris",
-    status: "Confirmed",
-  },
-  {
-    id: 4,
-    client: "Pierre Moreau",
-    service: "Dog-sitter",
-    date: "2025-04-26",
-    time: "09:00 - 11:00",
-    location: "5 rue de Rivoli, 75004 Paris",
-    status: "Confirmed",
-  },
-  {
-    id: 5,
-    client: "Julie Bernard",
-    service: "Dog-sitter",
-    date: "2025-04-27",
-    time: "16:00 - 18:00",
-    location: "12 rue de Vaugirard, 75006 Paris",
-    status: "Pending",
-  },
-]
+  // Utiliser les données réelles des annonces
+  const upcomingServices = announcements?.annonces || []
 
 // Fonction pour formater la date
 const formatDate = (dateString: string) => {
@@ -88,6 +45,26 @@ export default function ShopkeeperDashboard() {
   const { t } = useLanguage()
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false)
+  
+  // Connexion WebSocket
+  useShopkeeperWebSocket()
+  
+  // Appels API
+  const { data: stats, loading: statsLoading } = useApiCall()
+  const { data: announcements, loading: announcementsLoading } = useApiCall()
+  
+  // Charger les données
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        await stats.execute(shopkeeperService.getStats())
+        await announcements.execute(shopkeeperService.getMyAnnonces())
+      } catch (error) {
+        console.error('Erreur lors du chargement des données:', error)
+      }
+    }
+    loadData()
+  }, [])
 
   // Fonction pour rendre le badge de statut avec la bonne couleur (dans le scope de useLanguage)
   const renderStatusBadge = (status: string) => {
