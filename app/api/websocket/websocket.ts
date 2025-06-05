@@ -24,15 +24,15 @@ class WebSocketService {
         });
         
         this.socket.on('connect', () => {
-        console.log('WebSocket connecté');
+            console.log('WebSocket connecté');
         });
         
         this.socket.on('disconnect', () => {
-        console.log('WebSocket déconnecté');
+            console.log('WebSocket déconnecté');
         });
         
         this.socket.on('connect_error', (error) => {
-        console.error('Erreur de connexion WebSocket:', error);
+            console.error('Erreur de connexion WebSocket:', error);
         });
         
         // Configurer les écouteurs enregistrés

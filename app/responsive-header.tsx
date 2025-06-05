@@ -17,6 +17,7 @@ export default function ResponsiveHeader({ activePage }: HeaderProps) {
 	const [isMenuOpen, setIsMenuOpen] = useState(false);
 	const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
 	const [first_name, setUserName] = useState('');
+	const [isAdmin, setIsAdmin] = useState(false);
 	const { isMobile } = useScreenSize();
 	const { t } = useLanguage();
 	const router = useRouter();
@@ -280,6 +281,7 @@ export default function ResponsiveHeader({ activePage }: HeaderProps) {
 				return res.json();
 			})
 			.then((data) => {
+				setIsAdmin(data.role === 'admin');
 				setUserName(data.firstName);
 			})
 			.catch((err) => console.error('Auth/me failed:', err));
@@ -436,6 +438,17 @@ export default function ResponsiveHeader({ activePage }: HeaderProps) {
 								>
 									{t('common.serviceProvider')}
 								</button>
+
+								{isAdmin && (
+									<button
+										className='block px-4 py-2 text-gray-700 hover:bg-gray-100 w-full text-left'
+										onClick={() =>
+											navigateTo('admin', true)
+										}
+									>
+										{t('common.adminDashboard')}
+									</button>
+								)}
 
 								<div className='border-t border-gray-100 my-1'></div>
 

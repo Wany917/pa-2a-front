@@ -41,7 +41,8 @@
     "add": "Añadir",
     "accept": "Aceptar",
     "reject": "Rechazar",
-    "appClient": "Accede a tu espacio cliente"
+    "appClient": "Accede a tu espacio cliente",
+    "adminDashboard": "Admin"
   },
   "navigation": {
     "app_client": "Panel",
@@ -571,7 +572,8 @@
     "available": "Disponible",
     "editYourJustificativePieces": "Editar tus documentos justificativos",
     "editYourDocuments": "Editar tus documentos",
-    "uploadYourNewDocument": "Sube un nuevo documento en .pdf"
+    "uploadYourNewDocument": "Sube un nuevo documento en .pdf",
+    "reviewsCount": "aviso"
   },
   "status": {
     "pending": "Pendiente",
@@ -763,6 +765,65 @@
     "november": "Noviembre",
     "december": "Diciembre",
     "clientContract": "Contrato del cliente",
-    "shopkeeperContract": "Contrato del comerciante"
+    "shopkeeperContract": "Contrato del comerciante",
+    "clients": "Clientes",
+    "administrators": "Administradores",
+    "deactivate": "Desactivar",
+    "modify": "Modificar",
+    "noDocuments": "Sin documentos",
+    "reactivate": "Reactivar",
+    "confirmAction": "¿Estás seguro de que quieres",
+    "confirmDelete": "¿Estás seguro de que quieres eliminar este usuario?",
+    "userNotFound": "Usuario no encontrado",
+    "userType": "Tipo de usuario",
+    "userInformation": "Información del usuario",
+    "editUserDescription": "Editar y actualizar la información del usuario a continuación",
+    "enterLastName": "Ingresa el apellido",
+    "enterEmail": "Ingresa el correo electrónico",
+    "userDateOfBirth": "Fecha de nacimiento",
+    "editUser": "Editar Usuario",
+    "resetPassword": "Restablecer Contraseña",
+    "newPassword": "Nueva Contraseña",
+    "confirmNewPassword": "Confirmar Nueva Contraseña",
+    "enterNewPassword": "Ingresa la nueva contraseña",
+    "enterConfirmPassword": "Confirma la nueva contraseña",
+    "passwordResetSuccess": "Contraseña restablecida exitosamente",
+    "passwordMismatch": "Las contraseñas no coinciden",
+    "passwordTooShort": "La contraseña debe tener al menos 6 caracteres",
+    "resetPasswordConfirm": "¿Estás seguro de que quieres restablecer la contraseña de este usuario?",
+    "noReviews": "No hay reseñas disponibles",
+    "cancel": "Cancelar",
+    "validations": "Validaciones",
+    "validationsTitle": "Validación de Documentos Justificativos",
+    "validationsDescription": "Valida o rechaza las solicitudes de cambio de rol de usuarios",
+    "pendingRequests": "solicitudes pendientes",
+    "noPendingRequests": "No hay solicitudes pendientes",
+    "noPendingRequestsDescription": "Todas las solicitudes de validación han sido procesadas",
+    "validateRequest": "Validar solicitud",
+    "validateRequestDescription": "¿Estás seguro de que quieres validar la solicitud de",
+    "rejectRequest": "Rechazar solicitud",
+    "rejectRequestDescription": "¿Estás seguro de que quieres rechazar la solicitud de",
+    "requestValidated": "Solicitud validada exitosamente",
+    "requestRejected": "Solicitud rechazada exitosamente",
+    "errorValidatingRequest": "Error al validar la solicitud",
+    "errorRejectingRequest": "Error al rechazar la solicitud",
+    "documentType": "Tipo de documento",
+    "uploadedAt": "Subido el",
+    "downloadDocument": "Descargar documento",
+    "idCard": "Cédula de Identidad",
+    "drivingLicense": "Licencia de Conducir",
+    "serviceProvider": "Proveedor de Servicios",
+    "validate": "Validar",
+    "pending": "Pendiente"
+  },
+  "validations": {
+    "roles": {
+      "admin": "Administrador",
+      "client": "Cliente",
+      "livreur": "Repartidor",
+      "prestataire": "Proveedor de servicios",
+      "commercant": "Comerciante",
+      "unknown": "Rol desconocido"
+    }
   }
 }

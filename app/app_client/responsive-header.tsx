@@ -17,6 +17,7 @@ export default function ResponsiveHeader({ activePage }: HeaderProps) {
 	const [isMenuOpen, setIsMenuOpen] = useState(false);
 	const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
 	const [first_name, setUserName] = useState('');
+	const [isAdmin, setIsAdmin] = useState(false);
 	const { isMobile } = useScreenSize();
 	const { t } = useLanguage();
 	const router = useRouter();
@@ -31,37 +32,40 @@ export default function ResponsiveHeader({ activePage }: HeaderProps) {
 		setIsUserMenuOpen(!isUserMenuOpen);
 	};
 
-	const navigateTo = async (buttonName: string, closeMenu: boolean = false) => {
+	const navigateTo = async (
+		buttonName: string,
+		closeMenu: boolean = false
+	) => {
 		let path = '';
 
-    const token =
-      sessionStorage.getItem('authToken') ||
-      localStorage.getItem('authToken');
-    if (!token) return;
+		const token =
+			sessionStorage.getItem('authToken') ||
+			localStorage.getItem('authToken');
+		if (!token) return;
 
-    let user_id = '';
-    
-    try {
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/auth/me`,
-        {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${token}`,
-          },
-          credentials: "include",
-        }
-      );
-      
-      if (!response.ok) throw new Error('Failed to fetch user data');
-      
-      const userData = await response.json();
-      user_id = userData.id;
-    } catch (error) {
-      console.error('Error fetching user data:', error);
-      return;
-    }
+		let user_id = '';
+
+		try {
+			const response = await fetch(
+				`${process.env.NEXT_PUBLIC_API_URL}/auth/me`,
+				{
+					method: 'GET',
+					headers: {
+						'Content-Type': 'application/json',
+						Authorization: `Bearer ${token}`,
+					},
+					credentials: 'include',
+				}
+			);
+
+			if (!response.ok) throw new Error('Failed to fetch user data');
+
+			const userData = await response.json();
+			user_id = userData.id;
+		} catch (error) {
+			console.error('Error fetching user data:', error);
+			return;
+		}
 
 		switch (buttonName) {
 			case 'announcements':
@@ -83,137 +87,178 @@ export default function ResponsiveHeader({ activePage }: HeaderProps) {
 				path = '/app_client/edit-account';
 				break;
 			case 'register-delivery-man':
-        try {
-          if (!user_id) {
-            console.error('User ID not available');
-            path = '/register/delivery-man';
-            break;
-          }
-          
-          const response = await fetch(
-            `${process.env.NEXT_PUBLIC_API_URL}/justification-pieces/user/${user_id}`,
-            {
-              method: "GET",
-              headers: {
-                "Content-Type": "application/json",
-                "Authorization": `Bearer ${token}`,
-              },
-              credentials: "include",
-            }
-          );
-          
-          if (!response.ok) {
-            throw new Error(`API request failed with status ${response.status}`);
-          }
-          
-          const justificationPieceData = await response.json();
-          
-          if (justificationPieceData.justificationPieces && justificationPieceData.justificationPieces.length > 0) {
-            const hasVerified = justificationPieceData.justificationPieces.some(
-              (piece: any) => piece.verificationStatus === 'verified'
-            );
-            
-            const hasPending = justificationPieceData.justificationPieces.some(
-              (piece: any) => piece.verificationStatus === 'pending'
-            );
-            
-            if (hasVerified) {
-              path = '/app_deliveryman';
-            } else if (hasPending) {
-              path = '/documents-verification/pending-validation/deliveryman';
-            } else {
-              path = '/register/delivery-man';
-            }
-          } else {
-            path = '/register/delivery-man';
-          }
-        } catch (error) {
-          console.error('Error fetching justification pieces:', error);
-          path = '/register/delivery-man';
-        }
+				try {
+					if (!user_id) {
+						console.error('User ID not available');
+						path = '/register/delivery-man';
+						break;
+					}
+
+					const response = await fetch(
+						`${process.env.NEXT_PUBLIC_API_URL}/justification-pieces/user/${user_id}`,
+						{
+							method: 'GET',
+							headers: {
+								'Content-Type': 'application/json',
+								Authorization: `Bearer ${token}`,
+							},
+							credentials: 'include',
+						}
+					);
+
+					if (!response.ok) {
+						throw new Error(
+							`API request failed with status ${response.status}`
+						);
+					}
+
+					const justificationPieceData = await response.json();
+
+					if (
+						justificationPieceData.justificationPieces &&
+						justificationPieceData.justificationPieces.length > 0
+					) {
+						const hasVerified =
+							justificationPieceData.justificationPieces.some(
+								(piece: any) =>
+									piece.verificationStatus === 'verified'
+							);
+
+						const hasPending =
+							justificationPieceData.justificationPieces.some(
+								(piece: any) =>
+									piece.verificationStatus === 'pending'
+							);
+
+						if (hasVerified) {
+							path = '/app_deliveryman';
+						} else if (hasPending) {
+							path =
+								'/documents-verification/pending-validation/deliveryman';
+						} else {
+							path = '/register/delivery-man';
+						}
+					} else {
+						path = '/register/delivery-man';
+					}
+				} catch (error) {
+					console.error(
+						'Error fetching justification pieces:',
+						error
+					);
+					path = '/register/delivery-man';
+				}
 				break;
 			case 'register-shopkeeper':
-        try {
-          if (!user_id) {
-            console.error('User ID not available');
-            path = '/register/shopkeeper';
-            break;
-          }
+				try {
+					if (!user_id) {
+						console.error('User ID not available');
+						path = '/register/shopkeeper';
+						break;
+					}
 
-          const response = await fetch(
-            `${process.env.NEXT_PUBLIC_API_URL}/commercants/${user_id}/profile`,
-            {
-              method: "GET",
-              headers: {
-                "Content-Type": "application/json",
-              },
-              credentials: "include",
-            }
-          )
+					const response = await fetch(
+						`${process.env.NEXT_PUBLIC_API_URL}/commercants/${user_id}/profile`,
+						{
+							method: 'GET',
+							headers: {
+								'Content-Type': 'application/json',
+							},
+							credentials: 'include',
+						}
+					);
 
-          const commercantData = await response.json();
+					const commercantData = await response.json();
 
-          if (commercantData.commercant && commercantData.commercant.verificationState == 'verified') {
-            path = '/app_shopkeeper';
-          } else if (commercantData.commercant && commercantData.commercant.verificationState == 'pending') {
-            path = '/documents-verification/pending-validation/shopkeeper';
-          } else {
-            path = '/register/shopkeeper';
-          }
-        } catch (error) {
-          console.error('Error fetching user data:', error);
-          path = '/register/shopkeeper';
-        }
+					if (
+						commercantData.commercant &&
+						commercantData.commercant.verificationState ==
+							'verified'
+					) {
+						path = '/app_shopkeeper';
+					} else if (
+						commercantData.commercant &&
+						commercantData.commercant.verificationState == 'pending'
+					) {
+						path =
+							'/documents-verification/pending-validation/shopkeeper';
+					} else {
+						path = '/register/shopkeeper';
+					}
+				} catch (error) {
+					console.error('Error fetching user data:', error);
+					path = '/register/shopkeeper';
+				}
 				break;
 			case 'register-service-provider':
 				try {
-          if (!user_id) {
-            console.error('User ID not available');
-            path = '/register/service-provider';
-            break;
-          }
-          
-          const response = await fetch(
-            `${process.env.NEXT_PUBLIC_API_URL}/justification-pieces/user/${user_id}`,
-            {
-              method: "GET",
-              headers: {
-                "Content-Type": "application/json",
-                "Authorization": `Bearer ${token}`,
-              },
-              credentials: "include",
-            }
-          );
-          
-          if (!response.ok) {
-            throw new Error(`API request failed with status ${response.status}`);
-          }
-          
-          const justificationPieceData = await response.json();
-          
-          if (justificationPieceData.justificationPieces && justificationPieceData.justificationPieces.length > 0) {
-            const hasVerified = justificationPieceData.justificationPieces.some(
-              (piece: any) => piece.verificationStatus === 'verified'
-            );
-            
-            const hasPending = justificationPieceData.justificationPieces.some(
-              (piece: any) => piece.verificationStatus === 'pending'
-            );
-            
-            if (hasVerified) {
-              path = '/app_service-provider';
-            } else if (hasPending) {
-              path = '/documents-verification/pending-validation/service-provider';
-            } else {
-              path = '/register/service-provider';
-            }
-          } else {
-            path = '/register/service-provider';
-          }
-        } catch (error) {
-          console.error('Error fetching justification pieces:', error);
-          path = '/register/service-provider';
-        }
+					if (!user_id) {
+						console.error('User ID not available');
+						path = '/register/service-provider';
+						break;
+					}
+
+					const response = await fetch(
+						`${process.env.NEXT_PUBLIC_API_URL}/justification-pieces/user/${user_id}`,
+						{
+							method: 'GET',
+							headers: {
+								'Content-Type': 'application/json',
+								Authorization: `Bearer ${token}`,
+							},
+							credentials: 'include',
+						}
+					);
+
+					if (!response.ok) {
+						throw new Error(
+							`API request failed with status ${response.status}`
+						);
+					}
+
+					const justificationPieceData = await response.json();
+
+					if (
+						justificationPieceData.justificationPieces &&
+						justificationPieceData.justificationPieces.length > 0
+					) {
+						const hasVerified =
+							justificationPieceData.justificationPieces.some(
+								(piece: any) =>
+									piece.verificationStatus === 'verified'
+							);
+
+						const hasPending =
+							justificationPieceData.justificationPieces.some(
+								(piece: any) =>
+									piece.verificationStatus === 'pending'
+							);
+
+						if (hasVerified) {
+							path = '/app_service-provider';
+						} else if (hasPending) {
+							path =
+								'/documents-verification/pending-validation/service-provider';
+						} else {
+							path = '/register/service-provider';
+						}
+					} else {
+						path = '/register/service-provider';
+					}
+				} catch (error) {
+					console.error(
+						'Error fetching justification pieces:',
+						error
+					);
+					path = '/register/service-provider';
+				}
+				break;
+			case 'admin':
+				if (isAdmin) {
+					path = '/admin';
+				} else {
+					path = '/app_client';
+				}
 				break;
 			case 'logout':
 				path = '/logout';
@@ -280,6 +325,7 @@ export default function ResponsiveHeader({ activePage }: HeaderProps) {
 				return res.json();
 			})
 			.then((data) => {
+				setIsAdmin(data.role === 'admin');
 				setUserName(data.firstName);
 			})
 			.catch((err) => console.error('Auth/me failed:', err));
@@ -320,9 +366,7 @@ export default function ResponsiveHeader({ activePage }: HeaderProps) {
 				<TabletUp>
 					<nav className='flex items-center space-x-6'>
 						<button
-							onClick={() =>
-								navigateTo('announcements')
-							}
+							onClick={() => navigateTo('announcements')}
 							className={`${
 								activePage === 'announcements'
 									? 'text-green-500 font-medium border-b-2 border-green-500'
@@ -385,10 +429,7 @@ export default function ResponsiveHeader({ activePage }: HeaderProps) {
 								<button
 									className='flex items-center px-4 py-2 text-gray-700 hover:bg-gray-100 w-full text-left'
 									onClick={() =>
-										navigateTo(
-											'edit-account',
-											true
-										)
+										navigateTo('edit-account', true)
 									}
 								>
 									<Edit className='h-4 w-4 mr-2' />
@@ -416,10 +457,7 @@ export default function ResponsiveHeader({ activePage }: HeaderProps) {
 								<button
 									className='block px-4 py-2 text-gray-700 hover:bg-gray-100 w-full text-left'
 									onClick={() =>
-										navigateTo(
-                      'register-shopkeeper', 
-                      true
-                    )
+										navigateTo('register-shopkeeper', true)
 									}
 								>
 									{t('common.shopkeeper')}
@@ -436,6 +474,15 @@ export default function ResponsiveHeader({ activePage }: HeaderProps) {
 								>
 									{t('common.serviceProvider')}
 								</button>
+
+								{isAdmin && (
+									<button
+										className='block px-4 py-2 text-gray-700 hover:bg-gray-100 w-full text-left'
+										onClick={() => navigateTo('admin', true)}
+									>
+										{t('common.adminDashboard')}
+									</button>
+								)}
 
 								<div className='border-t border-gray-100 my-1'></div>
 
@@ -467,10 +514,7 @@ export default function ResponsiveHeader({ activePage }: HeaderProps) {
 										: 'text-gray-700'
 								}`}
 								onClick={() =>
-									navigateTo(
-										'announcements',
-										true
-									)
+									navigateTo('announcements', true)
 								}
 							>
 								{t('navigation.myAnnouncements')}
@@ -483,9 +527,7 @@ export default function ResponsiveHeader({ activePage }: HeaderProps) {
 										? 'text-green-500 font-medium'
 										: 'text-gray-700'
 								}`}
-								onClick={() =>
-									navigateTo('payments', true)
-								}
+								onClick={() => navigateTo('payments', true)}
 							>
 								{t('navigation.myPayments')}
 							</button>
@@ -497,9 +539,7 @@ export default function ResponsiveHeader({ activePage }: HeaderProps) {
 										? 'text-green-500 font-medium'
 										: 'text-gray-700'
 								}`}
-								onClick={() =>
-									navigateTo('messages', true)
-								}
+								onClick={() => navigateTo('messages', true)}
 							>
 								{t('navigation.messages')}
 							</button>
@@ -511,9 +551,7 @@ export default function ResponsiveHeader({ activePage }: HeaderProps) {
 										? 'text-green-500 font-medium'
 										: 'text-gray-700'
 								}`}
-								onClick={() =>
-									navigateTo('complaint', true)
-								}
+								onClick={() => navigateTo('complaint', true)}
 							>
 								{t('navigation.makeComplaint')}
 							</button>

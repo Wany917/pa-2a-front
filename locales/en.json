@@ -41,7 +41,8 @@
     "add": "Add",
     "accept": "Accept",
     "reject": "Reject",
-    "appClient": "Access your Client Area"
+    "appClient": "Access your Client Area",
+    "adminDashboard": "Admin"
   },
   "navigation": {
     "app_client": "Dashboard",
@@ -451,8 +452,8 @@
     "by": "by",
     "pendingThanksTitle": "Thank you! Your delivery account request is pending.",
     "pendingMessageLine1": "We have received your request to become a deliveryman!!",
-		"pendingMessageLine2": "Our verification team will review your request and inform you by email within 24 hours.",
-		"notificationsDescription": "Here you will find all notifications about announcements to accept or decline.",
+    "pendingMessageLine2": "Our verification team will review your request and inform you by email within 24 hours.",
+    "notificationsDescription": "Here you will find all notifications about announcements to accept or decline.",
     "partialDelivery": "Partial Delivery",
     "fullDelivery": "Full Delivery",
     "partialUntil": "Partial until",
@@ -547,7 +548,7 @@
     "browseFiles": "Browse your files",
     "pendingThanksTitle": "Thank you! Your service is pending verification.",
     "pendingMessageLine1": "We have received your become a service provider!!",
-		"pendingMessageLine2": "Our verification team will review your request and inform you by email within 24 hours.",
+    "pendingMessageLine2": "Our verification team will review your request and inform you by email within 24 hours.",
     "bookedOn": "Booked on",
     "at": "at",
     "intervention": "Your upcoming interventions",
@@ -571,7 +572,8 @@
     "available": "Available",
     "editYourJustificativePieces": "Edit Your Supporting Documents",
     "editYourDocuments": "Edit Your Documents",
-    "uploadYourNewDocument": "Upload a new document as .pdf"
+    "uploadYourNewDocument": "Upload a new document as .pdf",
+    "reviewsCount": "reviews"
   },
   "status": {
     "pending": "Pending",
@@ -605,7 +607,7 @@
     "editYourJustificativePieces": "Edit Your Supporting Documents",
     "pendingThanksTitle": "Thank you! Your shopkeeper account request is pending.",
     "pendingMessageLine1": "We have received your request to become a shopkeeper!!",
-		"pendingMessageLine2": "Our verification team will review your request and call you within 24 hours."
+    "pendingMessageLine2": "Our verification team will review your request and call you within 24 hours."
   },
   "contracts": {
     "contract": "Contract",
@@ -763,6 +765,65 @@
     "november": "November",
     "december": "December",
     "clientContract": "Client Contract",
-    "shopkeeperContract": "Shopkeeper Contract"
+    "shopkeeperContract": "Shopkeeper Contract",
+    "clients": "Clients",
+    "administrators": "Administrators",
+    "deactivate": "Deactivate",
+    "modify": "Modify",
+    "noDocuments": "No documents",
+    "reactivate": "Reactivate",
+    "confirmAction": "Are you sure you want to",
+    "confirmDelete": "Are you sure you want to delete this user?",
+    "userNotFound": "User not found",
+    "userType": "User Type",
+    "userInformation": "User Information",
+    "editUserDescription": "Edit and update user information below",
+    "enterLastName": "Enter last name",
+    "enterEmail": "Enter email",
+    "userDateOfBirth": "Date of Birth",
+    "editUser": "Edit User",
+    "resetPassword": "Reset Password",
+    "newPassword": "New Password",
+    "confirmNewPassword": "Confirm New Password",
+    "enterNewPassword": "Enter new password",
+    "enterConfirmPassword": "Confirm new password",
+    "passwordResetSuccess": "Password reset successfully",
+    "passwordMismatch": "Passwords do not match",
+    "passwordTooShort": "Password must be at least 6 characters",
+    "resetPasswordConfirm": "Are you sure you want to reset this user's password?",
+    "noReviews": "No reviews available",
+    "cancel": "Cancel",
+    "validations": "Validations",
+    "validationsTitle": "Justification Documents Validation",
+    "validationsDescription": "Validate or reject user role change requests",
+    "pendingRequests": "pending requests",
+    "noPendingRequests": "No pending requests",
+    "noPendingRequestsDescription": "All validation requests have been processed",
+    "validateRequest": "Validate request",
+    "validateRequestDescription": "Are you sure you want to validate the request from",
+    "rejectRequest": "Reject request",
+    "rejectRequestDescription": "Are you sure you want to reject the request from",
+    "requestValidated": "Request validated successfully",
+    "requestRejected": "Request rejected successfully",
+    "errorValidatingRequest": "Error validating request",
+    "errorRejectingRequest": "Error rejecting request",
+    "documentType": "Document type",
+    "uploadedAt": "Uploaded on",
+    "downloadDocument": "Download document",
+    "idCard": "ID Card",
+    "drivingLicense": "Driving License",
+    "serviceProvider": "Service Provider",
+    "validate": "Validate",
+    "pending": "Pending"
+  },
+  "validations": {
+    "roles": {
+      "admin": "Administrator",
+      "client": "Client",
+      "livreur": "Delivery Person",
+      "prestataire": "Service Provider",
+      "commercant": "Shopkeeper",
+      "unknown": "Unknown Role"
+    }
   }
 }

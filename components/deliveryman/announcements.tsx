@@ -23,6 +23,7 @@ import { useApiCall, useApiCallWithSuccess } from "@/hooks/use-api-call"
 import { useLivreurWebSocket } from "@/hooks/use-livreur-websocket"
 import { livreurService } from "@/services/livreurService"
 import { clientService } from "@/services/clientService"
+import { useToast } from '@/hooks/use-toast';
 
 // ✅ AMÉLIORÉ - Interface pour utilisateur multi-rôles
 interface MultiRoleUser {
@@ -191,8 +192,14 @@ export default function DeliverymanAnnouncements() {
     try {
       // Vérifier que l'utilisateur est bien un livreur
       if (!user?.livreur?.id) {
-        alert("Vous devez être connecté en tant que livreur")
-        return
+        const { toast } = useToast();
+
+        toast({
+          variant: "destructive",
+          title: "Erreur d'authentification",
+          description: "Vous devez être connecté en tant que livreur"
+        });
+        return;
       }
 
       // ✅ NOUVEAU - Utiliser le service livreur pour accepter la livraison
@@ -230,10 +237,15 @@ export default function DeliverymanAnnouncements() {
       }, 1000)
       
     } catch (error) {
-      console.error("Erreur lors de l'acceptation de la livraison:", error)
-      alert("Impossible d'accepter cette livraison")
+      console.error("Erreur lors de l'acceptation de la livraison:", error);
+      const { toast } = useToast();
+      toast({
+        variant: "destructive",
+        title: "Erreur",
+        description: "Impossible d'accepter cette livraison"
+      });
     } finally {
-      setLoadingAccept({ id: 0, loading: false })
+      setLoadingAccept({ id: 0, loading: false });
     }
   }
 

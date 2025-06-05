@@ -41,19 +41,21 @@ export default function EditAnnouncementPage() {
         });
         
         if (response.ok) {
-          const data = await response.json();
+          const responseData = await response.json();
+          const data = responseData.annonce; // Extract from wrapper
+          
           // Mise à jour des données du formulaire avec les valeurs reçues de l'API
           setAnnouncement({
-            title: data.title || "Untitled Announcement",
-            deliveryAddress: data.destination_address || "",
-            price: data.price?.toString() || "0",
-            deliveryDate: data.scheduled_date ? 
-              new Date(data.scheduled_date).toISOString().split('T')[0] : 
+            title: data.title || "",
+            deliveryAddress: data.destinationAddress || data.destination_address || "",
+            price: data.price?.toString() || "",
+            deliveryDate: data.scheduledDate ? 
+              new Date(data.scheduledDate).toISOString().split('T')[0] : 
               new Date().toISOString().split('T')[0],
-            amount: data.amount?.toString() || "1",
-            storageBox: data.storage_box || "Storage box 1",
-            packageSize: data.colis?.length > 0 ? data.colis[0].size || "Medium" : "Medium",
-            weight: data.colis?.length > 0 ? data.colis[0].weight?.toString() || "2.5" : "2.5",
+            amount: data.amount?.toString() || "1", // This might not exist in backend
+            storageBox: data.storageBoxId || data.storage_box_id || "Storage box 1",
+            packageSize: (data.colis && data.colis.length > 0) ? data.colis[0].size : "Medium",
+            weight: (data.colis && data.colis.length > 0) ? data.colis[0].weight?.toString() : "2.5",
             priorityShipping: data.priority || false,
           });
           
