@@ -33,7 +33,7 @@ interface MultiRoleUser {
 }
 
 class LivreurService {
-	// Méthode utilitaire pour récupérer l'ID livreur
+	//  utilitaire pour récupérer l'ID livreur
 	private async getLivreurId(): Promise<number> {
 		const userResponse = await apiClient.get<MultiRoleUser>(API_ROUTES.AUTH.ME);
 		const user = userResponse.data;

@@ -257,7 +257,7 @@ interface AddressSuggestion {
       try {
         await loadAnnouncements(clientService.getMyAnnonces());
       } catch (error) {
-        console.error('Erreur lors du chargement des annonces:', error);
+        console.error('Erreur xlors du chargement des annonces:', error);
       }
     };
     

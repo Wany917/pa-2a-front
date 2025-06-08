@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, MapPin, Clock, Package, Edit, Trash2, Calendar } from 'lucide-react';
 import { trajetService, type TrajetPlanifie, type CreateTrajetData } from '@/services/trajetService';
+import { livreurService } from '@/services/livreurService';
 import { useApiCall } from '@/hooks/use-api-call';
 import { toast } from 'sonner';
 
@@ -12,6 +13,7 @@ interface PlannedRoutesProps {
 
 export default function PlannedRoutes({ livreurId }: PlannedRoutesProps) {
   const [trajets, setTrajets] = useState<TrajetPlanifie[]>([]);
+  const [livraisons, setLivraisons] = useState<any[]>([]);
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [editingTrajet, setEditingTrajet] = useState<TrajetPlanifie | null>(null);
   const [formData, setFormData] = useState<CreateTrajetData>({
@@ -45,9 +47,49 @@ export default function PlannedRoutes({ livreurId }: PlannedRoutesProps) {
     }
   };
 
+  // Charger les livraisons du livreur
+  const loadLivraisons = async () => {
+    try {
+      const response = await execute(() => livreurService.getMyLivraisons({ status: 'in_progress' }));
+      if (response?.data?.livraisons && Array.isArray(response.data.livraisons)) {
+        setLivraisons(response.data.livraisons);
+      } else if (response?.livraisons && Array.isArray(response.livraisons)) {
+        setLivraisons(response.livraisons);
+      } else {
+        setLivraisons([]);
+      }
+    } catch (error) {
+      console.error('Erreur lors du chargement des livraisons:', error);
+      setLivraisons([]);
+    }
+  };
+
   useEffect(() => {
     loadTrajets();
+    loadLivraisons();
   }, [livreurId]);
+
+  // Fonction pour créer un trajet basé sur une livraison
+  const createTrajetFromLivraison = async (livraison: any) => {
+    const trajetData: CreateTrajetData = {
+      startingAddress: livraison.pickupLocation,
+      destinationAddress: livraison.dropoffLocation,
+      plannedDate: new Date().toISOString(),
+      description: `Livraison #${livraison.id}`,
+      type: 'delivery_route',
+      maxCapacity: livraison.colis?.length || 1,
+      estimatedDuration: 60
+    };
+    
+    try {
+      await execute(() => trajetService.createTrajet(trajetData));
+      toast.success('Trajet créé à partir de la livraison');
+      await loadTrajets();
+    } catch (error) {
+      console.error('Erreur:', error);
+      toast.error('Erreur lors de la création du trajet');
+    }
+  };
 
   // Gérer la soumission du formulaire
   const handleSubmit = async (e: React.FormEvent) => {
@@ -244,8 +286,8 @@ export default function PlannedRoutes({ livreurId }: PlannedRoutesProps) {
                 <input
                   type="number"
                   min="1"
-                  value={formData.maxCapacity}
-                  onChange={(e) => setFormData({ ...formData, maxCapacity: parseInt(e.target.value) })}
+                  value={formData.maxCapacity || ''}
+                  onChange={(e) => setFormData({ ...formData, maxCapacity: e.target.value ? parseInt(e.target.value) : 0 })}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
                 />
               </div>
@@ -257,8 +299,8 @@ export default function PlannedRoutes({ livreurId }: PlannedRoutesProps) {
                 <input
                   type="number"
                   min="1"
-                  value={formData.estimatedDuration}
-                  onChange={(e) => setFormData({ ...formData, estimatedDuration: parseInt(e.target.value) })}
+                  value={formData.estimatedDuration || ''}
+                  onChange={(e) => setFormData({ ...formData, estimatedDuration: e.target.value ? parseInt(e.target.value) : 0 })}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
                 />
               </div>

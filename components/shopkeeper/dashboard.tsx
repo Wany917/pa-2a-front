@@ -87,12 +87,13 @@ export default function ShopkeeperDashboard() {
     return <Badge className={`${bgColor} font-normal`}>{label}</Badge>
   }
 
-  // Données fictives des dernières annonces
-  const recentAnnouncements = [
-    { id: 1, title: "Pair of running shoes", date: "15 May 2025", status: "Published" },
-    { id: 2, title: "Baby stroller",          date: "20 May 2025", status: "Draft"     },
-    { id: 3, title: "Dog food package",       date: "22 May 2025", status: "Published" },
-  ]
+  // Utiliser les vraies données des annonces récentes
+  const recentAnnouncements = (announcements?.annonces || []).slice(0, 3).map(annonce => ({
+    id: annonce.id,
+    title: annonce.title,
+    date: formatDate(annonce.created_at),
+    status: annonce.status
+  }))
 
   return (
     <div className="flex h-screen bg-gray-50">

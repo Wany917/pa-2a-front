@@ -18,7 +18,6 @@ import {
 } from "lucide-react"
 import { useLanguage } from "@/components/language-context"
 import LanguageSelector from "@/components/language-selector"
-import DeliverymanLayout from "./layout"
 import { useApiCall, useApiCallWithSuccess } from "@/hooks/use-api-call"
 import { useLivreurWebSocket } from "@/hooks/use-livreur-websocket"
 import { livreurService } from "@/services/livreurService"
@@ -88,7 +87,7 @@ export default function DeliverymanAnnouncements() {
     try {
       console.log('Chargement des annonces disponibles...')
       
-      const announcesResponse: any = await executeGetAnnouncements(() =>
+      const announcesResponse: any = await executeGetAnnouncements(
         fetch(`${process.env.NEXT_PUBLIC_API_URL}/annonces`, {
           method: 'GET',
           headers: {
@@ -150,11 +149,11 @@ export default function DeliverymanAnnouncements() {
     const loadData = async () => {
       try {
         // 1. Charger le profil utilisateur d'abord
-        const userProfile = await executeGetProfile(() => livreurService.getProfile())
+        const userProfile = await executeGetProfile(livreurService.getProfile())
         
         // Vérifier que l'utilisateur est bien un livreur
         if (!userProfile?.livreur?.id) {
-          console.error('Utilisateur non-livreur:', userProfile)
+          console.error('Utilisateur non autorisé : rôle livreur requis')
           return
         }
         
@@ -219,25 +218,32 @@ export default function DeliverymanAnnouncements() {
       // ✅ NOUVEAU - Utiliser le service livreur pour accepter la livraison
       console.log('Acceptation de la livraison pour l\'annonce:', announcementId)
       
-      // ✅ CORRIGÉ - Utiliser les vraies données de l'annonce au lieu de données mockées
-      const response = await executeAcceptDelivery(() =>
-        fetch(`${process.env.NEXT_PUBLIC_API_URL}/annonces/${announcementId}/livraisons`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${sessionStorage.getItem('authToken') || localStorage.getItem('authToken')}`
-          },
-          credentials: 'include',
-          body: JSON.stringify({
-            livreur_id: user.livreur.id,
-            status: 'scheduled',
-            pickup_location: announcement.storageBox || "Point de collecte",
-            dropoff_location: announcement.address || "Adresse de livraison"
-          })
-        }).then(res => {
-          if (!res.ok) throw new Error('Erreur lors de la création de la livraison')
-          return res.json()
+      // ✅ CORRIGÉ - Créer d'abord la livraison via l'API annonces
+      const createResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/annonces/${announcementId}/livraisons`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${sessionStorage.getItem('authToken') || localStorage.getItem('authToken')}`
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          livreur_id: user.livreur.id,
+          status: 'scheduled',
+          pickup_location: announcement.storageBox || "Point de collecte",
+          dropoff_location: announcement.address || "Adresse de livraison"
         })
+      })
+      
+      if (!createResponse.ok) {
+        throw new Error('Erreur lors de la création de la livraison')
+      }
+      
+      const createResult = await createResponse.json()
+      console.log('Livraison créée:', createResult)
+      
+      // ✅ NOUVEAU - Maintenant accepter la livraison via le service livreur
+      const response = await executeAcceptDelivery(() =>
+        livreurService.acceptLivraison(createResult.data.id)
       )
       
       console.log('Livraison créée:', response)
@@ -266,10 +272,8 @@ export default function DeliverymanAnnouncements() {
   const loading = profileLoading || announcementsLoading
 
   return (
-    <DeliverymanLayout>
-      {/* Page content */}
-      <main className="p-4 lg:p-6">
-        <h1 className="mb-6 text-2xl font-bold">{t("deliveryman.announcements")}</h1>
+    <div>
+      <h1 className="mb-6 text-2xl font-bold">{t("deliveryman.announcements")}</h1>
 
         {loading ? (
           <div className="flex justify-center items-center h-64">
@@ -354,7 +358,6 @@ export default function DeliverymanAnnouncements() {
             )}
           </>
         )}
-      </main>
-    </DeliverymanLayout>
+    </div>
   )
 }
