@@ -32,9 +32,6 @@ import { shopkeeperService } from '@/services/shopkeeperService'
 import { useShopkeeperWebSocket } from '@/hooks/use-shopkeeper-websocket'
 import { useApiCall } from '@/hooks/use-api-call'
 
-  // Utiliser les données réelles des annonces
-  const upcomingServices = announcements?.annonces || []
-
 // Fonction pour formater la date
 const formatDate = (dateString: string) => {
   const options: Intl.DateTimeFormatOptions = { day: "numeric", month: "short", year: "numeric" }
@@ -50,21 +47,25 @@ export default function ShopkeeperDashboard() {
   useShopkeeperWebSocket()
   
   // Appels API
-  const { data: stats, loading: statsLoading } = useApiCall()
-  const { data: announcements, loading: announcementsLoading } = useApiCall()
+  const { data: stats, loading: statsLoading, execute: loadStats } = useApiCall()
+  const { data: announcements, loading: announcementsLoading, execute: loadAnnouncements } = useApiCall()
   
-  // Charger les données
+  // Charger les données au montage du composant
   useEffect(() => {
     const loadData = async () => {
       try {
-        await stats.execute(shopkeeperService.getStats())
-        await announcements.execute(shopkeeperService.getMyAnnonces())
+        await loadStats(shopkeeperService.getStats())
+        await loadAnnouncements(shopkeeperService.getMyAnnonces())
       } catch (error) {
         console.error('Erreur lors du chargement des données:', error)
       }
     }
+    
     loadData()
-  }, [])
+  }, [loadStats, loadAnnouncements])
+  
+  // Utiliser les données réelles des annonces
+  const upcomingServices = announcements?.annonces || []
 
   // Fonction pour rendre le badge de statut avec la bonne couleur (dans le scope de useLanguage)
   const renderStatusBadge = (status: string) => {
@@ -232,38 +233,85 @@ export default function ShopkeeperDashboard() {
         <div className="p-6 bg-gray-50 min-h-screen">
             <h1 className="text-3xl font-bold mb-6">{t("shopkeeper.dashboard")}</h1>
 
-             {/* Tableau des prestations à venir */}
+            {/* Statistiques */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">{t("shopkeeper.totalAnnouncements")}</CardTitle>
+                  <Tag className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">
+                    {statsLoading ? "..." : (stats?.totalAnnouncements || announcements?.annonces?.length || 0)}
+                  </div>
+                </CardContent>
+              </Card>
+              
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">{t("shopkeeper.activeAnnouncements")}</CardTitle>
+                  <PartyPopper className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">
+                    {statsLoading ? "..." : (stats?.activeAnnouncements || upcomingServices.filter(s => s.status === 'active').length || 0)}
+                  </div>
+                </CardContent>
+              </Card>
+              
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">{t("shopkeeper.monthlyRevenue")}</CardTitle>
+                  <CreditCard className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">
+                    {statsLoading ? "..." : `${stats?.monthlyRevenue || 0}€`}
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+             {/* Tableau des annonces récentes */}
                 <Card className="border-none shadow-md">
                     <div className="p-4 border-b">
-                        <h2 className="text-lg font-semibold">{t("serviceProvider.upcomingInterventions")}</h2>
+                        <h2 className="text-lg font-semibold">{t("shopkeeper.recentAnnouncements")}</h2>
                     </div>
                     <div className="p-4">
-                        <div className="overflow-x-auto">
-                        <table className="min-w-full divide-y divide-gray-200">
-                            <thead>
-                            <tr>
-                                <th className="px-6 py-3 text-left text-sm font-medium text-gray-500">{t("serviceProvider.client")}</th>
-                                <th className="px-6 py-3 text-left text-sm font-medium text-gray-500">{t("serviceProvider.service")}</th>
-                                <th className="px-6 py-3 text-left text-sm font-medium text-gray-500">{t("serviceProvider.date")}</th>
-                                <th className="px-6 py-3 text-left text-sm font-medium text-gray-500">{t("serviceProvider.time")}</th>
-                                <th className="px-6 py-3 text-left text-sm font-medium text-gray-500">{t("serviceProvider.addressClient")}</th>
-                                <th className="px-6 py-3 text-left text-sm font-medium text-gray-500">{t("serviceProvider.status")}</th>
-                            </tr>
-                            </thead>
-                            <tbody className="divide-y divide-gray-200">
-                            {upcomingServices.map((service) => (
-                                <tr key={service.id} className="hover:bg-gray-50">
-                                <td className="px-6 py-4 text-sm font-medium text-gray-900">{service.client}</td>
-                                <td className="px-6 py-4 text-sm text-gray-500">{service.service}</td>
-                                <td className="px-6 py-4 text-sm text-gray-500">{formatDate(service.date)}</td>
-                                <td className="px-6 py-4 text-sm text-gray-500">{service.time}</td>
-                                <td className="px-6 py-4 text-sm text-gray-500 truncate">{service.location}</td>
-                                <td className="px-6 py-4 text-sm">{renderStatusBadge(service.status)}</td>
+                        {announcementsLoading ? (
+                          <div className="flex justify-center py-8">
+                            <div className="text-gray-500">Chargement des annonces...</div>
+                          </div>
+                        ) : upcomingServices.length > 0 ? (
+                          <div className="overflow-x-auto">
+                            <table className="min-w-full divide-y divide-gray-200">
+                                <thead>
+                                <tr>
+                                    <th className="px-6 py-3 text-left text-sm font-medium text-gray-500">{t("shopkeeper.title")}</th>
+                                    <th className="px-6 py-3 text-left text-sm font-medium text-gray-500">{t("shopkeeper.description")}</th>
+                                    <th className="px-6 py-3 text-left text-sm font-medium text-gray-500">{t("shopkeeper.createdAt")}</th>
+                                    <th className="px-6 py-3 text-left text-sm font-medium text-gray-500">{t("shopkeeper.price")}</th>
+                                    <th className="px-6 py-3 text-left text-sm font-medium text-gray-500">{t("shopkeeper.status")}</th>
                                 </tr>
-                            ))}
-                            </tbody>
-                        </table>
-                        </div>
+                                </thead>
+                                <tbody className="divide-y divide-gray-200">
+                                {upcomingServices.slice(0, 5).map((annonce) => (
+                                    <tr key={annonce.id} className="hover:bg-gray-50">
+                                    <td className="px-6 py-4 text-sm font-medium text-gray-900">{annonce.title || annonce.titre}</td>
+                                    <td className="px-6 py-4 text-sm text-gray-500 truncate max-w-xs">{annonce.description}</td>
+                                    <td className="px-6 py-4 text-sm text-gray-500">{formatDate(annonce.created_at || annonce.createdAt)}</td>
+                                    <td className="px-6 py-4 text-sm text-gray-500">{annonce.price ? `${annonce.price}€` : 'N/A'}</td>
+                                    <td className="px-6 py-4 text-sm">{renderStatusBadge(annonce.status || 'active')}</td>
+                                    </tr>
+                                ))}
+                                </tbody>
+                            </table>
+                          </div>
+                        ) : (
+                          <div className="flex justify-center py-8">
+                            <div className="text-gray-500">{t("shopkeeper.noAnnouncements")}</div>
+                          </div>
+                        )}
                     </div>
                 </Card>
 

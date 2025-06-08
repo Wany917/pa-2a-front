@@ -1,4 +1,4 @@
-import apiClient from '@/config/api';
+import apiClient, { API_ROUTES } from '@/config/api';
 import type {
 	Livraison,
 	Livreur,
@@ -35,7 +35,7 @@ interface MultiRoleUser {
 class LivreurService {
 	// Méthode utilitaire pour récupérer l'ID livreur
 	private async getLivreurId(): Promise<number> {
-		const userResponse = await apiClient.get<MultiRoleUser>('/auth/me');
+		const userResponse = await apiClient.get<MultiRoleUser>(API_ROUTES.AUTH.ME);
 		const user = userResponse.data;
 		
 		if (!user.livreur?.id) {
@@ -52,24 +52,24 @@ class LivreurService {
 		maxPrice?: number;
 		vehicleType?: string;
 	}): Promise<ApiResponse<Livraison[]>> {
-		return apiClient.get('/livreurs/livraisons/available', { params: filters });
+		return apiClient.get(API_ROUTES.LIVREURS.AVAILABLE_LIVRAISONS, { params: filters });
 	}
 
 	async acceptLivraison(livraisonId: number): Promise<ApiResponse<Livraison>> {
 		const livreurId = await this.getLivreurId();
-		return apiClient.post(`/livreurs/${livreurId}/livraisons/${livraisonId}/accept`);
+		return apiClient.post(API_ROUTES.LIVREURS.ACCEPT_LIVRAISON(livreurId, livraisonId));
 	}
 
 	// ========== Mes livraisons ==========
 	async getMyLivraisons(status?: 'scheduled' | 'in_progress' | 'completed' | 'cancelled'): Promise<ApiResponse<Livraison[]>> {
 		const livreurId = await this.getLivreurId();
 		const params = status ? { status } : undefined;
-		return apiClient.get(`/livreurs/${livreurId}/livraisons`, { params });
+		return apiClient.get(API_ROUTES.LIVREURS.LIVRAISONS(livreurId), { params });
 	}
 
 	async getCurrentLivraison(): Promise<ApiResponse<Livraison | null>> {
 		const livreurId = await this.getLivreurId();
-		return apiClient.get(`/livreurs/${livreurId}/livraisons/current`);
+		return apiClient.get(API_ROUTES.LIVREURS.CURRENT_LIVRAISON(livreurId));
 	}
 
 	async updateLivraisonStatus(
@@ -77,7 +77,7 @@ class LivreurService {
 		data: UpdateLivraisonStatusRequest
 	): Promise<ApiResponse<Livraison>> {
 		const livreurId = await this.getLivreurId();
-		return apiClient.put(`/livreurs/${livreurId}/livraisons/${livraisonId}/status`, data);
+		return apiClient.put(API_ROUTES.LIVREURS.UPDATE_STATUS(livreurId, livraisonId), data);
 	}
 
 	async startLivraison(livraisonId: number): Promise<ApiResponse<Livraison>> {
@@ -109,7 +109,7 @@ class LivreurService {
 	}): Promise<ApiResponse<GPSPosition>> {
 		const livreurId = await this.getLivreurId();
 
-		return apiClient.post('/tracking/location', {
+		return apiClient.post(API_ROUTES.TRACKING.UPDATE_LOCATION, {
 			livreur_id: livreurId,
 			...position,
 			timestamp: new Date().toISOString(),
@@ -174,23 +174,23 @@ class LivreurService {
 
 	// ========== Messages ==========
 	async sendMessage(data: SendMessageRequest): Promise<ApiResponse<Message>> {
-		return apiClient.post('/messages', data);
+		return apiClient.post(API_ROUTES.MESSAGES.SEND, data);
 	}
 
 	async getConversations(): Promise<ApiResponse<Conversation[]>> {
-		return apiClient.get('/messages/conversations');
+		return apiClient.get(API_ROUTES.MESSAGES.CONVERSATIONS);
 	}
 
 	async getMessageHistory(userId: number): Promise<ApiResponse<Message[]>> {
-		return apiClient.get(`/messages/history/${userId}`);
+		return apiClient.get(API_ROUTES.MESSAGES.HISTORY(userId));
 	}
 
 	async markMessageAsRead(messageId: number): Promise<ApiResponse<Message>> {
-		return apiClient.put(`/messages/${messageId}/read`);
+		return apiClient.put(API_ROUTES.MESSAGES.MARK_READ(messageId));
 	}
 
 	async getProfile(): Promise<ApiResponse<Livreur>> {
-		return apiClient.get('/auth/me');
+		return apiClient.get(API_ROUTES.AUTH.ME);
 	}
 
 	async updateProfile(data: {
@@ -201,7 +201,7 @@ class LivreurService {
 		vehicle_type?: string;
 		license_number?: string;
 	}): Promise<ApiResponse<Livreur>> {
-		return apiClient.put('/auth/profile', data);
+		return apiClient.put(API_ROUTES.AUTH.UPDATE_PROFILE, data);
 	}
 
 	async changePassword(data: {
@@ -209,7 +209,7 @@ class LivreurService {
 		new_password: string;
 		confirm_password: string;
 	}): Promise<ApiResponse<void>> {
-		return apiClient.put('/auth/change-password', data);
+		return apiClient.put(API_ROUTES.AUTH.CHANGE_PASSWORD, data);
 	}
 
 	// ========== Documents justificatifs ==========
@@ -217,14 +217,14 @@ class LivreurService {
 		file: File, 
 		documentType: string
 	): Promise<ApiResponse<any>> {
-		const userResponse = await apiClient.get<MultiRoleUser>('/auth/me');
+		const userResponse = await apiClient.get<MultiRoleUser>(API_ROUTES.AUTH.ME);
 		const userId = userResponse.data.id; // ID utilisateur principal, pas livreur
 
 		// Upload du fichier
 		const uploadResponse = await this.uploadFile(file, 'document');
 		
 		// Créer l'entrée justification_piece
-		return apiClient.post('/justification-pieces/create', {
+		return apiClient.post(API_ROUTES.LIVREURS.UPLOAD_JUSTIFICATION, {
 			utilisateur_id: userId,
 			document_type: documentType,
 			file_path: uploadResponse.data.path

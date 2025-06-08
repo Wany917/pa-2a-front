@@ -17,7 +17,7 @@ class WebSocketService {
         this.userId = userId;
         
         // Connecter au serveur WebSocket avec l'ID utilisateur dans les headers
-        this.socket = io(process.env.WEB_SOCKET_URL || 'ws://localhost:3333', {
+        this.socket = io(process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:3333', {
         extraHeaders: {
             'user_id': userId.toString()
         }

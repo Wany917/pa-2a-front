@@ -1,4 +1,4 @@
-import apiClient from '@/config/api';
+import apiClient, { API_ROUTES } from '@/config/api';
 import type {
 	Annonce,
 	Livraison,
@@ -19,25 +19,25 @@ import type {
 class ClientService {
 	// ========== Annonces ==========
 	async createAnnonce(data: CreateAnnonceRequest): Promise<ApiResponse<Annonce>> {
-		return apiClient.post('/annonces/create', data);
+		return apiClient.post(API_ROUTES.ANNONCES.CREATE, data);
 	}
 
 	async getMyAnnonces(): Promise<ApiResponse<{ annonces: Annonce[] }>> {
-		const userResponse = await apiClient.get<User>('/auth/me');
+		const userResponse = await apiClient.get<User>(API_ROUTES.AUTH.ME);
 		const userId = userResponse.data.id;
-		return apiClient.get(`/annonces/user/${userId}`);
+		return apiClient.get(API_ROUTES.ANNONCES.USER_ANNONCES(userId));
 	}
 
 	async getAnnonceById(id: number): Promise<ApiResponse<{ annonce: Annonce }>> {
-		return apiClient.get(`/annonces/${id}`);
+		return apiClient.get(API_ROUTES.ANNONCES.GET(id));
 	}
 
 	async updateAnnonce(id: number, data: Partial<CreateAnnonceRequest>): Promise<ApiResponse<Annonce>> {
-		return apiClient.put(`/annonces/${id}`, data);
+		return apiClient.put(API_ROUTES.ANNONCES.UPDATE(id), data);
 	}
 
 	async deleteAnnonce(id: number): Promise<ApiResponse<void>> {
-		return apiClient.delete(`/annonces/${id}`);
+		return apiClient.delete(API_ROUTES.ANNONCES.GET(id));
 	}
 
 	async searchAnnonces(query: string, filters?: {
@@ -46,19 +46,19 @@ class ClientService {
 		priceMax?: number;
 		location?: string;
 	}): Promise<ApiResponse<Annonce[]>> {
-		return apiClient.get('/annonces/search', { params: { query, ...filters } });
+		return apiClient.get(API_ROUTES.ANNONCES.ALL, { params: { query, ...filters } });
 	}
 
 	// ========== Livraisons ==========
 	async createLivraison(annonceId: number, data: CreateLivraisonRequest): Promise<ApiResponse<Livraison>> {
-		return apiClient.post(`/annonces/${annonceId}/livraisons`, data);
+		return apiClient.post(API_ROUTES.ANNONCES.CREATE_LIVRAISON(annonceId), data);
 	}
 
 	async getMyLivraisons(): Promise<ApiResponse<Livraison[]>> {
-		const userResponse = await apiClient.get<User>('/auth/me');
+		const userResponse = await apiClient.get<User>(API_ROUTES.AUTH.ME);
 		const userId = userResponse.data.id;
 		
-		const response = await apiClient.get(`/livraisons/client/${userId}`);
+		const response = await apiClient.get(API_ROUTES.LIVRAISONS.CLIENT_LIVRAISONS(userId));
 		
 		// Transformer la réponse paginée en format attendu
 		if (response.success && (response.data as any)?.livraisons?.data) {
@@ -77,7 +77,7 @@ class ClientService {
 	}
 
 	async getLivraisonById(id: number): Promise<ApiResponse<Livraison>> {
-		return apiClient.get(`/livraisons/${id}`);
+		return apiClient.get(API_ROUTES.LIVRAISONS.GET(id));
 	}
 
 	async trackLivraison(id: number): Promise<ApiResponse<{
@@ -89,23 +89,22 @@ class ClientService {
 		};
 		estimatedArrival?: string;
 	}>> {
-		return apiClient.get(`/tracking/livraison/${id}`);
+		return apiClient.get(API_ROUTES.TRACKING.LIVRAISON(id));
 	}
-
 	async cancelLivraison(id: number, reason?: string): Promise<ApiResponse<Livraison>> {
-		return apiClient.put(`/livraisons/${id}/cancel`, { reason });
+		return apiClient.put(API_ROUTES.LIVRAISONS.CANCEL(id), { reason });
 	}
 
 	// ========== Colis ==========
 	async createColis(data: CreateColisRequest): Promise<ApiResponse<Colis>> {
-		return apiClient.post('/colis/create', data);
+		return apiClient.post(API_ROUTES.COLIS.CREATE, data);
 	}
 
 	async getMyColis(): Promise<ApiResponse<Colis[]>> {
-		const userResponse = await apiClient.get<User>('/auth/me');
+		const userResponse = await apiClient.get<User>(API_ROUTES.AUTH.ME);
 		const userId = userResponse.data.id; // Correction ici aussi
 		
-		return apiClient.get(`/colis/user/${userId}`);
+		return apiClient.get(API_ROUTES.COLIS.USER_COLIS(userId));
 	}
 
 	async trackColis(trackingNumber: string): Promise<ApiResponse<{
@@ -117,7 +116,7 @@ class ClientService {
 			description?: string;
 		}>;
 	}>> {
-		const response = await apiClient.get(`/colis/${trackingNumber}`);
+		const response = await apiClient.get(API_ROUTES.COLIS.TRACK(trackingNumber));
 		
 		// Transformer la réponse pour correspondre au format attendu
 		if (response.success && (response.data as any)?.colis) {
@@ -143,7 +142,7 @@ class ClientService {
 		address: string;
 		locationId?: number;
 	}): Promise<ApiResponse<Colis>> {
-		return apiClient.put(`/colis/${id}/location`, location);
+		return apiClient.put(API_ROUTES.COLIS.UPDATE_LOCATION(id), location);
 	}
 
 	// ========== Services (recherche et commande) ==========
@@ -167,11 +166,11 @@ class ClientService {
 				}
 			});
 		}
-		return apiClient.get('/services/search', { params });
+		return apiClient.get(API_ROUTES.SERVICES.ALL, { params });
 	}
 
 	async getServiceById(id: number): Promise<ApiResponse<any>> {
-		return apiClient.get(`/services/${id}`);
+		return apiClient.get(API_ROUTES.SERVICES.GET(id));
 	}
 
 	async bookService(serviceId: number, data: {
@@ -179,19 +178,19 @@ class ClientService {
 		notes?: string;
 		address: string;
 	}): Promise<ApiResponse<any>> {
-		return apiClient.post(`/services/${serviceId}/book`, data);
+		return apiClient.post(API_ROUTES.SERVICES.BOOK(serviceId), data);
 	}
 
 	// ========== Réclamations ==========
 	async createComplaint(data: CreateComplaintRequest): Promise<ApiResponse<Complaint>> {
-		return apiClient.post('/complaints/create', data);
+		return apiClient.post(API_ROUTES.COMPLAINTS.CREATE, data);
 	}
 
 	async getMyComplaints(): Promise<ApiResponse<Complaint[]>> {
-		const userResponse = await apiClient.get<User>('/auth/me');
+		const userResponse = await apiClient.get<User>(API_ROUTES.AUTH.ME);
 		const userId = userResponse.data.id; // Correction ici aussi
 		
-		return apiClient.get(`/complaints/user/${userId}`);
+		return apiClient.get(API_ROUTES.COMPLAINTS.USER_COMPLAINTS(userId));
 	}
 
 	async updateComplaint(id: number, data: {
@@ -199,29 +198,29 @@ class ClientService {
 		category?: string;
 		priority?: 'low' | 'medium' | 'high' | 'urgent';
 	}): Promise<ApiResponse<Complaint>> {
-		return apiClient.put(`/complaints/${id}`, data);
+		return apiClient.put(API_ROUTES.COMPLAINTS.UPDATE(id), data);
 	}
 
 	// ========== Messages ==========
 	async sendMessage(data: SendMessageRequest): Promise<ApiResponse<Message>> {
-		return apiClient.post('/messages', data);
+		return apiClient.post(API_ROUTES.MESSAGES.SEND, data);
 	}
 
 	async getConversations(): Promise<ApiResponse<Conversation[]>> {
-		return apiClient.get('/messages/conversations');
+		return apiClient.get(API_ROUTES.MESSAGES.CONVERSATIONS);
 	}
 
 	async getMessageHistory(userId: number): Promise<ApiResponse<Message[]>> {
-		return apiClient.get(`/messages/history/${userId}`);
+		return apiClient.get(API_ROUTES.MESSAGES.HISTORY(userId));
 	}
 
 	async markMessageAsRead(messageId: number): Promise<ApiResponse<Message>> {
-		return apiClient.put(`/messages/${messageId}/read`);
+		return apiClient.put(API_ROUTES.MESSAGES.MARK_READ(messageId));
 	}
 
 	// ========== Profil utilisateur ==========
 	async getProfile(): Promise<ApiResponse<User>> {
-		return apiClient.get('/auth/me');
+		return apiClient.get(API_ROUTES.AUTH.ME);
 	}
 
 	async updateProfile(data: {
@@ -230,7 +229,7 @@ class ClientService {
 		phone_number?: string;
 		address?: string;
 	}): Promise<ApiResponse<User>> {
-		return apiClient.put('/auth/profile', data);
+		return apiClient.put(API_ROUTES.AUTH.UPDATE_PROFILE, data);
 	}
 
 	async changePassword(data: {
@@ -238,7 +237,7 @@ class ClientService {
 		new_password: string;
 		confirm_password: string;
 	}): Promise<ApiResponse<void>> {
-		return apiClient.put('/auth/change-password', data);
+		return apiClient.put(API_ROUTES.AUTH.CHANGE_PASSWORD, data);
 	}
 
 	// ========== Paiements ==========
@@ -251,10 +250,10 @@ class ClientService {
 		date: string;
 		reference?: string;
 	}>>> {
-		const userResponse = await apiClient.get<User>('/auth/me');
+		const userResponse = await apiClient.get<User>(API_ROUTES.AUTH.ME);
 		const userId = userResponse.data.id; // Correction ici aussi
 		
-		return apiClient.get(`/payments/user/${userId}`);
+		return apiClient.get(API_ROUTES.USERS.PAYMENTS(userId));
 	}
 
 	async processPayment(data: {
@@ -264,7 +263,7 @@ class ClientService {
 		payment_method: 'card' | 'paypal' | 'bank_transfer';
 		payment_details: Record<string, any>;
 	}): Promise<ApiResponse<any>> {
-		return apiClient.post('/payments/process', data);
+		return apiClient.post(API_ROUTES.USERS.PROCESS_PAYMENT, data);
 	}
 
 	// ========== Évaluations ==========
@@ -272,14 +271,14 @@ class ClientService {
 		rating: number;
 		comment?: string;
 	}): Promise<ApiResponse<any>> {
-		return apiClient.post(`/livraisons/${livraisonId}/rate-livreur`, data);
+		return apiClient.post(API_ROUTES.LIVRAISONS.RATE_LIVREUR(livraisonId), data);
 	}
 
 	async rateService(serviceBookingId: number, data: {
 		rating: number;
 		comment?: string;
 	}): Promise<ApiResponse<any>> {
-		return apiClient.post(`/services/bookings/${serviceBookingId}/rate`, data);
+		return apiClient.post(API_ROUTES.SERVICES.RATE(serviceBookingId), data);
 	}
 
 	// ========== Statistiques ==========
@@ -294,10 +293,10 @@ class ClientService {
 			date: string;
 		}>;
 	}>> {
-		const userResponse = await apiClient.get<User>('/auth/me');
+		const userResponse = await apiClient.get<User>(API_ROUTES.AUTH.ME);
 		const userId = userResponse.data.id; // Correction ici aussi
 		
-		return apiClient.get(`/clients/${userId}/stats`);
+		return apiClient.get(API_ROUTES.CLIENTS.STATS(userId));
 	}
 
 	// ========== Upload de fichiers ==========
@@ -306,7 +305,7 @@ class ClientService {
 		formData.append('file', file);
 		formData.append('type', type);
 
-		return apiClient.uploadFile('/files/upload', formData);
+		return apiClient.uploadFile(API_ROUTES.USERS.UPLOAD_FILE, formData);
 	}
 
   // Nouvelle méthode pour envoyer un email de suivi
@@ -317,7 +316,7 @@ class ClientService {
     recipientName: string;
     estimatedDelivery: string;
   }): Promise<ApiResponse<any>> {
-    return apiClient.post('/send-email', {
+    return apiClient.post(API_ROUTES.USERS.SEND_EMAIL, {
       to: data.email,
       subject: "Votre colis est en route !",
       body: {

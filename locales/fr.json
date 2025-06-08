@@ -142,6 +142,8 @@
     "createNewAnnouncement": "Créer une nouvelle annonce",
     "editYourAnnouncement": "Modifier votre annonce",
     "packageName": "Nom du colis",
+    "packageDelivery": "Livraison de colis",
+    "shoppingList": "Liste de courses",
     "whereTo": "Destination",
     "startingPoint": "Adresse de départ",
     "price": "Prix du colis",

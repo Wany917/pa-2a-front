@@ -30,21 +30,22 @@ export default function ServiceProviderDashboard() {
   useServiceProviderWebSocket()
   
   // Appels API
-  const { data: stats, loading: statsLoading } = useApiCall()
-  const { data: interventions, loading: interventionsLoading } = useApiCall()
+  const { data: stats, loading: statsLoading, execute: loadStats } = useApiCall()
+  const { data: interventions, loading: interventionsLoading, execute: loadInterventions } = useApiCall()
   
-  // Charger les données
+  // Charger les données au montage du composant
   useEffect(() => {
     const loadData = async () => {
       try {
-        await stats.execute(serviceProviderService.getStats())
-        await interventions.execute(serviceProviderService.getMyInterventions({ status: 'confirmed' }))
+        await loadStats(serviceProviderService.getStats())
+        await loadInterventions(serviceProviderService.getMyInterventions({ status: 'confirmed' }))
       } catch (error) {
         console.error('Erreur lors du chargement des données:', error)
       }
     }
+    
     loadData()
-  }, [])
+  }, [loadStats, loadInterventions])
 
   // Utiliser les données réelles des interventions
   const upcomingServices = interventions || []
@@ -93,32 +94,42 @@ export default function ServiceProviderDashboard() {
             <h2 className="text-lg font-semibold">{t("serviceProvider.upcomingInterventions")}</h2>
         </div>
         <div className="p-4">
-            <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-                <thead>
-                <tr>
-                    <th className="px-6 py-3 text-left text-sm font-medium text-gray-500">{t("serviceProvider.client")}</th>
-                    <th className="px-6 py-3 text-left text-sm font-medium text-gray-500">{t("serviceProvider.service")}</th>
-                    <th className="px-6 py-3 text-left text-sm font-medium text-gray-500">{t("serviceProvider.date")}</th>
-                    <th className="px-6 py-3 text-left text-sm font-medium text-gray-500">{t("serviceProvider.time")}</th>
-                    <th className="px-6 py-3 text-left text-sm font-medium text-gray-500">{t("serviceProvider.addressClient")}</th>
-                    <th className="px-6 py-3 text-left text-sm font-medium text-gray-500">{t("serviceProvider.status")}</th>
-                </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-200">
-                {upcomingServices.map((service) => (
-                    <tr key={service.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 text-sm font-medium text-gray-900">{service.client}</td>
-                    <td className="px-6 py-4 text-sm text-gray-500">{service.service}</td>
-                    <td className="px-6 py-4 text-sm text-gray-500">{formatDate(service.date)}</td>
-                    <td className="px-6 py-4 text-sm text-gray-500">{service.time}</td>
-                    <td className="px-6 py-4 text-sm text-gray-500 truncate">{service.location}</td>
-                    <td className="px-6 py-4 text-sm">{renderStatusBadge(service.status)}</td>
+            {interventionsLoading ? (
+              <div className="flex justify-center py-8">
+                <div className="text-gray-500">Chargement des interventions...</div>
+              </div>
+            ) : upcomingServices.length > 0 ? (
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-200">
+                    <thead>
+                    <tr>
+                        <th className="px-6 py-3 text-left text-sm font-medium text-gray-500">{t("serviceProvider.client")}</th>
+                        <th className="px-6 py-3 text-left text-sm font-medium text-gray-500">{t("serviceProvider.service")}</th>
+                        <th className="px-6 py-3 text-left text-sm font-medium text-gray-500">{t("serviceProvider.date")}</th>
+                        <th className="px-6 py-3 text-left text-sm font-medium text-gray-500">{t("serviceProvider.time")}</th>
+                        <th className="px-6 py-3 text-left text-sm font-medium text-gray-500">{t("serviceProvider.addressClient")}</th>
+                        <th className="px-6 py-3 text-left text-sm font-medium text-gray-500">{t("serviceProvider.status")}</th>
                     </tr>
-                ))}
-                </tbody>
-            </table>
-            </div>
+                    </thead>
+                    <tbody className="divide-y divide-gray-200">
+                    {upcomingServices.map((service) => (
+                        <tr key={service.id} className="hover:bg-gray-50">
+                        <td className="px-6 py-4 text-sm font-medium text-gray-900">{service.client_name || service.client || 'N/A'}</td>
+                        <td className="px-6 py-4 text-sm text-gray-500">{service.service_type || service.service || 'N/A'}</td>
+                        <td className="px-6 py-4 text-sm text-gray-500">{formatDate(service.scheduled_date || service.date)}</td>
+                        <td className="px-6 py-4 text-sm text-gray-500">{service.scheduled_time || service.time || 'N/A'}</td>
+                        <td className="px-6 py-4 text-sm text-gray-500 truncate">{service.client_address || service.location || 'N/A'}</td>
+                        <td className="px-6 py-4 text-sm">{renderStatusBadge(service.status || 'pending')}</td>
+                        </tr>
+                    ))}
+                    </tbody>
+                </table>
+              </div>
+            ) : (
+              <div className="flex justify-center py-8">
+                <div className="text-gray-500">{t("serviceProvider.noInterventions")}</div>
+              </div>
+            )}
         </div>
     </Card>
 
@@ -128,9 +139,11 @@ export default function ServiceProviderDashboard() {
         <Card className="p-6">
           <h3 className="text-lg font-semibold mb-8">{t("serviceProvider.numberOfClients")}</h3>
           <div className="flex flex-col items-center justify-center">
-            <p className="text-5xl font-bold mb-6">83.9 K</p>
+            <p className="text-5xl font-bold mb-6">
+              {statsLoading ? "..." : (stats?.totalClients || upcomingServices.length || 0)}
+            </p>
             <div className="bg-[#8CD790] bg-opacity-20 text-[#8CD790] px-4 py-2 rounded-full text-sm">
-              +9.7 K {t("serviceProvider.thisMonth")}
+              {statsLoading ? "..." : `+${stats?.newClientsThisMonth || 0}`} {t("serviceProvider.thisMonth")}
             </div>
           </div>
         </Card>
@@ -138,15 +151,14 @@ export default function ServiceProviderDashboard() {
         {/* Meilleur service */}
         <Card className="p-6">
           <h3 className="text-lg font-semibold mb-4 text-center">{t("serviceProvider.bestService")}</h3>
-          <p className="text-center font-medium mb-4">Dog-sitter</p>
+          <p className="text-center font-medium mb-4">
+            {statsLoading ? "..." : (stats?.bestService || "Service général")}
+          </p>
           <div className="flex justify-center mb-4">
-            <div className="relative w-40 h-40 rounded-lg overflow-hidden">
-              <Image
-                src="/dog-sitter.jpg"
-                alt="Dog-sitter"
-                fill
-                className="object-cover"
-              />
+            <div className="relative w-40 h-40 rounded-lg overflow-hidden bg-gray-200 flex items-center justify-center">
+              <span className="text-gray-500 text-sm text-center">
+                {statsLoading ? "Chargement..." : "Image du service"}
+              </span>
             </div>
           </div>
         </Card>
@@ -155,9 +167,11 @@ export default function ServiceProviderDashboard() {
         <Card className="p-6">
           <h3 className="text-lg font-semibold mb-8">{t("serviceProvider.numbersOfTheMonth")}</h3>
           <div className="flex flex-col items-center justify-center">
-            <p className="text-5xl font-bold mb-6">£ 4.5 K</p>
+            <p className="text-5xl font-bold mb-6">
+              {statsLoading ? "..." : `${stats?.monthlyRevenue || 0}€`}
+            </p>
             <div className="bg-[#8CD790] bg-opacity-20 text-[#8CD790] px-4 py-2 rounded-full text-sm">
-              +5.4% {t("serviceProvider.thanLastMonth")}
+              {statsLoading ? "..." : `+${stats?.revenueGrowth || 0}%`} {t("serviceProvider.thanLastMonth")}
             </div>
           </div>
         </Card>

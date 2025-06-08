@@ -1,4 +1,4 @@
-import apiClient from '@/config/api';
+import apiClient, { API_ROUTES } from '@/config/api';
 import type { Annonce, Commercant, Message, ApiResponse, User } from '@/types/api';
 
 interface MultiRoleUser {
@@ -11,7 +11,7 @@ interface MultiRoleUser {
 
 class ShopkeeperService {
   private async getShopkeeperId(): Promise<number> {
-    const userResponse = await apiClient.get<MultiRoleUser>('/auth/me');
+    const userResponse = await apiClient.get<MultiRoleUser>(API_ROUTES.AUTH.ME);
     if (!userResponse.data.commercant?.id) {
       throw new Error('Unauthorized: shopkeeper role required');
     }
@@ -20,35 +20,35 @@ class ShopkeeperService {
 
   async getProfile(): Promise<ApiResponse<Commercant>> {
     const id = await this.getShopkeeperId();
-    return apiClient.get(`/commercants/${id}`);
+    return apiClient.get(API_ROUTES.COMMERCANTS.GET(id));
   }
 
   async updateProfile(data: Partial<Commercant>): Promise<ApiResponse<Commercant>> {
     const id = await this.getShopkeeperId();
-    return apiClient.put(`/commercants/${id}`, data);
+    return apiClient.put(API_ROUTES.COMMERCANTS.UPDATE(id), data);
   }
 
   async getMyAnnonces(): Promise<ApiResponse<{ annonces: Annonce[] }>> {
-    const userResponse = await apiClient.get<User>('/auth/me');
-    return apiClient.get(`/annonces/user/${userResponse.data.id}`);
+    const userResponse = await apiClient.get<User>(API_ROUTES.AUTH.ME);
+    return apiClient.get(API_ROUTES.ANNONCES.USER_ANNONCES(userResponse.data.id));
   }
 
   async createAnnonce(data: any): Promise<ApiResponse<Annonce>> {
-    return apiClient.post('/annonces/create', data);
+    return apiClient.post(API_ROUTES.ANNONCES.CREATE, data);
   }
 
   async getConversations(): Promise<ApiResponse<any[]>> {
-    const userResponse = await apiClient.get<User>('/auth/me');
-    return apiClient.get(`/messages/conversations/${userResponse.data.id}`);
+    const userResponse = await apiClient.get<User>(API_ROUTES.AUTH.ME);
+    return apiClient.get(API_ROUTES.MESSAGES.USER_CONVERSATIONS(userResponse.data.id));
   }
 
   async sendMessage(data: any): Promise<ApiResponse<Message>> {
-    return apiClient.post('/messages/send', data);
+    return apiClient.post(API_ROUTES.MESSAGES.SEND, data);
   }
 
   async getStats(): Promise<ApiResponse<any>> {
     const id = await this.getShopkeeperId();
-    return apiClient.get(`/commercants/${id}/stats`);
+    return apiClient.get(API_ROUTES.COMMERCANTS.STATS(id));
   }
 }
 

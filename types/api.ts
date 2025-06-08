@@ -366,7 +366,7 @@ export interface UseApiCallState<T> {
 }
 
 export interface UseApiCallResult<T> extends UseApiCallState<T> {
-	execute: (apiCall: Promise<any>) => Promise<T>;
+	execute: (apiCall: () => Promise<any>) => Promise<T>;
 	reset: () => void;
 }
 

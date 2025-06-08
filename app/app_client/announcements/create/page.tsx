@@ -18,7 +18,7 @@ export default function CreateAnnouncementPage() {
   const { t } = useLanguage()
   const router = useRouter()
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [step, setStep] = useState(1) // Étape 1: Nombre de colis, Étape 2: Adresses, Étape 3: Date de livraison, Étape 4: Contenu des colis
+  const [step, setStep] = useState(1) // Étape 1: Nombre de colis, Étape 2: Adresses, Étape 3: Détails de l'annonce (titre, prix, date), Étape 4: Contenu des colis
   const [packageCount, setPackageCount] = useState(1)
   const [currentPackage, setCurrentPackage] = useState(1)
   const [error, setError] = useState<string | null>(null)
@@ -35,14 +35,16 @@ export default function CreateAnnouncementPage() {
   const [startingAddress, setStartingAddress] = useState("")
   const [startingBox, setStartingBox] = useState("")
 
-  // États pour les caractéristiques du colis
+  // États pour l'annonce
   const [title, setTitle] = useState("")
   const [price, setPrice] = useState("")
   const [description, setDescription] = useState("")
+  const [deliveryDate, setDeliveryDate] = useState("")
+  
+  // États pour les caractéristiques du colis
   const [packageName, setPackageName] = useState("")
   const [packageSize, setPackageSize] = useState("Medium")
   const [packageWeight, setPackageWeight] = useState("1")
-  const [deliveryDate, setDeliveryDate] = useState("")
   const [selectedImage, setSelectedImage] = useState<File | null>(null)
 
   // Refs pour les dropdowns
@@ -167,27 +169,20 @@ export default function CreateAnnouncementPage() {
     setIsSubmitting(true);
 
     try {
-      // Vérifions que les données essentielles sont présentes
-      if (!destinationAddress) {
-        setError(t("announcements.errorMissingDestination"));
+      // Validation des données essentielles
+      if (!destinationAddress || !title || !price || !packageName || !packageSize || !packageWeight) {
+        setError("Veuillez remplir tous les champs obligatoires (adresse, titre, prix, nom du colis, taille et poids)");
+        console.log("Validation échouée:", {
+          destinationAddress,
+          title,
+          price,
+          packageName,
+          packageSize,
+          packageWeight
+        });
         setIsSubmitting(false);
         return;
       }
-
-      if (!packageName) {
-        setError("Le nom du colis est obligatoire");
-        setIsSubmitting(false);
-        return;
-      }
-
-      if (!price) {
-        setError("Le prix est obligatoire");
-        setIsSubmitting(false);
-        return;
-      }
-
-      // Utiliser le nom du package comme titre s'il n'est pas défini séparément
-      const finalTitle = title || packageName;
 
       const token = sessionStorage.getItem('authToken') || localStorage.getItem('authToken');
       if (!token) {
@@ -217,7 +212,7 @@ export default function CreateAnnouncementPage() {
       
       // Données utilisateur et générales
       formData.append("utilisateur_id", utilisateur_id.toString());
-      formData.append("title", finalTitle);
+      formData.append("title", title);
       formData.append("price", price ? price.toString() : "0");
       
       // Adresses clairement définies
@@ -236,23 +231,40 @@ export default function CreateAnnouncementPage() {
       // Si un box de stockage est sélectionné
       if (startingType === 'box' && startingBox) {
         // Extraire l'ID du box depuis la chaîne "Storage box X"
-        const boxId = startingBox.replace("Storage box ", "");
-        formData.append("storage_box_id", boxId);
+        const boxId = startingBox.replace("Storage box ", "").trim();
+        if (!isNaN(Number(boxId)) && boxId !== "") {
+          formData.append("storage_box_id", boxId);
+          console.log("Storage box ID ajouté:", boxId);
+        } else {
+          console.warn("ID de storage box invalide:", boxId);
+        }
+      } else {
+        console.log("Aucun storage box sélectionné ou type d'adresse utilisé");
       }
 
-      // Description complète incluant détails du colis
-      const fullDescription = `Package Name: ${packageName}
-Package Size: ${packageSize}
-Package Weight: ${packageWeight} kg
-Additional Notes: ${description || "No additional notes"}`;
+      // Description de l'annonce et détails du colis
+      let fullDescription = "";
+      
+      // Ajouter la description personnalisée si elle existe
+      if (description && description.trim() !== "") {
+        fullDescription += description.trim() + "\n\n";
+      }
+      
+      // Ajouter les détails du colis
+      fullDescription += `Package Details:\nName: ${packageName}\nSize: ${packageSize}\nWeight: ${packageWeight} kg`;
       
       formData.append("description", fullDescription);
+      console.log("Description complète:", fullDescription);
       
       // Images
       if (selectedImage) {
         console.log("Ajout de l'image au formulaire", selectedImage.name);
         formData.append("image", selectedImage);
       }
+
+      // S'assurer que les colis n'ont pas le tag liste-de-course
+      // Les colis sont identifiés par l'absence de ce tag
+      console.log("Création d'un colis (pas de tag liste-de-course)");
 
       // Afficher toutes les données qui vont être envoyées pour le débogage
       const formDataDebug: Record<string, any> = {};
@@ -330,7 +342,7 @@ Additional Notes: ${description || "No additional notes"}`;
     setStep(2)
   }
 
-  const proceedToDeliveryDateStep = () => {
+  const proceedToAnnouncementDetails = () => {
     setStep(3)
   }
 
@@ -346,7 +358,7 @@ Additional Notes: ${description || "No additional notes"}`;
     setStep(2)
   }
 
-  const goBackToDeliveryDateStep = () => {
+  const goBackToAnnouncementDetails = () => {
     setStep(3)
   }
 
@@ -576,41 +588,96 @@ Additional Notes: ${description || "No additional notes"}`;
                   </button>
                   <button
                     type="button"
-                    onClick={proceedToDeliveryDateStep}
+                    onClick={proceedToAnnouncementDetails}
                     className="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
                     disabled={
-                     (startingType === 'address'
+                     !destinationAddress || (startingType === 'address'
                          ? !startingAddress
                          : !startingBox)
                    }
                   >
-                    {t("announcements.continueToDeliveryDate")}
+                    {t("announcements.continueToAnnouncementDetails")}
                   </button>
                 </div>
               </div>
             </div>
           )}
 
-          {/* Étape 3: Date de livraison */}
+          {/* Étape 3: Détails de l'annonce */}
           {step === 3 && (
             <div className="bg-white rounded-lg shadow-md p-6">
-              <h2 className="text-xl font-medium text-gray-800 mb-6">{t("announcements.deliveryDate")}</h2>
+              <h2 className="text-xl font-medium text-gray-800 mb-6">{t("announcements.announcementDetails")}</h2>
 
-              <div className="mb-6">
-                <label htmlFor="deliveryDate" className="block text-sm font-medium text-gray-700 mb-2">
-                  {t("announcements.selectDeliveryDate")}
-                </label>
-                <input
-                  type="date"
-                  id="deliveryDate"
-                  value={deliveryDate}
-                  onChange={(e) => setDeliveryDate(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
-                  required
-                />
+              <div className="space-y-6">
+                {/* Titre de l'annonce */}
+                <div>
+                  <label htmlFor="announcement-title" className="block text-sm font-medium text-gray-700 mb-1">
+                    {t("announcements.announcementTitle")}
+                  </label>
+                  <input
+                    type="text"
+                    id="announcement-title"
+                    value={title}
+                    onChange={(e) => setTitle(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                    placeholder={t("announcements.enterAnnouncementTitle")}
+                    required
+                  />
+                </div>
+
+                {/* Prix */}
+                <div>
+                  <label htmlFor="announcement-price" className="block text-sm font-medium text-gray-700 mb-1">
+                    {t("announcements.price")}
+                  </label>
+                  <div className="relative">
+                    <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-500">€</span>
+                    <input
+                      type="number"
+                      id="announcement-price"
+                      value={price}
+                      onChange={(e) => setPrice(e.target.value)}
+                      min="0"
+                      step="0.01"
+                      className="w-full pl-8 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                      placeholder="0.00"
+                      required
+                    />
+                  </div>
+                </div>
+
+                {/* Date de livraison */}
+                <div>
+                  <label htmlFor="deliveryDate" className="block text-sm font-medium text-gray-700 mb-1">
+                    {t("announcements.selectDeliveryDate")}
+                  </label>
+                  <input
+                    type="date"
+                    id="deliveryDate"
+                    value={deliveryDate}
+                    onChange={(e) => setDeliveryDate(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                    required
+                  />
+                </div>
+
+                {/* Description */}
+                <div>
+                  <label htmlFor="announcement-description" className="block text-sm font-medium text-gray-700 mb-1">
+                    {t("announcements.description")} ({t("common.optional")})
+                  </label>
+                  <textarea
+                    id="announcement-description"
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                    rows={3}
+                    placeholder={t("announcements.enterDescription")}
+                  />
+                </div>
               </div>
 
-              <div className="flex justify-between pt-4">
+              <div className="flex justify-between pt-6">
                 <button
                   type="button"
                   onClick={goBackToAddressStep}
@@ -622,9 +689,9 @@ Additional Notes: ${description || "No additional notes"}`;
                   type="button"
                   onClick={proceedToPackageDetails}
                   className="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
-                  disabled={!deliveryDate}
+                  disabled={!title || !price || !deliveryDate}
                 >
-                  {t("announcements.continueToDetails")}
+                  {t("announcements.continueToPackageDetails")}
                 </button>
               </div>
             </div>
@@ -691,20 +758,6 @@ Additional Notes: ${description || "No additional notes"}`;
                     </div>
 
                     <div>
-                      <label htmlFor="announcement-title" className="block text-sm font-medium text-gray-700 mb-1">
-                        Titre de l'annonce
-                      </label>
-                      <input
-                        type="text"
-                        id="announcement-title"
-                        value={title}
-                        onChange={(e) => setTitle(e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
-                        placeholder="Titre de votre annonce"
-                      />
-                    </div>
-
-                    <div>
                       <label htmlFor={`name-${index}`} className="block text-sm font-medium text-gray-700 mb-1">
                         {t("announcements.packageName")}
                       </label>
@@ -719,45 +772,23 @@ Additional Notes: ${description || "No additional notes"}`;
                       />
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-8">
-                      <div>
-                        <label htmlFor={`price-${index}`} className="block text-sm font-medium text-gray-700 mb-1">
-                          {t("announcements.price")}
-                        </label>
-                        <div className="relative">
-                          <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-500">£</span>
-                          <input
-                            type="number"
-                            id={`price-${index}`}
-                            name={`package_${index + 1}_price`}
-                            value={price}
-                            onChange={(e) => setPrice(e.target.value)}
-                            min="0"
-                            step="0.01"
-                            className="w-full pl-8 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
-                            required
-                          />
-                        </div>
-                      </div>
-
-                      <div>
-                        <label htmlFor={`weight-${index}`} className="block text-sm font-medium text-gray-700 mb-1">
-                          {t("announcements.weight")}
-                        </label>
-                        <div className="relative">
-                          <input
-                            type="number"
-                            id={`weight-${index}`}
-                            name={`package_${index + 1}_weight`}
-                            value={packageWeight}
-                            onChange={(e) => setPackageWeight(e.target.value)}
-                            min="0"
-                            step="0.1"
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
-                            required
-                          />
-                          <span className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-500">kg</span>
-                        </div>
+                    <div>
+                      <label htmlFor={`weight-${index}`} className="block text-sm font-medium text-gray-700 mb-1">
+                        {t("announcements.weight")}
+                      </label>
+                      <div className="relative">
+                        <input
+                          type="number"
+                          id={`weight-${index}`}
+                          name={`package_${index + 1}_weight`}
+                          value={packageWeight}
+                          onChange={(e) => setPackageWeight(e.target.value)}
+                          min="0"
+                          step="0.1"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                          required
+                        />
+                        <span className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-500">kg</span>
                       </div>
                     </div>  
 
@@ -781,16 +812,15 @@ Additional Notes: ${description || "No additional notes"}`;
                     </div>
 
                     <div className="mt-8">
-                      <label htmlFor={`description-${index}`} className="block text-sm font-medium text-gray-700 mb-1">
-                        {t("announcements.additionalNotes")}
+                      <label htmlFor={`package-notes-${index}`} className="block text-sm font-medium text-gray-700 mb-1">
+                        {t("announcements.packageNotes")} ({t("common.optional")})
                       </label>
                       <textarea
-                        id={`description-${index}`}
-                        name={`package_${index + 1}_description`}
-                        value={description}
-                        onChange={(e) => setDescription(e.target.value)}
+                        id={`package-notes-${index}`}
+                        name={`package_${index + 1}_notes`}
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
                         rows={3}
+                        placeholder={t("announcements.enterPackageNotes")}
                       />
                     </div>
 
@@ -817,7 +847,7 @@ Additional Notes: ${description || "No additional notes"}`;
                 <div className="flex justify-between space-x-4 mt-8">
                   <button
                     type="button"
-                    onClick={goBackToDeliveryDateStep}
+                    onClick={goBackToAnnouncementDetails}
                     className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
                   >
                     {t("common.back")}

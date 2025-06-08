@@ -3,17 +3,19 @@
 import { useState, useRef, useEffect } from "react"
 import Image from "next/image"
 import Link from "next/link"
-import { Plus, Package } from "lucide-react"
+import { Plus, Package, MapPin } from "lucide-react"
 import ResponsiveHeader from "../responsive-header"
 import { useLanguage } from "@/components/language-context"
 import { useRouter } from "next/navigation"
 import { formatDateRange } from '@/app/utils/date-formats'
 import { clientService } from '@/services/clientService'
 import { useApiCall } from '@/hooks/use-api-call'
+import { toast } from 'sonner'
 
 interface Announcement {
   id: number;
   title: string;
+  type: 'shopping_list' | 'package_delivery';
   image: string;
   deliveryAddress: string;
   price: string;
@@ -37,21 +39,83 @@ export default function AnnouncementsPage() {
   const [shopPrice, setShopPrice] = useState("")
   const [shopList, setShopList] = useState("")
   const [shopDeliveryAddress, setShopDeliveryAddress] = useState("")
+  const [shopAddressSuggestions, setShopAddressSuggestions] = useState<AddressSuggestion[]>([])
+
+interface AddressSuggestion {
+  label: string
+  value: string
+}
+  const [showShopAddressSuggestions, setShowShopAddressSuggestions] = useState(false)
+  const [isLoadingShopAddressSuggestions, setIsLoadingShopAddressSuggestions] = useState(false)
   const [shopDeliveryDate, setShopDeliveryDate] = useState("")
   const [error, setError] = useState<string | null>(null)
 
   // Ref pour détecter le clic en dehors du modal
   const modalRef = useRef<HTMLDivElement>(null)
+  const shopAddressSuggestionsRef = useRef<HTMLDivElement>(null)
+  
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (modalRef.current && !modalRef.current.contains(event.target as Node)) {
         setShowCreateModal(false)
         setShowShoppingForm(false)
       }
+      if (shopAddressSuggestionsRef.current && !shopAddressSuggestionsRef.current.contains(event.target as Node)) {
+        setShowShopAddressSuggestions(false)
+      }
     }
     document.addEventListener("mousedown", handleClickOutside)
     return () => document.removeEventListener("mousedown", handleClickOutside)
   }, [])
+
+  // Fonction pour rechercher les adresses
+  const searchShopAddresses = async (query: string) => {
+    if (query.length < 3) {
+      setShopAddressSuggestions([])
+      setShowShopAddressSuggestions(false)
+      return
+    }
+
+    setIsLoadingShopAddressSuggestions(true)
+    try {
+      const response = await fetch(
+        `https://api-adresse.data.gouv.fr/search/?q=${encodeURIComponent(query)}&limit=5`
+      )
+      const data = await response.json()
+      
+      const suggestions: AddressSuggestion[] = data.features.map((feature: any) => ({
+        label: feature.properties.label,
+        value: feature.properties.label
+      }))
+      
+      setShopAddressSuggestions(suggestions)
+      setShowShopAddressSuggestions(suggestions.length > 0)
+    } catch (error) {
+      console.error('Erreur lors de la recherche d\'adresses:', error)
+      setShopAddressSuggestions([])
+      setShowShopAddressSuggestions(false)
+    } finally {
+      setIsLoadingShopAddressSuggestions(false)
+    }
+  }
+
+  // Fonction pour sélectionner une adresse
+  const selectShopAddress = (suggestion: AddressSuggestion) => {
+    setShopDeliveryAddress(suggestion.value)
+    setShowShopAddressSuggestions(false)
+    setShopAddressSuggestions([])
+  }
+
+  // Effet pour la recherche d'adresses avec debounce
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      if (shopDeliveryAddress) {
+        searchShopAddresses(shopDeliveryAddress)
+      }
+    }, 300)
+
+    return () => clearTimeout(timeoutId)
+  }, [shopDeliveryAddress])
 
   const openCreateModal = () => {
     // reset form / mode chaque ouverture
@@ -151,32 +215,54 @@ export default function AnnouncementsPage() {
 
   const { data: announcementsData, loading: announcementsLoading, execute: loadAnnouncements } = useApiCall();
 
-  const fetchAnnouncements = async () => {
-    try {
-      const response = await loadAnnouncements(clientService.getMyAnnonces());
-      if (response?.annonces && Array.isArray(response.annonces)) {
-        // Convertir au format attendu par le composant
-        const formattedAnnouncements = response.annonces.map((item: any) => ({
+  // Convertir les données de l'API au format attendu par le composant
+  useEffect(() => {
+    console.log('Données reçues:', announcementsData); // Debug
+    if (announcementsData?.annonces && Array.isArray(announcementsData.annonces)) {
+      const formattedAnnouncements = announcementsData.annonces.map((item: any) => {
+        console.log('Item annonce:', item); // Debug
+        console.log('Tags:', item.tags); // Debug tags
+        
+        // Déterminer le type d'annonce basé sur les tags
+        const isShoppingList = item.tags && Array.isArray(item.tags) && 
+          item.tags.some((tag: string) => tag === 'liste-de-course');
+        
+        console.log('Type détecté via tags:', isShoppingList ? 'shopping_list' : 'package_delivery'); // Debug
+        
+        return {
           id: item.id,
           title: item.title || "Package",
-          image: item.imagePath ? `${process.env.NEXT_PUBLIC_API_URL}/${item.imagePath}` : "/announcements.jpg",
-          deliveryAddress: item.destinationAddress || "Not specified",
+          type: isShoppingList ? 'shopping_list' : 'package_delivery',
+          image: item.image_path ? `${process.env.NEXT_PUBLIC_API_URL}/${item.image_path}` : "/announcements.jpg",
+          deliveryAddress: item.destination_address || item.destinationAddress || "Not specified",
           price: `£${item.price || 0}`,
-          deliveryDate: formatDateRange(item.scheduledDate),
-          amount: 1,
-          storageBox: item.storageBoxId ? `Storage box ${item.storageBoxId}` : "No storage box",
-          shoppingList: item.description,
-          hasColis: false
-        }));
-        setAnnouncements(formattedAnnouncements);
-      } else {
-        setAnnouncements([]);
-      }
-    } catch (error) {
-      console.error("Error fetching announcements:", error);
+          deliveryDate: formatDateRange(item.scheduled_date || item.scheduledDate),
+          amount: item.colis && Array.isArray(item.colis) ? item.colis.length : 1,
+          storageBox: (item.storage_box_id || item.storageBoxId) ? `Storage box ${item.storage_box_id || item.storageBoxId}` : "No storage box",
+          shoppingList: isShoppingList ? item.description : null,
+          hasColis: item.colis && Array.isArray(item.colis) && item.colis.length > 0
+        };
+      });
+      console.log('Annonces formatées:', formattedAnnouncements); // Debug
+      setAnnouncements(formattedAnnouncements);
+    } else if (announcementsData) {
+      console.log('Aucune annonce trouvée dans les données'); // Debug
       setAnnouncements([]);
     }
-  };
+  }, [announcementsData]);
+
+  // Charger les annonces au montage du composant
+  useEffect(() => {
+    const fetchAnnouncements = async () => {
+      try {
+        await loadAnnouncements(clientService.getMyAnnonces());
+      } catch (error) {
+        console.error('Erreur lors du chargement des annonces:', error);
+      }
+    };
+    
+    fetchAnnouncements();
+  }, [loadAnnouncements]);
 
   const handleShoppingListSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -202,11 +288,13 @@ export default function AnnouncementsPage() {
       formData.append("utilisateur_id", utilisateur_id.toString());
       formData.append("title", shopTitle);
       formData.append("price", shopPrice);
-      formData.append("shopping_list", shopList);
-      formData.append("delivery_address", shopDeliveryAddress);
-      formData.append("delivery_date", shopDeliveryDate);
+      formData.append("description", shopList); // Changé de shopping_list à description
+      formData.append("destination_address", shopDeliveryAddress); // Changé de delivery_address à destination_address
+      formData.append("scheduled_date", shopDeliveryDate); // Changé de delivery_date à scheduled_date
+      // Ajouter le tag pour identifier les listes de courses
+      formData.append("tags[]", "liste-de-course");
       
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/annonces/shopping-list`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/annonces/create`, { // Changé l'endpoint
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`
@@ -215,14 +303,26 @@ export default function AnnouncementsPage() {
       });
       
       if (response.ok) {
-        // Réinitialiser le formulaire et fermer la modal
+        // Réinitialiser le formulaire
+        setShopTitle('');
+        setShopPrice('');
+        setShopList('');
+        setShopDeliveryAddress('');
+        setShopDeliveryDate('');
+        setError(null);
+        
+        // Fermer les modals
         setShowShoppingForm(false);
         setShowCreateModal(false);
+        
+        // Afficher un message de succès
+        toast.success('Liste de courses créée avec succès!');
+        
         // Recharger les annonces
-        fetchAnnouncements();
+        await loadAnnouncements(clientService.getMyAnnonces());
       } else {
         const errorData = await response.json();
-        setError(`Erreur: ${errorData.error || "Impossible de créer la liste de courses"}`);
+        setError(`Erreur: ${errorData.error || errorData.message || "Impossible de créer la liste de courses"}`);
         console.error("Erreur lors de la création de la liste de courses:", JSON.stringify(errorData));
       }
     } catch (error: any) {
@@ -230,10 +330,6 @@ export default function AnnouncementsPage() {
       console.error("Erreur:", error);
     }
   };
-
-  useEffect(() => {
-    fetchAnnouncements();
-  }, []);
 
   // Mettre à jour isLoading basé sur l'état du hook
   useEffect(() => {
@@ -298,24 +394,54 @@ export default function AnnouncementsPage() {
                     style={{ objectFit: "contain" }}
                     className="mx-auto h-full"
                   />
+                  {/* Badge de type d'annonce */}
+                  <div className="absolute top-2 right-2">
+                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                      announcement.type === 'shopping_list' 
+                        ? 'bg-green-100 text-green-800' 
+                        : 'bg-green-200 text-green-900'
+                    }`}>
+                      {announcement.type === 'shopping_list' 
+                        ? t("announcements.shoppingList") 
+                        : t("announcements.packageDelivery")
+                      }
+                    </span>
+                  </div>
                 </div>
 
                 <div className="p-4">
-                  <h2 className="text-lg font-semibold mb-2">{announcement.title}</h2>
+                  <div className="flex items-center justify-between mb-2">
+                    <h2 className="text-lg font-semibold">{announcement.title}</h2>
+                    {announcement.hasColis && (
+                      <span className="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs font-medium">
+                        {announcement.amount} {announcement.amount > 1 ? 'colis' : 'colis'}
+                      </span>
+                    )}
+                  </div>
                   
                   <div className="space-y-1 text-sm mb-4">
                     <p><span className="font-medium">{t("announcements.deliveryAddress")}:</span> {announcement.deliveryAddress}</p>
                     <p><span className="font-medium">{t("announcements.priceForDelivery")}:</span> {announcement.price}</p>
                     <p><span className="font-medium">{t("announcements.deliveryDate")}:</span> {announcement.deliveryDate}</p>
-                    {announcement.storageBox && (
+                    {announcement.type === 'package_delivery' && announcement.storageBox && (
                       <p><span className="font-medium">{t("announcements.storageBox")}:</span> {announcement.storageBox}</p>
                     )}
-                    {announcement.shoppingList && (
-                      <div>
-                        <strong>{t("announcements.shoppingList")}:</strong>
-                        <p className="text-sm italic">{announcement.shoppingList}</p>
+                    {announcement.type === 'shopping_list' && announcement.shoppingList && (
+                      <div className="bg-green-50 p-3 rounded-lg mt-2">
+                        <strong className="text-green-800">{t("announcements.shoppingList")}:</strong>
+                        <p className="text-sm text-green-700 mt-1">{announcement.shoppingList}</p>
                       </div>
                     )}
+                    {announcement.type === 'package_delivery' && (
+                       <div className="bg-green-50 p-3 rounded-lg mt-2">
+                         <strong className="text-green-800">{t("announcements.packageDelivery")}:</strong>
+                         {announcement.hasColis && announcement.amount > 1 ? (
+                           <p className="text-sm text-green-700 mt-1">{announcement.amount} colis à livrer</p>
+                         ) : (
+                           <p className="text-sm text-green-700 mt-1">Détails du colis dans la description</p>
+                         )}
+                       </div>
+                     )}
                   </div>
                   
                   <div className="space-y-2">
@@ -341,7 +467,7 @@ export default function AnnouncementsPage() {
                       className={`w-full py-2 px-3 rounded text-sm transition-colors flex items-center justify-center ${
                         announcement.hasColis 
                           ? 'bg-gray-100 text-gray-500 cursor-not-allowed' 
-                          : 'bg-blue-100 hover:bg-blue-200 text-blue-800'
+                          : 'bg-green-100 hover:bg-green-200 text-green-800'
                       }`}
                     >
                       <Package className="h-4 w-4 mr-2" />
@@ -399,13 +525,51 @@ export default function AnnouncementsPage() {
                   className="w-full px-3 py-2 border rounded"
                   required
                 />
-                <input
-                  value={shopDeliveryAddress}
-                  onChange={(e) => setShopDeliveryAddress(e.target.value)}
-                  placeholder={t("announcements.deliveryAddress")}
-                  className="w-full px-3 py-2 border rounded"
-                  required
-                />
+                {/* Adresse de livraison avec autocomplétion */}
+                <div className="relative">
+                  <label htmlFor="shopDeliveryAddress" className="block text-sm font-medium text-gray-700 mb-1">
+                    {t("announcements.deliveryAddress")}
+                  </label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <MapPin className="h-5 w-5 text-gray-400" />
+                    </div>
+                    <input
+                      type="text"
+                      id="shopDeliveryAddress"
+                      value={shopDeliveryAddress}
+                      onChange={(e) => setShopDeliveryAddress(e.target.value)}
+                      onFocus={() => shopDeliveryAddress.length >= 3 && setShowShopAddressSuggestions(true)}
+                      className="w-full pl-10 pr-10 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                      placeholder={t("announcements.deliveryAddress")}
+                      required
+                    />
+                    {isLoadingShopAddressSuggestions && (
+                      <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
+                        <div className="animate-spin h-5 w-5 border-2 border-gray-300 border-t-green-500 rounded-full" />
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Suggestions d'adresses */}
+                  {showShopAddressSuggestions && shopAddressSuggestions.length > 0 && (
+                    <div
+                      ref={shopAddressSuggestionsRef}
+                      className="absolute z-10 mt-1 w-full bg-white shadow-lg rounded-md border border-gray-200 max-h-60 overflow-auto"
+                    >
+                      {shopAddressSuggestions.map((suggestion, index) => (
+                        <div
+                          key={index}
+                          className="px-4 py-2 hover:bg-gray-100 cursor-pointer flex items-center"
+                          onClick={() => selectShopAddress(suggestion)}
+                        >
+                          <MapPin className="h-4 w-4 text-gray-400 mr-2 flex-shrink-0" />
+                          <span className="text-sm">{suggestion.label}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
                 <div className="flex items-center justify-between">
                   {t("announcements.deliveryDate")}
                 </div>  

@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Link from "next/link"
 import Image from "next/image"
 import {
@@ -24,28 +24,54 @@ export default function ShopkeeperAnnouncementsPage() {
   const { t } = useLanguage()
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false)
-  const [announcements, setAnnouncements] = useState([
-    {
-      id: 1,
-      title: "Pair of running shoes",
-      image: "/running-shoes.jpg",
-      deliveryAddress: "11 rue Erand, Paris 75012",
-      price: "£20",
-      deliveryDate: "15th May - 30th May",
-      amount: 1,
-      storageBox: "Storage box 1",
-    },
-    {
-      id: 2,
-      title: "Pair of running shoes",
-      image: "/running-shoes.jpg",
-      deliveryAddress: "45 rue Erand, Paris 75017",
-      price: "£14",
-      deliveryDate: "3rd June - 17th June",
-      amount: 1,
-      storageBox: "Storage box 1",
-    },
-  ])
+  const [announcements, setAnnouncements] = useState([])
+
+  // Charger les annonces depuis l'API
+  useEffect(() => {
+    const fetchAnnouncements = async () => {
+      try {
+        const token = sessionStorage.getItem('authToken') || localStorage.getItem('authToken');
+        const userResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/me`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        
+        if (userResponse.ok) {
+          const userData = await userResponse.json();
+          const userId = userData.id;
+          
+          const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/annonces/user/${userId}`, {
+            headers: {
+              'Authorization': `Bearer ${token}`
+            }
+          });
+          
+          if (response.ok) {
+            const data = await response.json();
+            const annoncesData = data.annonces || [];
+            
+            const formattedAnnouncements = annoncesData.map((item: any) => ({
+              id: item.id,
+              title: item.title || "Package",
+              image: item.imagePath ? `${process.env.NEXT_PUBLIC_API_URL}/${item.imagePath}` : "/announcements.jpg",
+              deliveryAddress: item.destinationAddress || item.destination_address || "Not specified",
+              price: `£${item.price || 0}`,
+              deliveryDate: item.scheduledDate || item.scheduled_date ? new Date(item.scheduledDate || item.scheduled_date).toLocaleDateString() : "Not specified",
+              amount: 1,
+              storageBox: (item.storageBoxId || item.storage_box_id) ? `Storage box ${item.storageBoxId || item.storage_box_id}` : "No storage box",
+            }));
+            
+            setAnnouncements(formattedAnnouncements);
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching announcements:', error);
+      }
+    };
+    
+    fetchAnnouncements();
+  }, [])
 
   const handleDelete = (id: number) => {
     if (window.confirm(t("announcements.confirmDelete"))) {

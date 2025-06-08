@@ -1,4 +1,4 @@
-import apiClient from '@/config/api';
+import apiClient, { API_ROUTES } from '@/config/api';
 import type { Prestataire, Message, ApiResponse, User } from '@/types/api';
 
 interface MultiRoleUser {
@@ -11,7 +11,7 @@ interface MultiRoleUser {
 
 class ServiceProviderService {
   private async getServiceProviderId(): Promise<number> {
-    const userResponse = await apiClient.get<MultiRoleUser>('/auth/me');
+    const userResponse = await apiClient.get<MultiRoleUser>(API_ROUTES.AUTH.ME);
     if (!userResponse.data.prestataire?.id) {
       throw new Error('Unauthorized: service provider role required');
     }
@@ -20,36 +20,36 @@ class ServiceProviderService {
 
   async getProfile(): Promise<ApiResponse<Prestataire>> {
     const id = await this.getServiceProviderId();
-    return apiClient.get(`/prestataires/${id}`);
+    return apiClient.get(API_ROUTES.PRESTATAIRES.GET(id));
   }
 
   async updateProfile(data: Partial<Prestataire>): Promise<ApiResponse<Prestataire>> {
     const id = await this.getServiceProviderId();
-    return apiClient.put(`/prestataires/${id}`, data);
+    return apiClient.put(API_ROUTES.PRESTATAIRES.UPDATE(id), data);
   }
 
   async getMyInterventions(filters?: any): Promise<ApiResponse<any[]>> {
     const id = await this.getServiceProviderId();
-    return apiClient.get(`/prestataires/${id}/interventions`, { params: filters });
+    return apiClient.get(API_ROUTES.PRESTATAIRES.INTERVENTIONS(id), { params: filters });
   }
 
   async updateAvailability(status: string): Promise<ApiResponse<Prestataire>> {
     const id = await this.getServiceProviderId();
-    return apiClient.put(`/prestataires/${id}/availability`, { status });
+    return apiClient.put(API_ROUTES.PRESTATAIRES.UPDATE_AVAILABILITY(id), { status });
   }
 
   async getConversations(): Promise<ApiResponse<any[]>> {
-    const userResponse = await apiClient.get<User>('/auth/me');
-    return apiClient.get(`/messages/conversations/${userResponse.data.id}`);
+    const userResponse = await apiClient.get<User>(API_ROUTES.AUTH.ME);
+    return apiClient.get(API_ROUTES.MESSAGES.USER_CONVERSATIONS(userResponse.data.id));
   }
 
   async sendMessage(data: any): Promise<ApiResponse<Message>> {
-    return apiClient.post('/messages/send', data);
+    return apiClient.post(API_ROUTES.MESSAGES.SEND, data);
   }
 
   async getStats(): Promise<ApiResponse<any>> {
     const id = await this.getServiceProviderId();
-    return apiClient.get(`/prestataires/${id}/stats`);
+    return apiClient.get(API_ROUTES.PRESTATAIRES.STATS(id));
   }
 }
 

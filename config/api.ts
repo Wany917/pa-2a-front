@@ -1,3 +1,5 @@
+import { API_ROUTES } from './routes';
+
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3333';
 
 interface RequestConfig extends RequestInit {
@@ -216,4 +218,4 @@ class ApiClient {
 const apiClient = new ApiClient(API_BASE_URL);
 
 export default apiClient;
-export { ApiClient, type RequestConfig, type ApiResponse }; 
+export { ApiClient, type RequestConfig, type ApiResponse, API_ROUTES };

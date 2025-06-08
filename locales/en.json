@@ -140,6 +140,8 @@
     "createNewAnnouncement": "Create a New Announcement",
     "editYourAnnouncement": "Edit Your Announcement",
     "packageName": "Package Name",
+    "packageDelivery": "Package Delivery",
+    "shoppingList": "Shopping List",
     "whereTo": "Destination",
     "startingPoint": "Starting Address",
     "price": "Package Price",

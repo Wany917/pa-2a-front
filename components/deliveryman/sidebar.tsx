@@ -9,6 +9,7 @@ import {
 	CreditCard,
 	BellRing,
 	PartyPopper,
+	MapPin,
 } from 'lucide-react';
 import { useLanguage } from '@/components/language-context';
 import { usePathname } from 'next/navigation';
@@ -42,6 +43,11 @@ export default function DeliverymanSidebar({
 			href: '/app_deliveryman/deliveries',
 			icon: <Package className='mr-3 h-5 w-5' />,
 			label: t('deliveryman.deliveries'),
+		},
+		{
+			href: '/app_deliveryman/planned-routes',
+			icon: <MapPin className='mr-3 h-5 w-5' />,
+			label: 'Trajets planifiés',
 		},
 		{
 			href: '/app_deliveryman/notifications',

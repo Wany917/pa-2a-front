@@ -57,6 +57,7 @@ interface Announcement {
 
 export default function DeliverymanAnnouncements() {
   const { t } = useLanguage()
+  const { toast } = useToast()
   const [announcements, setAnnouncements] = useState<Announcement[]>([])
   const [user, setUser] = useState<MultiRoleUser | null>(null)
   const [loadingAccept, setLoadingAccept] = useState<{id: number, loading: boolean}>({ id: 0, loading: false })
@@ -87,7 +88,7 @@ export default function DeliverymanAnnouncements() {
     try {
       console.log('Chargement des annonces disponibles...')
       
-      const announcesResponse: any = await executeGetAnnouncements(
+      const announcesResponse: any = await executeGetAnnouncements(() =>
         fetch(`${process.env.NEXT_PUBLIC_API_URL}/annonces`, {
           method: 'GET',
           headers: {
@@ -125,11 +126,11 @@ export default function DeliverymanAnnouncements() {
           description: annonce.description,
           image: annonce.imagePath ? `${process.env.NEXT_PUBLIC_API_URL}/${annonce.imagePath}` : "/placeholder.svg",
           client: annonce.utilisateur ? `${annonce.utilisateur.firstName || annonce.utilisateur.first_name || ''} ${annonce.utilisateur.lastName || annonce.utilisateur.last_name || ''}`.trim() : "Client",
-          address: annonce.destinationAddress || "Adresse non spécifiée",
+          address: annonce.destinationAddress || annonce.destination_address || "Adresse non spécifiée",
           price: `€${annonce.price || 0}`,
           deliveryDate: formatDate(annonce.scheduledDate || annonce.scheduled_date),
           amount: 1, // Par défaut 1 puisque ce n'est pas dans l'API
-          storageBox: annonce.storageBoxId || "Non spécifié",
+          storageBox: (annonce.storageBoxId || annonce.storage_box_id) ? `Storage box ${annonce.storageBoxId || annonce.storage_box_id}` : "Non spécifié",
           size: getSizeFromWeight(5) as "Small" | "Medium" | "Large", // ✅ CORRIGÉ - Cast du type
           isPriority: annonce.priority,
           utilisateurId: annonce.utilisateurId || annonce.user_id
@@ -149,7 +150,7 @@ export default function DeliverymanAnnouncements() {
     const loadData = async () => {
       try {
         // 1. Charger le profil utilisateur d'abord
-        const userProfile = await executeGetProfile(livreurService.getProfile())
+        const userProfile = await executeGetProfile(() => livreurService.getProfile())
         
         // Vérifier que l'utilisateur est bien un livreur
         if (!userProfile?.livreur?.id) {
@@ -219,7 +220,7 @@ export default function DeliverymanAnnouncements() {
       console.log('Acceptation de la livraison pour l\'annonce:', announcementId)
       
       // ✅ CORRIGÉ - Utiliser les vraies données de l'annonce au lieu de données mockées
-      const response = await executeAcceptDelivery(
+      const response = await executeAcceptDelivery(() =>
         fetch(`${process.env.NEXT_PUBLIC_API_URL}/annonces/${announcementId}/livraisons`, {
           method: 'POST',
           headers: {
@@ -251,7 +252,6 @@ export default function DeliverymanAnnouncements() {
       
     } catch (error) {
       console.error("Erreur lors de l'acceptation de la livraison:", error);
-      const { toast } = useToast();
       toast({
         variant: "destructive",
         title: "Erreur",

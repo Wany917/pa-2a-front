@@ -25,10 +25,12 @@ export default function EditAnnouncementPage() {
     weight: "2.5",
     priorityShipping: false,
     hasStorageBox: false, // Nouveau champ pour déterminer si un storage box est utilisé
+    customDescription: "", // Nouveau champ pour la description personnalisée
   })
 
   const [image, setImage] = useState<File | null>(null)
   const [imagePreview, setImagePreview] = useState<string | null>(null)
+  const [originalAnnouncement, setOriginalAnnouncement] = useState<any>(null)
 
   // ✅ CORRIGÉ - Chargement des données de l'annonce via API
   useEffect(() => {
@@ -48,48 +50,83 @@ export default function EditAnnouncementPage() {
           
           console.log("Données annonce reçues:", annonceData);
           
+          // Stocker les données originales pour accéder aux tags
+          setOriginalAnnouncement(annonceData);
+          
           // Extraire les informations de taille, poids et quantité depuis la description
           let packageSize = "Medium"; // Valeur par défaut
           let weight = "2.5"; // Valeur par défaut
           let amount = "1"; // Valeur par défaut
+          let customDescription = "";
           
           if (annonceData.description) {
-            // Rechercher les motifs dans la description
-            const sizeMatch = annonceData.description.match(/Package Size: (\w+)/);
-            if (sizeMatch && sizeMatch[1]) {
-              packageSize = sizeMatch[1];
+            // Séparer la description personnalisée des détails du colis
+            const packageDetailsIndex = annonceData.description.indexOf("Package Details:");
+            
+            if (packageDetailsIndex !== -1) {
+              // Extraire la description personnalisée (avant "Package Details:")
+              customDescription = annonceData.description.substring(0, packageDetailsIndex).trim();
+              
+              // Extraire les détails du colis
+              const packageDetailsSection = annonceData.description.substring(packageDetailsIndex);
+              
+              const sizeMatch = packageDetailsSection.match(/Size: (\w+)/);
+              if (sizeMatch && sizeMatch[1]) {
+                packageSize = sizeMatch[1];
+              }
+              
+              const weightMatch = packageDetailsSection.match(/Weight: ([\d.]+) kg/);
+              if (weightMatch && weightMatch[1]) {
+                weight = weightMatch[1];
+              }
+              
+              const amountMatch = packageDetailsSection.match(/Amount: (\d+)/);
+              if (amountMatch && amountMatch[1]) {
+                amount = amountMatch[1];
+              }
+            } else {
+              // Ancienne logique pour la compatibilité
+              const sizeMatch = annonceData.description.match(/Package Size: (\w+)/);
+              if (sizeMatch && sizeMatch[1]) {
+                packageSize = sizeMatch[1];
+              }
+              
+              const weightMatch = annonceData.description.match(/Weight: ([\d.]+) kg/);
+              if (weightMatch && weightMatch[1]) {
+                weight = weightMatch[1];
+              }
+              
+              const amountMatch = annonceData.description.match(/Amount: (\d+)/);
+              if (amountMatch && amountMatch[1]) {
+                amount = amountMatch[1];
+              }
             }
             
-            const weightMatch = annonceData.description.match(/Weight: ([\d.]+) kg/);
-            if (weightMatch && weightMatch[1]) {
-              weight = weightMatch[1];
-            }
-            
-            const amountMatch = annonceData.description.match(/Amount: (\d+)/);
-            if (amountMatch && amountMatch[1]) {
-              amount = amountMatch[1];
-            }
-            
-            console.log("Extracted from description:", { packageSize, weight, amount });
+            console.log("Extracted from description:", { packageSize, weight, amount, customDescription });
           }
           
           // Déterminer si l'annonce utilise un storage box
-          const hasStorageBox = !!annonceData.storageBoxId;
+          // Vérifier les deux formats possibles: camelCase et snake_case
+          const storageBoxId = annonceData.storageBoxId || annonceData.storage_box_id;
+          const hasStorageBox = !!storageBoxId;
+          
+          console.log("Storage box data:", { storageBoxId, hasStorageBox, annonceData });
           
           // Mise à jour des données du formulaire avec les valeurs reçues de l'API
           setAnnouncement({
             title: annonceData.title || "Untitled Announcement",
-            deliveryAddress: annonceData.destinationAddress || "",
+            deliveryAddress: annonceData.destinationAddress || annonceData.destination_address || "",
             price: annonceData.price?.toString() || "0",
-            deliveryDate: annonceData.scheduledDate ? 
-              new Date(annonceData.scheduledDate).toISOString().split('T')[0] : 
+            deliveryDate: annonceData.scheduledDate || annonceData.scheduled_date ? 
+              new Date(annonceData.scheduledDate || annonceData.scheduled_date).toISOString().split('T')[0] : 
               new Date().toISOString().split('T')[0],
             amount: amount, // Utiliser la valeur extraite
-            storageBox: annonceData.storageBoxId ? `Storage box ${annonceData.storageBoxId}` : "",
+            storageBox: storageBoxId ? `Storage box ${storageBoxId}` : "",
             packageSize: packageSize, // Utiliser la valeur extraite
             weight: weight, // Utiliser la valeur extraite
             priorityShipping: annonceData.priority || false,
             hasStorageBox: hasStorageBox, // Nouveau champ
+            customDescription: customDescription, // Nouveau champ pour la description personnalisée
           });
           
           // Si une image est disponible, construire l'URL complète
@@ -138,9 +175,9 @@ export default function EditAnnouncementPage() {
       formData.append("utilisateur_id", utilisateurId.toString());
       formData.append("title", announcement.title)
       formData.append("destination_address", announcement.deliveryAddress)
-      formData.append("price", announcement.price)
+      formData.append("price", parseFloat(announcement.price).toString())
       
-      // Utiliser directement le format YYYY-MM-DD de l'input HTML
+      // Convertir la date au format YYYY-MM-DD pour le backend
       if (announcement.deliveryDate) {
         console.log("Date envoyée (YYYY-MM-DD):", announcement.deliveryDate);
         formData.append("scheduled_date", announcement.deliveryDate);
@@ -150,18 +187,36 @@ export default function EditAnnouncementPage() {
       if (announcement.hasStorageBox && announcement.storageBox && announcement.storageBox.includes("Storage box")) {
         const boxId = announcement.storageBox.replace("Storage box ", "").trim();
         if (!isNaN(Number(boxId))) {
-          formData.append("storage_box_id", boxId);
+          formData.append("storage_box_id", boxId.toString());
         }
       }
       
       // Priorité d'expédition
-      formData.append("priority", announcement.priorityShipping.toString())
+      formData.append("priority", announcement.priorityShipping ? "true" : "false")
       
-      // Description détaillée avec les informations du colis
-      const description = `Package Size: ${announcement.packageSize}
-Weight: ${announcement.weight} kg
-Amount: ${announcement.amount}`;
-      formData.append("description", description)
+      // Gestion de la description selon le type d'annonce
+      let fullDescription = "";
+      
+      // Vérifier si c'est une liste de courses via les tags
+      const isShoppingList = originalAnnouncement?.tags && 
+        Array.isArray(originalAnnouncement.tags) && 
+        originalAnnouncement.tags.some((tag: string) => tag === 'liste-de-course');
+      
+      if (isShoppingList) {
+        // Pour les listes de courses, utiliser seulement la description personnalisée
+        fullDescription = announcement.customDescription || "";
+        // Conserver le tag liste-de-course
+        formData.append("tags[]", "liste-de-course");
+      } else {
+        // Pour les colis, ajouter la description personnalisée + détails du colis
+        if (announcement.customDescription && announcement.customDescription.trim() !== "") {
+          fullDescription += announcement.customDescription.trim() + "\n\n";
+        }
+        fullDescription += `Package Details:\nSize: ${announcement.packageSize}\nWeight: ${announcement.weight} kg\nAmount: ${announcement.amount}`;
+      }
+      
+      formData.append("description", fullDescription);
+      console.log("Description complète:", fullDescription);
       
       console.log("Données formulaire envoyées:", {
         title: announcement.title,
@@ -170,7 +225,7 @@ Amount: ${announcement.amount}`;
         destination: announcement.deliveryAddress,
         storageBox: announcement.hasStorageBox ? announcement.storageBox : "Aucun",
         priority: announcement.priorityShipping,
-        description: description,
+        description: fullDescription,
         hasImage: !!image
       });
 
@@ -183,7 +238,7 @@ Amount: ${announcement.amount}`;
       }
 
       // Envoi de la requête PUT pour mettre à jour l'annonce
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/annonces/${id}/with-string-dates`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/annonces/${id}`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`
@@ -191,13 +246,21 @@ Amount: ${announcement.amount}`;
         body: formData
       });
 
+      console.log("Statut de la réponse:", response.status);
+      
       if (response.ok) {
+        const responseData = await response.json();
+        console.log("Mise à jour réussie:", responseData);
         // Redirection vers la page des annonces
         window.location.href = "/app_client/announcements"
       } else {
         const errorData = await response.json();
-        console.error("Error updating announcement:", JSON.stringify(errorData));
-        alert(t("announcements.errorUpdating"));
+        console.error("Erreur lors de la mise à jour:", {
+          status: response.status,
+          statusText: response.statusText,
+          errorData: errorData
+        });
+        alert(`Erreur lors de la mise à jour: ${errorData.message || errorData.error || 'Erreur inconnue'}`);
       }
     } catch (error) {
       console.error("Error:", error);
@@ -207,7 +270,7 @@ Amount: ${announcement.amount}`;
     }
   }
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { id, value } = e.target
     setAnnouncement((prev) => ({ ...prev, [id]: value }))
   }
@@ -429,6 +492,20 @@ Amount: ${announcement.amount}`;
                   />
                   <span className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-500">kg</span>
                 </div>
+              </div>
+
+              <div>
+                <label htmlFor="customDescription" className="block text-sm font-medium text-gray-700 mb-1">
+                  {t("announcements.description")} ({t("common.optional")})
+                </label>
+                <textarea
+                  id="customDescription"
+                  value={announcement.customDescription}
+                  onChange={handleChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                  rows={3}
+                  placeholder={t("announcements.enterDescription")}
+                />
               </div>
 
               <div className="flex items-center">
