@@ -91,14 +91,15 @@ export default function VerifyEmailClient() {
       return
     }
 
-    
+    console.log(verificationCode)
+    console.log(`{'first_name': ${formData.firstname}, 'last_name': ${formData.name}, 'email': ${formData.email}}`)
     const code_valid = await fetch(
       `${process.env.NEXT_PUBLIC_API_URL}/codes-temporaire/check-code`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ 
-          user_info: {code: {'first_name': formData.firstname, 'last_name': formData.name, 'email': formData.email}}, 
-          code: verificationCode 
+          user_info: `{'first_name': '${formData.firstname}', 'last_name': '${formData.name}', 'email': '${formData.email}'}`, 
+          code: `${verificationCode}` 
         }),
         credentials: "include",
       })
@@ -141,6 +142,21 @@ export default function VerifyEmailClient() {
       
       sessionStorage.setItem("authToken", data.token)
 
+      const clientRes = await fetch(process.env.NEXT_PUBLIC_API_URL + "/clients/add", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          utilisateur_id: data.user.id,
+        })
+      })
+
+      const clientData = await clientRes.json()
+
+      if (!clientRes.ok) {
+        console.log(clientData)
+        throw new Error(t("auth.failedToCreateClient"))
+      }
+
       router.push("/verification-success")
     } catch (err) {
       setError(t("auth.invalidVerificationCode"))
@@ -168,7 +184,7 @@ export default function VerifyEmailClient() {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ 
-            user_info: {code: {'first_name': formData.firstname, 'last_name': formData.name, 'email': formData.email}} 
+            user_info: `{'first_name': '${formData.firstname}', 'last_name': '${formData.name}', 'email': '${formData.email}'}`
           }),
           credentials: "include",
         }

@@ -22,6 +22,7 @@ import {
 } from "lucide-react"
 import { useLanguage } from "@/components/language-context"
 import LanguageSelector from "@/components/language-selector"
+import { useToast } from '@/hooks/use-toast';
 
 // Mock data for payments
 const mockPayments = [
@@ -122,10 +123,17 @@ export default function ShopkeeperPayment() {
     setSelectedInvoice(null)
   }
 
+  // Add this inside the component
+  const { toast } = useToast();
+
   const handleDownloadInvoice = (id: string) => {
-    console.log(`Downloading invoice for payment ${id}`)
-    alert(`Invoice ${id} downloaded successfully!`)
-  }
+    console.log(`Downloading invoice for payment ${id}`);
+    toast({
+      title: "Téléchargement réussi",
+      description: `Facture ${id} téléchargée avec succès!`,
+      variant: "default"
+    });
+  };
 
 
   return (

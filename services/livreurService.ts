@@ -189,7 +189,6 @@ class LivreurService {
 		return apiClient.put(`/messages/${messageId}/read`);
 	}
 
-	// ========== Profil et compte ==========
 	async getProfile(): Promise<ApiResponse<Livreur>> {
 		return apiClient.get('/auth/me');
 	}

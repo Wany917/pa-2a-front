@@ -173,13 +173,13 @@ export default function AppClientEnhanced() {
 			<ResponsiveHeader />
 
 			{/* WebSocket Status Indicator (for development) */}
-			{process.env.NODE_ENV === 'development' && (
+			{/* {process.env.NODE_ENV === 'development' && (
 				<div className={`fixed top-4 right-4 px-2 py-1 rounded text-xs z-50 ${
 					websocket.isConnected ? 'bg-green-500 text-white' : 'bg-red-500 text-white'
 				}`}>
 					WS: {websocket.isConnected ? 'Connected' : 'Disconnected'}
 				</div>
-			)}
+			)} */}
 
 			{/* Main Content */}
 			<main className='container mx-auto px-4 py-8'>

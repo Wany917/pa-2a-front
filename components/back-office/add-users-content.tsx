@@ -28,7 +28,7 @@ export function AddUsersContent() {
     setTimeout(() => {
       setIsLoading(false)
       // Rediriger vers la page des utilisateurs
-      window.location.href = "/users"
+      window.location.href = "/admin/users"
     }, 1000)
   }
 
@@ -80,14 +80,14 @@ export function AddUsersContent() {
               <Label htmlFor="phone" className="mb-2 block">
                 {t("admin.userPhone")}
               </Label>
-              <Input id="phone" placeholder={t("admin.enterPhone")} required />
+              <Input id="phone" placeholder={t("admin.enterPhone")} />
             </div>
 
             <div>
               <Label htmlFor="city" className="mb-2 block">
                 {t("admin.city")}
               </Label>
-              <Input id="city" placeholder={t("admin.enterCity")} required />
+              <Input id="city" placeholder={t("admin.enterCity")} />
             </div>
 
             <div>
@@ -121,7 +121,7 @@ export function AddUsersContent() {
               <Label htmlFor="postal" className="mb-2 block">
                 {t("admin.postalCode")}
               </Label>
-              <Input id="postal" placeholder={t("admin.enterPostalCode")} required />
+              <Input id="postal" placeholder={t("admin.enterPostalCode")} />
             </div>
 
             <div>

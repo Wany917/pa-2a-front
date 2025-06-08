@@ -10,12 +10,10 @@ import {
 } from "lucide-react"
 import { useLanguage } from "@/components/language-context"
 import DeliverymanLayout from "./layout"
-// ✅ NOUVEAUX IMPORTS - Architecture moderne
 import { useApiCall } from "@/hooks/use-api-call"
 import { useLivreurWebSocket } from "@/hooks/use-livreur-websocket"
 import { livreurService } from "@/services/livreurService"
 
-// ✅ AMÉLIORÉ - Interface pour utilisateur multi-rôles
 interface MultiRoleUser {
   id: number
   firstName: string
@@ -28,7 +26,6 @@ interface MultiRoleUser {
   }
 }
 
-// ✅ AMÉLIORÉ - Type pour les livraisons basé sur les vraies données
 interface Delivery {
   id: string | number
   image?: string
@@ -56,7 +53,6 @@ export default function DeliverymanDeliveries() {
   const [deliveries, setDeliveries] = useState<Delivery[]>([])
   const [user, setUser] = useState<MultiRoleUser | null>(null)
 
-  // ✅ NOUVEAUX HOOKS - Architecture moderne
   const { execute: executeGetProfile, loading: profileLoading } = useApiCall<MultiRoleUser>()
   const { execute: executeGetLivraisons, loading: livraisonsLoading } = useApiCall<any>()
   

@@ -234,32 +234,32 @@ export default function DeliverymanEditAccount() {
 								</div>
 							</div>
 
-              <div className="flex justify-end space-x-3 pt-4">
-                <Link
-                  href="/app_deliveryman"
-                  className="px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
-                >
-                  {t("common.cancel")}
-                </Link>
-                <button
-                  type="submit"
-                  disabled={isSubmitting}
-                  className="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 transition-colors disabled:opacity-70 flex items-center"
-                >
-                  {isSubmitting ? (
-                    <>
-                      <span className="mr-2">{t("auth.savingChanges")}</span>
-                      <div className="animate-spin h-4 w-4 border-2 border-white rounded-full border-t-transparent"></div>
-                    </>
-                  ) : (
-                    <>
-                      <Save className="h-4 w-4 mr-2" />
-                      {t("auth.saveChanges")}
-                    </>
-                  )}
-                </button>
-              </div>
-            </form>
+							<div className="flex justify-end space-x-3 pt-4">
+								<Link
+									href="/app_deliveryman"
+									className="px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
+								>
+									{t("common.cancel")}
+								</Link>
+								<button
+									type="submit"
+									disabled={isSubmitting}
+									className="px-4 py-2 bg-green-50 text-white rounded-md hover:bg-green-600 transition-colors disabled:opacity-70 flex items-center"
+								>
+									{isSubmitting ? (
+										<>
+										<span className="mr-2">{t("auth.savingChanges")}</span>
+										<div className="animate-spin h-4 w-4 border-2 border-white rounded-full border-t-transparent"></div>
+										</>
+									) : (
+										<>
+										<Save className="h-4 w-4 mr-2" />
+										{t("auth.saveChanges")}
+										</>
+									)}
+								</button>
+							</div>
+						</form>
 
 						<div className='mt-8 pt-6 border-t border-gray-200'>
 							<div className='flex justify-between items-center mb-4'>
@@ -279,7 +279,7 @@ export default function DeliverymanEditAccount() {
 									{t('auth.editJustificative')}
 								</h2>
 								<Link
-									href='/app_deliveryman/edit_justificative'
+									href='/app_deliveryman/edit-justificative'
 									className='text-sm text-green-500 hover:underline'
 								>
 									{t('auth.editJustificative')}
