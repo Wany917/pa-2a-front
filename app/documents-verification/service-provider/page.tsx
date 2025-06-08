@@ -68,6 +68,7 @@ export default function ServiceProviderDocumentsPage() {
 				'document_type',
 				formData.idCard ? 'idCard' : 'drivingLicence'
 			);
+			formDataToSend.append('account_type', 'prestataire');
 			const fileToUpload = formData.idCard || formData.drivingLicence;
 			if (fileToUpload) {
 				formDataToSend.append('file', fileToUpload);

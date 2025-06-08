@@ -1,26 +1,26 @@
 "use client"
 
 import React, { useState } from "react"
-import { getStripe } from "../utils/stripe"
+import { getStripe } from "../utils/stripe" 
 
-interface CheckoutButtonProps {
+interface SubscribeButtonProps {
   planName: string
   priceId: string
   children: React.ReactNode
 }
 
-export default function CheckoutButton({
+export default function SubscribeButton({
   planName,
   priceId,
   children,
-}: CheckoutButtonProps) {
+}: SubscribeButtonProps) {
   const [isLoading, setIsLoading] = useState(false)
 
-  const handleCheckout = async () => {
+  const handleSubscribe = async () => {
     setIsLoading(true)
 
     try {
-      const response = await fetch("/api/create-checkout-session", {
+      const response = await fetch("/api/create-subscription-session", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -31,7 +31,7 @@ export default function CheckoutButton({
       const data = await response.json()
 
       if (!response.ok) {
-        console.error("Erreur create-checkout-session :", data.error)
+        console.error("Erreur create-subscription-session :", data.error)
         setIsLoading(false)
         return
       }
@@ -71,7 +71,7 @@ export default function CheckoutButton({
 
   return (
     <button
-      onClick={handleCheckout}
+      onClick={handleSubscribe}
       disabled={isLoading}
       className={`w-full py-2 px-4 rounded-md transition-colors ${
         planName === "Premium"

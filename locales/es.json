@@ -42,7 +42,8 @@
     "accept": "Aceptar",
     "reject": "Rechazar",
     "appClient": "Accede a tu espacio cliente",
-    "adminDashboard": "Admin"
+    "adminDashboard": "Admin",
+    "start": "Inicio"
   },
   "navigation": {
     "app_client": "Panel de control",

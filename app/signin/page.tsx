@@ -77,7 +77,7 @@ export default function SignupPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    setError("") // Réinitialiser l'erreur
+    setError("")
 
     // Vérification que tous les champs sont remplis
     if (!areAllFieldsFilled()) {
@@ -130,35 +130,17 @@ export default function SignupPage() {
         }),
       })
 
-      const requiresDocuments = selectedAccounts.some(
-        (type) => accountOptions.find((opt) => opt.id === type)?.requiresDocuments
-      )
-
-      if (requiresDocuments) {
-        // Rediriger vers la page de téléchargement des documents en fonction du compte
-        const accountWithDocuments = selectedAccounts.find(
+      // Store complete signup information including selected account types
+      sessionStorage.setItem("signupInfo", JSON.stringify({ 
+        formData, 
+        selectedAccounts,
+        requiresDocuments: selectedAccounts.some(
           (type) => accountOptions.find((opt) => opt.id === type)?.requiresDocuments
         )
+      }))
 
-        switch (accountWithDocuments) {
-          case "DeliveryMan":
-            router.push("/documents-verification/deliveryman")
-            break
-          case "ServiceProvider":
-            router.push("/documents-verification/service-provider")
-            break
-          case "Shopkeeper":
-            router.push("/documents-verification/shopkeeper")
-            break
-          default:
-            router.push("/documents-verification")
-            break
-        }
-      } else {
-        // Rediriger vers la vérification d'e-mail
-        sessionStorage.setItem("signupInfo", JSON.stringify({ formData }))
-        router.push("/verify-email")
-      }
+      // Always go to email verification first
+      router.push("/verify-email")
     } catch (error) {
       console.error("Error sending email:", error)
     } finally {
