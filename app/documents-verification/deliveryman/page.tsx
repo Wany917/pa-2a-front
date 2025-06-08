@@ -29,6 +29,11 @@ export default function DeliverymanDocumentsPage() {
 		e.preventDefault();
 		setError('');
 
+		if (!formData.idCard && !formData.drivingLicence) {
+			setError(t('deliveryman.pleaseUploadDocuments'))
+			return
+		}
+
 		setIsSubmitting(true);
 
 		try {
@@ -53,6 +58,7 @@ export default function DeliverymanDocumentsPage() {
 			const formDataToSend = new FormData();
 			formDataToSend.append('utilisateur_id', userData.id);
 			formDataToSend.append('document_type', formData.idCard ? 'idCard' : 'drivingLicence');
+			formDataToSend.append('account_type', 'livreur');
 			const fileToUpload = formData.idCard || formData.drivingLicence;
 			if (fileToUpload) {
 				formDataToSend.append('file', fileToUpload);

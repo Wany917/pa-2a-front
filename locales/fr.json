@@ -43,7 +43,8 @@
     "reject": "Rejeter",
     "appClient": "Accès à votre espace client",
     "selectOption": "Sélectionnez une option",
-    "adminDashboard": "Admin"
+    "adminDashboard": "Admin",
+    "start": "commencer"
   },
   "navigation": {
     "app_client": "Tableau de bord",

@@ -42,7 +42,8 @@
     "accept": "Accept",
     "reject": "Reject",
     "appClient": "Access your Client Area",
-    "adminDashboard": "Admin"
+    "adminDashboard": "Admin",
+    "start": "Start"
   },
   "navigation": {
     "app_client": "Dashboard",

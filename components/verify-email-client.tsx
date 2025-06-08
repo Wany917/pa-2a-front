@@ -83,7 +83,7 @@ export default function VerifyEmailClient() {
       return
     }
 
-    const { formData } = JSON.parse(stored)
+    const { formData, selectedAccounts, requiresDocuments } = JSON.parse(stored)
 
     if (verificationCode.length !== 6) {
       setError(t("auth.pleaseEnterCompleteCode"))
@@ -111,6 +111,7 @@ export default function VerifyEmailClient() {
     }
 
     try {
+      // Create the base user account
       const res = await fetch(
         `${process.env.NEXT_PUBLIC_API_URL}/auth/register`,
         {
@@ -135,31 +136,57 @@ export default function VerifyEmailClient() {
       const data = await res.json()
 
       if (!res.ok) {
-        console.log(data)
-        const msg = (data as any).error_message || t("auth.invalidVerificationCode")
-        throw new Error(msg)
+        throw new Error(data.error_message || t("auth.registrationFailed"))
       }
       
       sessionStorage.setItem("authToken", data.token)
 
-      const clientRes = await fetch(process.env.NEXT_PUBLIC_API_URL + "/clients/add", {
+      // Always create a client account (base account)
+      await fetch(process.env.NEXT_PUBLIC_API_URL + "/clients/add", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${data.token}`
+        },
         body: JSON.stringify({
           utilisateur_id: data.user.id,
         })
       })
 
-      const clientData = await clientRes.json()
+      // Update session storage with user ID for document verification
+      sessionStorage.setItem("signupInfo", JSON.stringify({ 
+        formData, 
+        selectedAccounts,
+        requiresDocuments,
+        userId: data.user.id,
+        token: data.token
+      }))
 
-      if (!clientRes.ok) {
-        console.log(clientData)
-        throw new Error(t("auth.failedToCreateClient"))
+      // Route based on account types that require documents
+      if (requiresDocuments) {
+        const accountWithDocuments = selectedAccounts.find(
+          (type: string) => type !== "Client" && ["DeliveryMan", "ServiceProvider", "Shopkeeper"].includes(type)
+        )
+
+        switch (accountWithDocuments) {
+          case "DeliveryMan":
+            router.push("/documents-verification/deliveryman")
+            break
+          case "ServiceProvider":
+            router.push("/documents-verification/service-provider")
+            break
+          case "Shopkeeper":
+            router.push("/documents-verification/shopkeeper")
+            break
+          default:
+            router.push("/verification-success")
+            break
+        }
+      } else {
+        router.push("/verification-success")
       }
-
-      router.push("/verification-success")
     } catch (err) {
-      setError(t("auth.invalidVerificationCode"))
+      setError(t("auth.registrationFailed"))
     } finally {
       setIsSubmitting(false)
     }
