@@ -31,26 +31,53 @@ export default function PlannedRoutes({ livreurId }: PlannedRoutesProps) {
   // Charger les trajets
   const loadTrajets = async () => {
     try {
-      const response = await execute(() => trajetService.getTrajetsByLivreur(livreurId));
+      console.log('Chargement des trajets pour le livreur:', livreurId);
+      const response = await execute(trajetService.getTrajetsByLivreur(livreurId));
+      
+      console.log('Réponse trajets reçue:', response);
+      
+      // Gestion flexible du format de réponse
+      let trajetsData: any[] = [];
+      
       if (response?.data?.trajets && Array.isArray(response.data.trajets)) {
-        setTrajets(response.data.trajets);
+        trajetsData = response.data.trajets;
       } else if (response?.trajets && Array.isArray(response.trajets)) {
-        setTrajets(response.trajets);
+        trajetsData = response.trajets;
+      } else if (response?.data && Array.isArray(response.data)) {
+        trajetsData = response.data;
+      } else if (Array.isArray(response)) {
+        trajetsData = response;
       } else {
-        setTrajets([]);
-        console.warn('Format de réponse inattendu:', response);
+        trajetsData = [];
+        console.warn('Format de réponse inattendu pour les trajets:', response);
       }
+      
+      setTrajets(trajetsData);
+      console.log('Trajets chargés:', trajetsData.length);
+      
     } catch (error) {
       console.error('Erreur lors du chargement des trajets:', error);
       setTrajets([]);
-      toast.error('Erreur lors du chargement des trajets');
+      
+      // Gestion d'erreur plus spécifique
+      if (error instanceof Error) {
+        if (error.message.includes('404')) {
+          toast.error('Service de trajets non disponible');
+        } else if (error.message.includes('500')) {
+          toast.error('Erreur serveur lors du chargement des trajets');
+        } else {
+          toast.error(`Erreur: ${error.message}`);
+        }
+      } else {
+        toast.error('Erreur lors du chargement des trajets');
+      }
     }
   };
 
   // Charger les livraisons du livreur
   const loadLivraisons = async () => {
     try {
-      const response = await execute(() => livreurService.getMyLivraisons({ status: 'in_progress' }));
+      const response = await execute(livreurService.getMyLivraisons({ status: 'in_progress' }));
       if (response?.data?.livraisons && Array.isArray(response.data.livraisons)) {
         setLivraisons(response.data.livraisons);
       } else if (response?.livraisons && Array.isArray(response.livraisons)) {
@@ -71,6 +98,8 @@ export default function PlannedRoutes({ livreurId }: PlannedRoutesProps) {
 
   // Fonction pour créer un trajet basé sur une livraison
   const createTrajetFromLivraison = async (livraison: any) => {
+    if (!confirm(`Êtes-vous sûr de vouloir créer un trajet planifié basé sur la livraison #${livraison.id} ?`)) return;
+    
     const trajetData: CreateTrajetData = {
       startingAddress: livraison.pickupLocation,
       destinationAddress: livraison.dropoffLocation,
@@ -82,7 +111,7 @@ export default function PlannedRoutes({ livreurId }: PlannedRoutesProps) {
     };
     
     try {
-      await execute(() => trajetService.createTrajet(trajetData));
+      await execute(trajetService.createTrajet(trajetData));
       toast.success('Trajet créé à partir de la livraison');
       await loadTrajets();
     } catch (error) {
@@ -97,10 +126,10 @@ export default function PlannedRoutes({ livreurId }: PlannedRoutesProps) {
     
     try {
       if (editingTrajet) {
-        await execute(() => trajetService.updateTrajet(editingTrajet.id, formData));
+        await execute(trajetService.updateTrajet(editingTrajet.id, formData));
         toast.success('Trajet mis à jour avec succès');
       } else {
-        await execute(() => trajetService.createTrajet(formData));
+        await execute(trajetService.createTrajet(formData));
         toast.success('Trajet planifié créé avec succès');
       }
       
@@ -130,7 +159,7 @@ export default function PlannedRoutes({ livreurId }: PlannedRoutesProps) {
     if (!confirm('Êtes-vous sûr de vouloir supprimer ce trajet ?')) return;
     
     try {
-      await execute(() => trajetService.deleteTrajet(id));
+      await execute(trajetService.deleteTrajet(id));
       toast.success('Trajet supprimé avec succès');
       await loadTrajets();
     } catch (error) {
@@ -141,8 +170,10 @@ export default function PlannedRoutes({ livreurId }: PlannedRoutesProps) {
 
   // Marquer comme terminé
   const handleComplete = async (id: number) => {
+    if (!confirm('Êtes-vous sûr de vouloir marquer ce trajet comme terminé ? Cette action est irréversible.')) return;
+    
     try {
-      await execute(() => trajetService.completeTrajet(id));
+      await execute(trajetService.completeTrajet(id));
       toast.success('Trajet marqué comme terminé');
       await loadTrajets();
     } catch (error) {

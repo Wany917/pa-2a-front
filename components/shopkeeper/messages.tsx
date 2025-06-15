@@ -312,6 +312,8 @@ export default function ShopkeeperMessage() {
       ],
     },
   ])
+    }
+  }, [conversationsLoading, conversationsData])
 
   // Filtrage par onglet + recherche
   const filteredConversations = conversations.filter((conversation) => {

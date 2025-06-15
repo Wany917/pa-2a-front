@@ -5,11 +5,11 @@ import type React from "react"
 import { useState, useEffect } from "react"
 import Image from "next/image"
 import Link from "next/link"
-import { Package, ArrowRight, Truck, CheckCircle, Loader2 } from "lucide-react"
+import { Package, MapPin, Clock, CheckCircle, AlertCircle, ArrowRight, Loader2, Truck } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useLanguage } from "@/components/language-context"
 import { clientService } from "@/services/clientService"
-import type { Livraison } from "@/types/api"
+import type { Livraison, Colis } from "@/types/api"
 
 export default function TrackingClient() {
   const { t } = useLanguage()
@@ -18,66 +18,89 @@ export default function TrackingClient() {
   const [error, setError] = useState("")
   const [loading, setLoading] = useState(true)
   const [recentLivraisons, setRecentLivraisons] = useState<Livraison[]>([])
+  const [recentColis, setRecentColis] = useState<Colis[]>([])
 
   useEffect(() => {
-    loadRecentLivraisons()
+    loadRecentActivity()
   }, [])
 
-  const loadRecentLivraisons = async () => {
+  const loadRecentActivity = async () => {
     try {
       setLoading(true);
-      console.log('Chargement des livraisons récentes...');
+      console.log('Chargement de l\'activité récente (livraisons + colis)...');
       
-      const response = await clientService.getMyLivraisons();
-      console.log('Réponse getMyLivraisons:', response);
+      // Charger les livraisons et colis en parallèle
+      const [livraisonsResponse, colisResponse] = await Promise.all([
+        clientService.getMyLivraisons(),
+        clientService.getMyColis()
+      ]);
       
-      if (response.success && response.data) {
-        // Vérifier que response.data est un tableau
-        if (Array.isArray(response.data)) {
-          // Trier par date de création (plus récentes en premier) et prendre les 5 dernières
-          const sortedLivraisons = response.data
-            .sort((a, b) => {
-              const dateA = new Date((a as any).created_at || (a as any).createdAt).getTime();
-              const dateB = new Date((b as any).created_at || (b as any).createdAt).getTime();
-              return dateB - dateA;
-            })
-            .slice(0, 5);
-          
-          setRecentLivraisons(sortedLivraisons);
-        } else {
-          console.error('Les données reçues ne sont pas un tableau:', response.data);
-          setRecentLivraisons([]);
-        }
-      } else {
-        // Si l'API ne renvoie pas de données, essayer de récupérer depuis le localStorage
-        const storedLivraisons = localStorage.getItem('recent-livraisons');
-        if (storedLivraisons) {
-          try {
-            const parsedLivraisons = JSON.parse(storedLivraisons);
-            setRecentLivraisons(parsedLivraisons);
-          } catch (e) {
-            console.error('Erreur lors du parsing des livraisons stockées:', e);
-            setRecentLivraisons([]);
-          }
-        } else {
-          setRecentLivraisons([]);
+      console.log('Réponse livraisons:', livraisonsResponse);
+      console.log('Réponse colis:', colisResponse);
+      
+      let livraisons: Livraison[] = [];
+      let colis: Colis[] = [];
+      
+      // Traiter les livraisons
+      if (livraisonsResponse.success && livraisonsResponse.data) {
+        if (Array.isArray(livraisonsResponse.data)) {
+          livraisons = livraisonsResponse.data;
         }
       }
+      
+      // Traiter les colis
+      if (colisResponse.success && colisResponse.data) {
+        if (Array.isArray(colisResponse.data)) {
+          colis = colisResponse.data;
+          console.log('📦 Données colis reçues:', colis);
+          // Vérifier si les tracking_number sont présents
+          colis.forEach((c, index) => {
+            console.log(`📦 Colis ${index}:`, {
+              id: c.id,
+              tracking_number: c.tracking_number,
+              status: c.status
+            });
+          });
+        }
+      }
+      
+      // Trier les livraisons par date de création
+      const sortedLivraisons = livraisons
+        .filter(item => {
+          const dateStr = (item as any).created_at || (item as any).createdAt;
+          return dateStr && !isNaN(new Date(dateStr).getTime());
+        })
+        .sort((a, b) => {
+          const dateA = new Date((a as any).created_at || (a as any).createdAt).getTime();
+          const dateB = new Date((b as any).created_at || (b as any).createdAt).getTime();
+          return dateB - dateA;
+        });
+      
+      // Trier les colis par date de création
+      const sortedColis = colis
+        .filter(item => {
+          const dateStr = (item as any).created_at || (item as any).createdAt;
+          return dateStr && !isNaN(new Date(dateStr).getTime());
+        })
+        .sort((a, b) => {
+          const dateA = new Date((a as any).created_at || (a as any).createdAt).getTime();
+          const dateB = new Date((b as any).created_at || (b as any).createdAt).getTime();
+          return dateB - dateA;
+        });
+      
+      setRecentLivraisons(sortedLivraisons);
+      setRecentColis(sortedColis);
+      
+      console.log('Activité récente chargée:', {
+        livraisons: sortedLivraisons.length,
+        colis: sortedColis.length
+      });
+      
     } catch (err) {
-      console.error('Erreur lors du chargement des livraisons:', err);
-      // Fallback: essayer de récupérer depuis le localStorage
-      const storedLivraisons = localStorage.getItem('recent-livraisons');
-      if (storedLivraisons) {
-        try {
-          const parsedLivraisons = JSON.parse(storedLivraisons);
-          setRecentLivraisons(parsedLivraisons);
-        } catch (e) {
-          console.error('Erreur lors du parsing des livraisons stockées:', e);
-          setRecentLivraisons([]);
-        }
-      } else {
-        setRecentLivraisons([]);
-      }
+      console.error('Erreur lors du chargement de l\'activité:', err);
+      // Réinitialiser les états en cas d'erreur
+      setRecentLivraisons([]);
+      setRecentColis([]);
     } finally {
       setLoading(false);
     }
@@ -249,12 +272,12 @@ export default function TrackingClient() {
             </form>
           </div>
 
-          {/* Suivis récents */}
+          {/* Livraisons récentes */}
           <div className="bg-white rounded-lg shadow-md p-6">
             <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-semibold">{t("tracking.recentlyTracked")}</h2>
+              <h2 className="text-xl font-semibold">Mes Livraisons</h2>
               <button
-                onClick={loadRecentLivraisons}
+                onClick={loadRecentActivity}
                 className="text-green-500 hover:text-green-600 text-sm"
                 disabled={loading}
               >
@@ -269,7 +292,7 @@ export default function TrackingClient() {
               </div>
             ) : recentLivraisons.length === 0 ? (
               <div className="text-center py-8">
-                <Package className="h-12 w-12 mx-auto text-gray-400 mb-4" />
+                <Truck className="h-12 w-12 mx-auto text-gray-400 mb-4" />
                 <p className="text-gray-600">Aucune livraison trouvée</p>
                 <Link 
                   href="/app_client/announcements"
@@ -280,12 +303,12 @@ export default function TrackingClient() {
               </div>
             ) : (
               <div className="space-y-4">
-                {recentLivraisons.map((livraison) => {
-                  const displayData = getLivraisonDisplayData(livraison)
+                {recentLivraisons.slice(0, 3).map((livraison) => {
+                  const displayData = getLivraisonDisplayData(livraison);
                   
                   return (
                     <Link
-                      key={livraison.id}
+                      key={`livraison-${livraison.id}`}
                       href={`/app_client/tracking/livraison/${livraison.id}`}
                       className="block border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors"
                     >
@@ -344,8 +367,113 @@ export default function TrackingClient() {
                         </div>
                       )}
                     </Link>
-                  )
+                  );
                 })}
+                {recentLivraisons.length > 3 && (
+                  <div className="text-center pt-4">
+                    <Link 
+                      href="/app_client/tracking/livraisons"
+                      className="text-green-500 hover:text-green-600 text-sm"
+                    >
+                      Voir toutes les livraisons ({recentLivraisons.length})
+                    </Link>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Colis récents */}
+          <div className="bg-white rounded-lg shadow-md p-6">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-semibold">Mes Colis</h2>
+            </div>
+
+            {loading ? (
+              <div className="flex justify-center items-center py-8">
+                <Loader2 className="h-6 w-6 animate-spin text-green-500" />
+                <span className="ml-2 text-gray-600">Chargement...</span>
+              </div>
+            ) : recentColis.length === 0 ? (
+              <div className="text-center py-8">
+                <Package className="h-12 w-12 mx-auto text-gray-400 mb-4" />
+                <p className="text-gray-600">Aucun colis trouvé</p>
+                <Link 
+                  href="/app_client/announcements"
+                  className="mt-2 inline-block text-green-500 hover:text-green-600"
+                >
+                  Créer une annonce pour commencer
+                </Link>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {recentColis.slice(0, 3).map((colis) => {
+                  // Vérifier que le tracking_number existe
+                  if (!colis.tracking_number) {
+                    console.warn('Colis sans tracking_number:', colis);
+                    return null;
+                  }
+                  
+                  return (
+                    <Link
+                      key={`colis-${colis.id}`}
+                      href={`/app_client/tracking/colis/${colis.tracking_number}`}
+                      className="block border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors"
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center">
+                          <div className="bg-primary/10 p-2 rounded-full mr-4">
+                            <Package className="h-6 w-6 text-primary" />
+                          </div>
+                          <div>
+                            <p className="font-medium">Colis {colis.tracking_number || 'N/A'}</p>
+                            <p className="text-sm text-gray-500">
+                              {getStatusText(colis.status)}
+                            </p>
+                          </div>
+                        </div>
+                        <ArrowRight className="h-5 w-5 text-gray-400" />
+                      </div>
+
+                      <div className="mt-3 grid grid-cols-3 gap-4 text-sm">
+                        <div>
+                          <p className="text-gray-500">Contenu</p>
+                          <p className="font-medium truncate" title={(colis as any).content_description || 'Colis'}>
+                            {(colis as any).content_description || 'Colis'}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-gray-500">Poids</p>
+                          <p className="font-medium">
+                            {(colis as any).weight || 'N/A'} kg
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-gray-500">Créé le</p>
+                          <p className="font-medium">
+                            {formatDate((colis as any).created_at || (colis as any).createdAt)}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="mt-2 text-right">
+                        <span className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">
+                          Colis
+                        </span>
+                      </div>
+                    </Link>
+                  );
+                })}
+                {recentColis.length > 3 && (
+                  <div className="text-center pt-4">
+                    <Link 
+                      href="/app_client/tracking/colis"
+                      className="text-green-500 hover:text-green-600 text-sm"
+                    >
+                      Voir tous les colis ({recentColis.length})
+                    </Link>
+                  </div>
+                )}
               </div>
             )}
           </div>

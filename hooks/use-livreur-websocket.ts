@@ -43,7 +43,7 @@ export function useLivreurWebSocket({
 
 	// Connecter au WebSocket
 	useEffect(() => {
-		if (userId) {
+		if (userId && userId > 0) {
 			connect(userId);
 		}
 
@@ -333,6 +333,20 @@ export function useLivreurWebSocket({
 		);
 	}, [emit]);
 
+	// Envoyer un message de chat de groupe
+	const sendGroupChatMessage = useCallback((livraisonId: number, content: string, messageType: 'text' | 'image' | 'file' = 'text') => {
+		if (!isConnected) {
+			console.warn('WebSocket non connecté');
+			return;
+		}
+
+		emit('send_group_chat_message', {
+			livraisonId,
+			content,
+			messageType,
+		});
+	}, [isConnected, emit]);
+
 	return {
 		isConnected,
 		// Gestion du GPS
@@ -345,10 +359,11 @@ export function useLivreurWebSocket({
 		// Gestion des messages
 		sendMessage,
 		markMessageAsRead,
+		sendGroupChatMessage,
 		// Gestion de la disponibilité
 		updateAvailabilityStatus,
 		// Statut actuel
 		currentLivraisonId: currentLivraisonIdRef.current,
 		isTrackingLocation: watchIdRef.current !== null,
 	};
-} 
+}

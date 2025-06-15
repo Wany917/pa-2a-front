@@ -52,7 +52,7 @@ class TrajetService {
    * Récupérer les trajets d'un livreur
    */
   async getTrajetsByLivreur(livreurId: number): Promise<ApiResponse<{ trajets: TrajetPlanifie[] }>> {
-    return apiClient.get(`/trajets-planifies/livreur/${livreurId}`);
+    return apiClient.get(API_ROUTES.TRAJETS.GET_BY_LIVREUR(livreurId));
   }
 
   /**
@@ -72,7 +72,7 @@ class TrajetService {
     }
 
     const queryString = params.toString();
-    const url = queryString ? `/trajets-planifies/active?${queryString}` : '/trajets-planifies/active';
+    const url = queryString ? `${API_ROUTES.TRAJETS.GET_ACTIVE}?${queryString}` : API_ROUTES.TRAJETS.GET_ACTIVE;
     
     return apiClient.get(url);
   }
@@ -81,14 +81,14 @@ class TrajetService {
    * Mettre à jour un trajet
    */
   async updateTrajet(id: number, data: Partial<CreateTrajetData & { status: string }>): Promise<ApiResponse<{ trajet: TrajetPlanifie }>> {
-    return apiClient.put(`/trajets-planifies/${id}`, data);
+    return apiClient.put(API_ROUTES.TRAJETS.UPDATE(id), data);
   }
 
   /**
    * Supprimer un trajet
    */
   async deleteTrajet(id: number): Promise<ApiResponse<{ message: string }>> {
-    return apiClient.delete(`/trajets-planifies/${id}`);
+    return apiClient.delete(API_ROUTES.TRAJETS.DELETE(id));
   }
 
   /**

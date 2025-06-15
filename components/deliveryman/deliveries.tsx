@@ -24,6 +24,10 @@ interface MultiRoleUser {
     availabilityStatus: 'available' | 'busy' | 'offline'
     rating: string
   }
+  admin?: {
+    id: number
+    role: string
+  }
 }
 
 interface Delivery {
@@ -87,27 +91,23 @@ export default function DeliverymanDeliveries() {
       // ✅ NOUVEAU - Transformer avec les vraies données du backend
       const formattedDeliveries: Delivery[] = livraisons.map((livraison: any) => {
         
-        // Mapper le statut API vers notre interface
+        // Mapper le statut API vers notre interface (statuts backend: scheduled, in_progress, completed, cancelled)
         let status: "paid" | "in_transit" | "delivered" | "pending" | "scheduled" | "completed" = "pending"
         switch(livraison.status) {
           case "scheduled":
             status = "scheduled"
             break
           case "in_progress":
-          case "en_cours":
-          case "in_transit":
             status = "in_transit"
             break
           case "completed":
-          case "livré":
-          case "delivered":
             status = "delivered"
             break
-          case "paid":
-          case "payé":
-            status = "paid"
+          case "cancelled":
+            status = "pending" // Ou créer un nouveau statut "cancelled" si nécessaire
             break
           default:
+            console.warn('Statut de livraison non reconnu:', livraison.status)
             status = "pending"
         }
         
@@ -150,9 +150,9 @@ export default function DeliverymanDeliveries() {
         // 1. Charger le profil utilisateur d'abord
         const userProfile = await executeGetProfile(livreurService.getProfile())
         
-        // Vérifier que l'utilisateur est bien un livreur
-        if (!userProfile?.livreur?.id) {
-          console.error('Utilisateur non-livreur:', userProfile)
+        // Vérifier que l'utilisateur est bien un livreur ou un admin
+        if (!userProfile?.livreur?.id && !userProfile?.admin) {
+          console.error('Utilisateur non-livreur et non-admin:', userProfile)
           return
         }
         

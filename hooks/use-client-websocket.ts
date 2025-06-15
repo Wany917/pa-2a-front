@@ -191,7 +191,7 @@ export function useDeliveryTracking(
 	useEffect(() => {
 		const unsubscribe = on('livreur_location_update', (data: LocationUpdateEvent) => {
 			// Filtrer pour la livraison concernée
-			if (!livraisonId || data.livraison_id === livraisonId) {
+			if (!livraisonId || data.livraisonId === livraisonId) {
 				onLocationUpdate?.(data);
 			}
 		});
@@ -202,4 +202,4 @@ export function useDeliveryTracking(
 	return {
 		livraisonId,
 	};
-} 
+}

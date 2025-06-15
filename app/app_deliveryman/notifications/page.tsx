@@ -5,5 +5,7 @@ import DeliverymanNotifications from "@/components/deliveryman/notifications"
 import DeliverymanLayout from "@/components/deliveryman/layout"
 
 export default function NotificationsPage() {
-  return <DeliverymanNotifications />
+  return (
+    <DeliverymanNotifications />
+  )
 }

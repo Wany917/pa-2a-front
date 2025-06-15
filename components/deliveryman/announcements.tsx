@@ -116,9 +116,12 @@ export default function DeliverymanAnnouncements() {
       
       console.log('Données annonces extraites:', annoncesData)
       
-      // Transformer les données pour correspondre à notre interface (même logique qu'avant)
+      // Transformer les données pour correspondre à notre interface
       const formattedAnnouncements: Announcement[] = annoncesData
-        .filter((annonce: any) => annonce.state === 'open') // Ne montrer que les annonces ouvertes
+        .filter((annonce: any) => {
+          // Ne montrer que les annonces ouvertes et sans livraison assignée
+          return annonce.state === 'open' && !annonce.livraison && !annonce.livreur_id
+        })
         .map((annonce: any) => ({
           id: annonce.id,
           title: annonce.title || "Annonce sans titre",
@@ -192,7 +195,11 @@ export default function DeliverymanAnnouncements() {
     
     // ✅ CORRIGÉ - Vérifications AVANT la confirmation
     if (!user?.livreur?.id) {
-      alert("Vous devez être connecté en tant que livreur")
+      toast({
+        variant: "destructive",
+        title: "Erreur d'authentification",
+        description: "Vous devez être connecté en tant que livreur"
+      })
       return
     }
     
@@ -214,8 +221,6 @@ export default function DeliverymanAnnouncements() {
     setLoadingAccept({ id: announcementId, loading: true })
     
     try {
-
-      // ✅ NOUVEAU - Utiliser le service livreur pour accepter la livraison
       console.log('Acceptation de la livraison pour l\'annonce:', announcementId)
       
       // ✅ CORRIGÉ - Créer d'abord la livraison via l'API annonces
@@ -235,33 +240,55 @@ export default function DeliverymanAnnouncements() {
       })
       
       if (!createResponse.ok) {
-        throw new Error('Erreur lors de la création de la livraison')
+        const errorData = await createResponse.json().catch(() => ({}))
+        throw new Error(errorData.message || 'Erreur lors de la création de la livraison')
       }
       
       const createResult = await createResponse.json()
       console.log('Livraison créée:', createResult)
+      
+      // ✅ NOUVEAU - Créer automatiquement une conversation entre le livreur et l'émetteur
+      if (announcement.utilisateurId && user.id) {
+        try {
+          await livreurService.sendMessage({
+            receiverId: announcement.utilisateurId,
+            content: `Bonjour ! J'ai accepté votre livraison "${announcement.title}". Je vous tiendrai informé du suivi.`,
+            type: 'text'
+          })
+          console.log('Message de confirmation envoyé au client')
+        } catch (messageError) {
+          console.warn('Erreur lors de l\'envoi du message:', messageError)
+          // Ne pas faire échouer toute l'opération pour un problème de message
+        }
+      }
       
       // ✅ NOUVEAU - Maintenant accepter la livraison via le service livreur
       const response = await executeAcceptDelivery(() =>
         livreurService.acceptLivraison(createResult.data.id)
       )
       
-      console.log('Livraison créée:', response)
+      console.log('Livraison acceptée:', response)
       
       // ✅ AMÉLIORÉ - Retirer cette annonce de la liste immédiatement
       setAnnouncements(prev => prev.filter(a => a.id !== announcementId))
       
+      // ✅ NOUVEAU - Notification de succès
+      toast({
+        title: "Livraison acceptée !",
+        description: `Vous avez accepté la livraison "${announcement.title}". Une conversation a été créée avec le client.`,
+      })
+      
       // ✅ NOUVEAU - Redirection plus élégante
       setTimeout(() => {
         window.location.href = '/app_deliveryman/deliveries'
-      }, 1000)
+      }, 2000)
       
     } catch (error) {
       console.error("Erreur lors de l'acceptation de la livraison:", error);
       toast({
         variant: "destructive",
         title: "Erreur",
-        description: "Impossible d'accepter cette livraison"
+        description: error instanceof Error ? error.message : "Impossible d'accepter cette livraison"
       });
     } finally {
       setLoadingAccept({ id: 0, loading: false });

@@ -17,6 +17,10 @@ interface MultiRoleUser {
     availabilityStatus: string;
     rating: string | null;
   };
+  admin?: {
+    id: number;
+    role: string;
+  };
 }
 
 export default function PlannedRoutesPage() {
@@ -47,8 +51,8 @@ export default function PlannedRoutesPage() {
 
         const userData = await userResponse.json();
         
-        // Vérifier que l'utilisateur est un livreur
-        if (!userData.livreur) {
+        // Vérifier que l'utilisateur est un livreur ou un admin
+        if (!userData.livreur && !userData.admin) {
           router.push('/dashboard');
           return;
         }
@@ -75,13 +79,13 @@ export default function PlannedRoutesPage() {
     );
   }
 
-  if (!user?.livreur) {
+  if (!user?.livreur && !user?.admin) {
     return (
       <DeliverymanLayout>
         <div className="flex items-center justify-center min-h-screen">
           <div className="text-center">
             <h2 className="text-xl font-semibold text-gray-900 mb-2">Accès refusé</h2>
-            <p className="text-gray-600">Vous devez être connecté en tant que livreur pour accéder à cette page.</p>
+            <p className="text-gray-600">Vous devez être connecté en tant que livreur ou administrateur pour accéder à cette page.</p>
           </div>
         </div>
       </DeliverymanLayout>
@@ -91,7 +95,14 @@ export default function PlannedRoutesPage() {
   return (
     <DeliverymanLayout>
       <div className="p-6">
-        <PlannedRoutes livreurId={user.livreur.id} />
+        {user.admin ? (
+          <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+            <p className="text-blue-800 text-sm">
+              🔧 <strong>Mode Administrateur</strong> - Vous consultez l'espace livreur en tant qu'admin
+            </p>
+          </div>
+        ) : null}
+        <PlannedRoutes livreurId={user.livreur?.id || 1} />
       </div>
     </DeliverymanLayout>
   );

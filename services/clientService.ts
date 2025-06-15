@@ -102,9 +102,35 @@ class ClientService {
 
 	async getMyColis(): Promise<ApiResponse<Colis[]>> {
 		const userResponse = await apiClient.get<User>(API_ROUTES.AUTH.ME);
-		const userId = userResponse.data.id; // Correction ici aussi
+		const userId = userResponse.data.id;
 		
-		return apiClient.get(API_ROUTES.COLIS.USER_COLIS(userId));
+		const response = await apiClient.get(API_ROUTES.COLIS.USER_COLIS(userId));
+		
+		// Transformer la réponse pour extraire les colis du format backend
+		if (response.success && response.data) {
+			// Si les données sont directement un tableau
+			if (Array.isArray(response.data)) {
+				return {
+					success: true,
+					data: response.data,
+					message: response.message
+				};
+			}
+			// Si les données sont dans un objet avec propriété colis
+			if ((response.data as any)?.colis && Array.isArray((response.data as any).colis)) {
+				return {
+					success: true,
+					data: (response.data as any).colis,
+					message: response.message
+				};
+			}
+		}
+		
+		return {
+			success: false,
+			data: [],
+			message: response.message || "Aucun colis trouvé"
+		};
 	}
 
 	async trackColis(trackingNumber: string): Promise<ApiResponse<{
@@ -116,7 +142,7 @@ class ClientService {
 			description?: string;
 		}>;
 	}>> {
-		const response = await apiClient.get(API_ROUTES.COLIS.TRACK(trackingNumber));
+		const response = await apiClient.get(API_ROUTES.COLIS.GET(trackingNumber));
 		
 		// Transformer la réponse pour correspondre au format attendu
 		if (response.success && (response.data as any)?.colis) {

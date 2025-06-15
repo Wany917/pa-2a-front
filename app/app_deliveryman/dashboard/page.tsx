@@ -1,7 +1,12 @@
 "use client"
 
-import DeliverymanDashboard from "@/components/deliveryman/dashboard"
+import DeliverymanLayout from '@/components/deliveryman/layout';
+import { DeliverymanDashboard } from '@/components/deliveryman/dashboard';
 
 export default function DashboardPage() {
-  return <DeliverymanDashboard />
-} 
+	return (
+		<DeliverymanLayout>
+			<DeliverymanDashboard />
+		</DeliverymanLayout>
+	);
+}

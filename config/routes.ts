@@ -130,8 +130,28 @@ export const API_ROUTES = {
     STATS: (id: number) => `/prestataires/${id}/stats`,
   },
 
-  // Trajets
+  // Routes pour les trajets planifiés
   TRAJETS: {
-    CREATE: '/trajets/create',
+    CREATE: '/trajets-planifies/create',
+    GET_BY_LIVREUR: (livreurId: number) => `/trajets-planifies/livreur/${livreurId}`,
+    GET_ACTIVE: '/trajets-planifies/active',
+    UPDATE: (id: number) => `/trajets-planifies/${id}`,
+    DELETE: (id: number) => `/trajets-planifies/${id}`,
+    COMPLETE: (id: number) => `/trajets-planifies/${id}`,
+  },
+
+  // Routes pour les livraisons partielles
+  PARTIAL_DELIVERIES: {
+    CREATE: '/partial-deliveries',
+    GET: (id: number) => `/partial-deliveries/${id}`,
+    GET_ALL: '/partial-deliveries',
+    USER_DELIVERIES: (userId: number) => `/partial-deliveries/user/${userId}`,
+    CANCEL: (id: number) => `/partial-deliveries/${id}/cancel`,
+    CALCULATE_COST: '/partial-deliveries/calculate-cost',
+    OPTIMIZE_ROUTE: '/partial-deliveries/optimize-route',
+    INITIATE_COORDINATION: '/partial-deliveries/initiate-coordination',
+    PROPOSE_SEGMENT: '/partial-deliveries/propose-segment',
+    ACCEPT_PROPOSAL: '/partial-deliveries/accept-proposal',
+    UPDATE_SEGMENT_STATUS: '/partial-deliveries/update-segment-status',
   },
 };

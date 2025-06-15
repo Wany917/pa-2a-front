@@ -18,6 +18,7 @@ export default function DeliverymanHeader({
 	const { t } = useLanguage();
 	const [first_name, setUserName] = useState('');
 	const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+	const [isAdmin, setIsAdmin] = useState(false);
 	const router = useRouter();
 	const userMenuRef = useRef<HTMLDivElement>(null);
 
@@ -167,6 +168,7 @@ export default function DeliverymanHeader({
 			})
 			.then((data) => {
 				setUserName(data.firstName);
+				setIsAdmin(data.role === 'admin' || data.admin);
 			})
 			.catch((err) => console.error('Auth/me failed:', err));
 	}, []);
@@ -180,6 +182,15 @@ export default function DeliverymanHeader({
 			>
 				<Menu className='h-6 w-6' />
 			</button>
+
+			{/* Admin indicator */}
+			{isAdmin && (
+				<div className='hidden lg:flex items-center bg-blue-50 border border-blue-200 rounded-lg px-3 py-1'>
+					<span className='text-blue-800 text-sm font-medium'>
+						🔧 Mode Administrateur - Espace Livreur
+					</span>
+				</div>
+			)}
 
 			{/* Right actions */}
 			<div className='ml-auto flex items-center space-x-4'>

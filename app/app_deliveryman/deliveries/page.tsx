@@ -3,5 +3,7 @@
 import DeliverymanDeliveries from "@/components/deliveryman/deliveries"
 
 export default function DeliveriesPage() {
-  return <DeliverymanDeliveries />
+  return (
+    <DeliverymanDeliveries />
+  )
 }

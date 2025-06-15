@@ -351,6 +351,125 @@ export interface TypingEvent {
 	receiver_id: number;
 }
 
+// ==================== TYPES LIVRAISONS PARTIELLES ====================
+
+// Segment de livraison pour les livraisons partielles
+export interface DeliverySegment {
+	id: number;
+	livraison_id: number;
+	order: number; // Ordre du segment (1, 2, 3...)
+	start_address: string;
+	end_address: string;
+	start_latitude: number;
+	start_longitude: number;
+	end_latitude: number;
+	end_longitude: number;
+	distance: number; // Distance en km
+	estimated_duration: number; // Durée estimée en minutes
+	status: 'pending' | 'accepted' | 'in_progress' | 'completed' | 'cancelled';
+	livreur_id?: number;
+	livreur?: Livreur;
+	proposed_cost?: number;
+	actual_cost?: number;
+	started_at?: string;
+	completed_at?: string;
+	created_at: string;
+	updated_at: string;
+}
+
+// Livraison partielle étendue
+export interface PartialDelivery extends Livraison {
+	is_partial: boolean;
+	parent_livraison_id?: number;
+	segments: DeliverySegment[];
+	total_segments: number;
+	completed_segments: number;
+	coordination_chat_id?: number;
+}
+
+// ==================== ÉVÉNEMENTS LIVRAISONS PARTIELLES ====================
+
+// Événement de demande de livraison partielle
+export interface PartialDeliveryRequestEvent {
+	original_livraison_id: number;
+	segments: DeliverySegment[];
+	client_id: number;
+	total_distance: number;
+	total_cost: number;
+	requested_at: string;
+}
+
+// Événement de proposition de segment par un livreur
+export interface SegmentProposalEvent {
+	segment_id: number;
+	livreur_id: number;
+	livreur: Livreur;
+	proposed_cost: number;
+	estimated_duration: number;
+	proposed_at: string;
+}
+
+// Événement d'acceptation de segment
+export interface SegmentAcceptedEvent {
+	segment_id: number;
+	livreur_id: number;
+	livreur: Livreur;
+	client_id: number;
+	accepted_at: string;
+}
+
+// Événement de mise à jour de statut de segment
+export interface SegmentStatusUpdatedEvent {
+	segment_id: number;
+	status: 'pending' | 'accepted' | 'in_progress' | 'completed' | 'cancelled';
+	livreur_id?: number;
+	updated_at: string;
+	location?: {
+		latitude: number;
+		longitude: number;
+	};
+}
+
+// Événement de coordination entre livreurs
+export interface DeliveryCoordinationEvent {
+	livraisonId: number;
+	currentSegmentId: number;
+	nextSegmentId?: number;
+	handoverLocation: {
+		latitude: number;
+		longitude: number;
+		address: string;
+	};
+	currentLivreurId: number;
+	nextLivreurId?: number;
+	estimatedHandoverTime: string;
+}
+
+// Événement de remise de colis entre livreurs
+export interface PackageHandoverEvent {
+	livraisonId: number;
+	fromSegmentId: number;
+	toSegmentId: number;
+	fromLivreurId: number;
+	toLivreurId: number;
+	handoverLocation: {
+		latitude: number;
+		longitude: number;
+		address: string;
+	};
+	handoverTime: string;
+	verificationCode?: string;
+}
+
+// Événement de chat de groupe pour livraison partielle
+export interface GroupChatMessageEvent {
+	livraisonId: number;
+	message: Message;
+	sender: User;
+	participants: User[];
+	messageType: 'coordination' | 'status_update' | 'general';
+}
+
 // Types d'erreurs
 export interface ApiError {
 	message: string;

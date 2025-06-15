@@ -48,55 +48,53 @@ export default function TrackingDetailClient({ id }: { id: string }) {
   const [refreshing, setRefreshing] = useState(false)
   const [trackingData, setTrackingData] = useState<UnifiedTrackingData | null>(null)
   const [error, setError] = useState<string | null>(null)
-  const [emailSent, setEmailSent] = useState(false);
-  const [sendingEmail, setSendingEmail] = useState(false);
-  const [userEmail, setUserEmail] = useState("");
+  const [emailSent, setEmailSent] = useState(false)
+  const [sendingEmail, setSendingEmail] = useState(false)
+  const [userEmail, setUserEmail] = useState("")
 
   useEffect(() => {
     loadTrackingData()
   }, [id])
 
-  // Déplacer ce useEffect ici (avant le premier return)
   useEffect(() => {
     const loadUserEmail = async () => {
       try {
-        const userResponse = await clientService.getProfile();
+        const userResponse = await clientService.getProfile()
         if (userResponse.success && userResponse.data) {
-          setUserEmail(userResponse.data.email);
+          setUserEmail(userResponse.data.email)
         }
       } catch (err) {
-        console.error('Erreur lors du chargement du profil:', err);
+        console.error('Erreur lors du chargement du profil:', err)
       }
-    };
+    }
     
-    loadUserEmail();
-  }, []);
+    loadUserEmail()
+  }, [])
 
-  // Déplacer cette fonction ici aussi
   const sendTrackingEmail = async () => {
-    if (!trackingData || !userEmail) return;
+    if (!trackingData || !userEmail) return
     
     try {
-      setSendingEmail(true);
+      setSendingEmail(true)
       
       const response = await clientService.sendTrackingEmail({
         email: userEmail,
         trackingId: trackingData.id,
         packageName: trackingData.title,
-        recipientName: userEmail.split('@')[0], // Utiliser la première partie de l'email comme nom
+        recipientName: userEmail.split('@')[0],
         estimatedDelivery: trackingData.estimatedDelivery || "Bientôt"
-      });
+      })
       
       if (response.success) {
-        setEmailSent(true);
-        setTimeout(() => setEmailSent(false), 5000); // Masquer le message après 5 secondes
+        setEmailSent(true)
+        setTimeout(() => setEmailSent(false), 5000)
       }
     } catch (err) {
-      console.error('Erreur lors de l\'envoi de l\'email:', err);
+      console.error('Erreur lors de l\'envoi de l\'email:', err)
     } finally {
-      setSendingEmail(false);
+      setSendingEmail(false)
     }
-  };
+  }
 
   const loadTrackingData = async () => {
     try {
@@ -104,19 +102,21 @@ export default function TrackingDetailClient({ id }: { id: string }) {
       setError(null)
       console.log('Chargement des données de suivi pour ID:', id)
 
-      // Déterminer si c'est un ID de livraison ou un numéro de colis
-      if (id.startsWith('COLIS-')) {
-        // C'est un numéro de colis
-        console.log('Chargement des données colis:', id)
+      // Essayer d'abord de charger comme un colis (par tracking_number)
+      try {
+        console.log('Tentative de chargement comme colis:', id)
         await loadColisData(id)
-      } else {
-        // C'est un ID de livraison
+        return // Si succès, on s'arrête ici
+      } catch (colisError) {
+        console.log('Échec du chargement comme colis, tentative comme livraison')
+        
+        // Si ça échoue, essayer comme un ID de livraison
         const livraisonId = parseInt(id)
         if (!isNaN(livraisonId)) {
           console.log('Chargement des données livraison:', livraisonId)
           await loadLivraisonData(livraisonId)
         } else {
-          setError("Format d'identifiant invalide")
+          setError("Aucune donnée trouvée pour cet identifiant")
         }
       }
     } catch (err) {
@@ -143,28 +143,31 @@ export default function TrackingDetailClient({ id }: { id: string }) {
         const unifiedData: UnifiedTrackingData = {
           id: livraison.id.toString(),
           type: 'livraison',
-          status: livraison.status,
+          status: livraison.status || 'pending',
           title: `Livraison #${livraison.id}`,
           origin: livraisonData.pickup_location || 
                   livraisonData.pickupLocation || 
                   livraisonData.startingAddress || 
+                  livraisonData.starting_address ||
                   "Adresse de départ",
           destination: livraisonData.dropoff_location || 
                       livraisonData.dropoffLocation || 
                       livraisonData.destinationAddress || 
+                      livraisonData.destination_address ||
                       "Adresse de destination",
           estimatedDelivery: estimatedArrival || 
                            livraisonData.estimated_delivery_time || 
                            livraisonData.estimatedDeliveryTime ||
-                           livraisonData.scheduled_date,
+                           livraisonData.scheduled_date ||
+                           livraisonData.scheduledDate,
           createdDate: livraisonData.created_at || 
                       livraisonData.createdAt || 
                       new Date().toISOString(),
-          cost: livraison.cost,
+          cost: livraison.cost || 0,
           currentPosition,
           livreur: livraisonData.livreur ? {
             id: livraisonData.livreur.id,
-            name: `${livraisonData.livreur.first_name || livraisonData.livreur.firstName || ''} ${livraisonData.livreur.last_name || livraisonData.livreur.lastName || ''}`.trim(),
+            name: `${livraisonData.livreur.first_name || livraisonData.livreur.firstName || ''} ${livraisonData.livreur.last_name || livraisonData.livreur.lastName || ''}`.trim() || 'Livreur',
             phone: livraisonData.livreur.phone_number || livraisonData.livreur.phoneNumber
           } : undefined,
           events: generateLivraisonEvents(livraison)
@@ -238,25 +241,37 @@ export default function TrackingDetailClient({ id }: { id: string }) {
         console.log('📦 Date création (camelCase):', colis.createdAt)
         console.log('📦 Date création (snake_case):', colis.created_at)
         
+        const trackingNumber = colis.trackingNumber || colis.tracking_number || colis.id?.toString() || 'N/A'
+        const createdDate = colis.createdAt || colis.created_at || new Date().toISOString()
+        
         const unifiedData: UnifiedTrackingData = {
-          id: colis.trackingNumber || colis.tracking_number,
+          id: trackingNumber,
           type: 'colis',
-          status: colis.status,
-          title: `Colis ${colis.trackingNumber || colis.tracking_number}`,
-          origin: colis.annonce?.startingAddress || 'Adresse d\'expédition',
-          destination: colis.annonce?.destinationAddress || 'Adresse de destination',
-          createdDate: colis.createdAt || colis.created_at,
-          trackingNumber: colis.trackingNumber || colis.tracking_number,
-          events: history.map(event => ({
-            date: new Date(event.timestamp).toLocaleDateString('fr-FR'),
-            time: new Date(event.timestamp).toLocaleTimeString('fr-FR', { 
-              hour: '2-digit', 
-              minute: '2-digit' 
-            }),
-            location: event.location,
-            status: event.status,
-            description: event.description || getStatusDescription(event.status)
-          }))
+          status: colis.status || 'stored',
+          title: `Colis ${trackingNumber}`,
+          origin: colis.annonce?.startingAddress || 
+                  colis.annonce?.starting_address ||
+                  colis.annonce?.pickupLocation ||
+                  'Adresse d\'expédition',
+          destination: colis.annonce?.destinationAddress || 
+                      colis.annonce?.destination_address ||
+                      colis.annonce?.dropoffLocation ||
+                      'Adresse de destination',
+          createdDate: createdDate,
+          trackingNumber: trackingNumber,
+          events: (history || []).map(event => {
+            const eventDate = new Date(event.timestamp || event.created_at || Date.now())
+            return {
+              date: eventDate.toLocaleDateString('fr-FR'),
+              time: eventDate.toLocaleTimeString('fr-FR', { 
+                hour: '2-digit', 
+                minute: '2-digit' 
+              }),
+              location: event.location || 'Localisation inconnue',
+              status: event.status || 'unknown',
+              description: event.description || getStatusDescription(event.status || 'unknown')
+            }
+          })
         }
         
         console.log('📦 Données unifiées pour la carte:', {
@@ -267,11 +282,11 @@ export default function TrackingDetailClient({ id }: { id: string }) {
         setTrackingData(unifiedData)
       } else {
         console.error('Erreur API trackColis:', response)
-        setError("Colis non trouvé")
+        throw new Error("Colis non trouvé")
       }
     } catch (err) {
       console.error('Erreur lors du chargement du colis:', err)
-      setError("Erreur lors du chargement des données de colis")
+      throw err // Relancer l'erreur pour permettre le fallback
     }
   }
 
@@ -400,14 +415,15 @@ export default function TrackingDetailClient({ id }: { id: string }) {
     }
   }
 
-  const formatDate = (dateString: string) => {
-    if (!dateString || dateString === 'undefined' || dateString === 'null') {
+  const formatDate = (dateString: string | undefined | null) => {
+    if (!dateString || dateString === 'undefined' || dateString === 'null' || dateString.trim() === '') {
       return "Date non disponible"
     }
     
     try {
       const date = new Date(dateString)
       if (isNaN(date.getTime())) {
+        console.warn('Date invalide reçue:', dateString)
         return "Date invalide"
       }
       return date.toLocaleDateString('fr-FR', {
@@ -415,7 +431,8 @@ export default function TrackingDetailClient({ id }: { id: string }) {
         month: 'long',
         year: 'numeric'
       })
-    } catch {
+    } catch (error) {
+      console.error('Erreur lors du formatage de la date:', error, 'Date:', dateString)
       return "Date invalide"
     }
   }

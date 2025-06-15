@@ -154,7 +154,7 @@ export default function MessageDetailPage() {
 		};
 
 		loadConversation();
-	}, [id, userId]);}]},"query_language":"French"}}}
+	}, [id, userId]);
 
 	// ✅ CORRIGÉ - Envoi de message via API
 	const handleSendMessage = async (e: React.FormEvent) => {

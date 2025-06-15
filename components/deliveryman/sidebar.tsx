@@ -10,6 +10,7 @@ import {
 	BellRing,
 	PartyPopper,
 	MapPin,
+	Route,
 } from 'lucide-react';
 import { useLanguage } from '@/components/language-context';
 import { usePathname } from 'next/navigation';
@@ -48,6 +49,11 @@ export default function DeliverymanSidebar({
 			href: '/app_deliveryman/planned-routes',
 			icon: <MapPin className='mr-3 h-5 w-5' />,
 			label: 'Trajets planifiés',
+		},
+		{
+			href: '/app_deliveryman/partial-deliveries',
+			icon: <Route className='mr-3 h-5 w-5' />,
+			label: 'Livraisons partielles',
 		},
 		{
 			href: '/app_deliveryman/notifications',
