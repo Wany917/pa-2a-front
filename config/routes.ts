@@ -28,6 +28,7 @@ export const API_ROUTES = {
     PROFILE: (id: number) => `/clients/${id}/profile`,
     UPDATE_PROFILE: (id: number) => `/clients/${id}/profile`,
     STATS: (userId: number) => `/clients/stats/${userId}`,
+    PARTIAL_STATS: (id: number) => `/clients/${id}/partial-stats`,
   },
   
   // Livreurs
@@ -43,6 +44,7 @@ export const API_ROUTES = {
     STATS: (id: number) => `/livreurs/${id}/stats`,
     AVAILABILITY: (id: number) => `/livreurs/${id}/availability`,
     UPLOAD_JUSTIFICATION: '/livreurs/upload-justification',
+    PARTIAL_STATS: (id: number) => `/livreurs/${id}/partial-stats`,
   },
   
   // Annonces
@@ -149,9 +151,46 @@ export const API_ROUTES = {
     CANCEL: (id: number) => `/partial-deliveries/${id}/cancel`,
     CALCULATE_COST: '/partial-deliveries/calculate-cost',
     OPTIMIZE_ROUTE: '/partial-deliveries/optimize-route',
-    INITIATE_COORDINATION: '/partial-deliveries/initiate-coordination',
-    PROPOSE_SEGMENT: '/partial-deliveries/propose-segment',
-    ACCEPT_PROPOSAL: '/partial-deliveries/accept-proposal',
-    UPDATE_SEGMENT_STATUS: '/partial-deliveries/update-segment-status',
+  },
+
+  // Routes pour les livraisons partielles intelligentes
+  SMART_PARTIAL_DELIVERIES: {
+    BASE: '/smart-partial-deliveries',
+    CREATE: '/smart-partial-deliveries',
+    GET_BY_ID: (id: string) => `/smart-partial-deliveries/${id}`,
+    GET_ALL: '/smart-partial-deliveries',
+    UPDATE: (id: string) => `/smart-partial-deliveries/${id}`,
+    DELETE: (id: string) => `/smart-partial-deliveries/${id}`,
+    SEARCH_ADDRESSES: '/smart-partial-deliveries/search-addresses',
+    CREATE_OPTIMIZED_ROUTE: '/smart-partial-deliveries/create-optimized-route',
+    CREATE_SMART: '/smart-partial-deliveries/create-smart',
+    AVAILABLE_FOR_LIVREUR: '/smart-partial-deliveries/available-for-livreur',
+    ACCEPT_SEGMENT: '/smart-partial-deliveries/accept-segment',
+  },
+
+  // Routes pour les segments de livraison
+	SEGMENTS: {
+		AVAILABLE: '/segments/available',
+		GET_WITH_PROPOSALS: (id: number) => `/segments/${id}/proposals`,
+		PROPOSE: '/segments/propose',
+		ACCEPT_PROPOSAL: '/segments/accept-proposal',
+		UPDATE_STATUS: (id: number) => `/segments/${id}/status`,
+		HISTORY: (id: number) => `/segments/${id}/history`,
+		AVAILABLE_LIVREURS: (id: number) => `/segments/${id}/available-livreurs`
+	},
+
+  // Routes pour les propositions de segments
+  SEGMENT_PROPOSALS: {
+    REJECT: (id: number) => `/segment-proposals/${id}/reject`,
+  },
+
+  // Routes pour la coordination
+  COORDINATION: {
+    INITIATE: '/coordination/initiate',
+    CONFIRM_HANDOVER: '/coordination/confirm-handover',
+    UPDATE_LOCATION: '/coordination/update-location',
+    GET_INFO: (id: number) => `/coordination/${id}/info`,
+    GENERATE_CODE: '/coordination/verification-code',
+    VALIDATE_CODE: '/coordination/validate-code'
   },
 };

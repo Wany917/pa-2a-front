@@ -1,4 +1,4 @@
-import apiClient from '@/config/api';
+import apiClient, { API_ROUTES } from '@/config/api';
 import { ApiResponse } from '@/types/api';
 import {
 	DeliverySegment,
@@ -133,14 +133,14 @@ export class PartialDeliveryService {
 	 * Créer une demande de livraison partielle
 	 */
 	static async createPartialDelivery(data: CreatePartialDeliveryRequest): Promise<ApiResponse<PartialDelivery>> {
-		return apiClient.post<PartialDelivery>('/partial-deliveries', data);
+		return apiClient.post<PartialDelivery>(API_ROUTES.PARTIAL_DELIVERIES.CREATE, data);
 	}
 
 	/**
 	 * Obtenir les détails d'une livraison partielle
 	 */
 	static async getPartialDelivery(id: number): Promise<ApiResponse<PartialDelivery>> {
-		return apiClient.get<PartialDelivery>(`/partial-deliveries/${id}`);
+		return apiClient.get<PartialDelivery>(API_ROUTES.PARTIAL_DELIVERIES.GET(id));
 	}
 
 	/**
@@ -151,7 +151,7 @@ export class PartialDeliveryService {
 		page?: number;
 		limit?: number;
 	}): Promise<ApiResponse<PartialDelivery[]>> {
-		return apiClient.get<PartialDelivery[]>('/partial-deliveries', { params });
+		return apiClient.get<PartialDelivery[]>(API_ROUTES.PARTIAL_DELIVERIES.GET_ALL, { params });
 	}
 
 	/**
@@ -162,14 +162,14 @@ export class PartialDeliveryService {
 		page?: number;
 		limit?: number;
 	}): Promise<ApiResponse<{ deliveries: PartialDelivery[]; total: number; page: number; limit: number }>> {
-		return apiClient.get<{ deliveries: PartialDelivery[]; total: number; page: number; limit: number }>(`/users/${userId}/partial-deliveries`, { params });
+		return apiClient.get<{ deliveries: PartialDelivery[]; total: number; page: number; limit: number }>(API_ROUTES.PARTIAL_DELIVERIES.USER_DELIVERIES(userId), { params });
 	}
 
 	/**
 	 * Annuler une livraison partielle
 	 */
 	static async cancelPartialDelivery(id: number, reason?: string): Promise<ApiResponse<PartialDelivery>> {
-		return apiClient.patch<PartialDelivery>(`/partial-deliveries/${id}/cancel`, { reason });
+		return apiClient.patch<PartialDelivery>(API_ROUTES.PARTIAL_DELIVERIES.CANCEL(id), { reason });
 	}
 
 	/**
@@ -187,7 +187,7 @@ export class PartialDeliveryService {
 		estimatedHandoverTime?: string;
 		notes?: string;
 	}): Promise<ApiResponse<any>> {
-		return apiClient.post('/partial-deliveries/initiate-coordination', data);
+		return apiClient.post(API_ROUTES.COORDINATION.INITIATE, data);
 	}
 
 	// ==================== GESTION DES SEGMENTS ====================
@@ -203,79 +203,72 @@ export class PartialDeliveryService {
 		min_cost?: number;
 		max_cost?: number;
 	}): Promise<ApiResponse<DeliverySegment[]>> {
-		return apiClient.get<DeliverySegment[]>('/segments/available', { params });
+		return apiClient.get<DeliverySegment[]>(API_ROUTES.SEGMENTS.AVAILABLE, { params });
 	}
 
 	/**
 	 * Obtenir les détails d'un segment avec ses propositions
 	 */
 	static async getSegmentWithProposals(segmentId: number): Promise<ApiResponse<SegmentWithProposals>> {
-		return apiClient.get<SegmentWithProposals>(`/segments/${segmentId}/proposals`);
+		return apiClient.get<SegmentWithProposals>(API_ROUTES.SEGMENTS.GET_WITH_PROPOSALS(segmentId));
 	}
 
 	/**
 	 * Proposer un segment (pour les livreurs)
 	 */
 	static async proposeSegment(data: ProposeSegmentRequest): Promise<ApiResponse<SegmentProposal>> {
-		return apiClient.post<SegmentProposal>('/segments/propose', data);
+		return apiClient.post<SegmentProposal>(API_ROUTES.SEGMENTS.PROPOSE, data);
 	}
 
 	/**
 	 * Accepter une proposition de segment (pour les clients)
 	 */
 	static async acceptSegmentProposal(data: AcceptSegmentProposalRequest): Promise<ApiResponse<DeliverySegment>> {
-		return apiClient.post<DeliverySegment>('/segments/accept-proposal', data);
+		return apiClient.post<DeliverySegment>(API_ROUTES.SEGMENTS.ACCEPT_PROPOSAL, data);
 	}
 
 	/**
 	 * Rejeter une proposition de segment (pour les clients)
 	 */
 	static async rejectSegmentProposal(proposalId: number, reason?: string): Promise<ApiResponse<void>> {
-		return apiClient.patch<void>(`/segment-proposals/${proposalId}/reject`, { reason });
+		return apiClient.patch<void>(API_ROUTES.SEGMENT_PROPOSALS.REJECT(proposalId), { reason });
 	}
 
 	/**
 	 * Mettre à jour le statut d'un segment (pour les livreurs)
 	 */
 	static async updateSegmentStatus(data: UpdateSegmentStatusRequest): Promise<ApiResponse<DeliverySegment>> {
-		return apiClient.patch<DeliverySegment>(`/segments/${data.segmentId}/status`, data);
+		return apiClient.patch<DeliverySegment>(API_ROUTES.SEGMENTS.UPDATE_STATUS(data.segmentId), data);
 	}
 
 	/**
 	 * Obtenir l'historique d'un segment
 	 */
 	static async getSegmentHistory(segmentId: number): Promise<ApiResponse<any[]>> {
-		return apiClient.get<any[]>(`/segments/${segmentId}/history`);
+		return apiClient.get<any[]>(API_ROUTES.SEGMENTS.HISTORY(segmentId));
 	}
 
 	// ==================== COORDINATION ET REMISE ====================
 
 	/**
-	 * Initier une coordination entre livreurs
+	 * Confirmer une remise de colis
 	 */
-	static async initiateCoordination(data: InitiateCoordinationRequest): Promise<ApiResponse<CoordinationInfo>> {
-		return apiClient.post<CoordinationInfo>('/coordination/initiate', data);
+	static async confirmHandover(data: ConfirmHandoverRequest): Promise<ApiResponse<void>> {
+		return apiClient.post<void>(API_ROUTES.COORDINATION.CONFIRM_HANDOVER, data);
 	}
 
 	/**
 	 * Obtenir les informations de coordination
 	 */
 	static async getCoordinationInfo(livraisonId: number): Promise<ApiResponse<CoordinationInfo[]>> {
-		return apiClient.get<CoordinationInfo[]>(`/deliveries/${livraisonId}/coordination`);
-	}
-
-	/**
-	 * Confirmer une remise de colis
-	 */
-	static async confirmHandover(data: ConfirmHandoverRequest): Promise<ApiResponse<void>> {
-		return apiClient.post<void>('/coordination/handover', data);
+		return apiClient.get<CoordinationInfo[]>(API_ROUTES.COORDINATION.GET_INFO(livraisonId));
 	}
 
 	/**
 	 * Générer un code de vérification pour la remise
 	 */
 	static async generateVerificationCode(livraisonId: number, segmentId: number): Promise<ApiResponse<{ code: string; expiresAt: string }>> {
-		return apiClient.post<{ code: string; expiresAt: string }>('/coordination/verification-code', {
+		return apiClient.post<{ code: string; expiresAt: string }>(API_ROUTES.COORDINATION.GENERATE_CODE, {
 			livraisonId: livraisonId,
 			segmentId: segmentId
 		});
@@ -285,7 +278,7 @@ export class PartialDeliveryService {
 	 * Valider un code de vérification
 	 */
 	static async validateVerificationCode(code: string, livraisonId: number): Promise<ApiResponse<{ valid: boolean; segmentId?: number }>> {
-		return apiClient.post<{ valid: boolean; segmentId?: number }>('/coordination/validate-code', {
+		return apiClient.post<{ valid: boolean; segmentId?: number }>(API_ROUTES.COORDINATION.VALIDATE_CODE, {
 			code,
 			livraisonId: livraisonId
 		});
@@ -312,7 +305,7 @@ export class PartialDeliveryService {
 			totalEarnings: number;
 			averageRating: number;
 			successfulHandovers: number;
-		}>(`/livreurs/${livreurId}/partial-stats`, { params });
+		}>(API_ROUTES.LIVREURS.PARTIAL_STATS(livreurId), { params });
 	}
 
 	/**
@@ -334,7 +327,7 @@ export class PartialDeliveryService {
 			totalCost: number;
 			averageDeliveryTime: number;
 			satisfactionRate: number;
-		}>(`/clients/${clientId}/partial-stats`, { params });
+		}>(API_ROUTES.CLIENTS.PARTIAL_STATS(clientId), { params });
 	}
 
 	// ==================== UTILITAIRES ====================
@@ -359,7 +352,7 @@ export class PartialDeliveryService {
 			segmentCosts: number[];
 			baseCost: number;
 			coordinationFee: number;
-		}>('/partial-deliveries/calculate-cost', { segments });
+		}>(API_ROUTES.PARTIAL_DELIVERIES.CALCULATE_COST, { segments });
 	}
 
 	/**
@@ -379,7 +372,7 @@ export class PartialDeliveryService {
 			optimizedSegments: typeof segments;
 			totalDistance: number;
 			estimatedTime: number;
-		}>('/partial-deliveries/optimize-route', { segments });
+		}>(API_ROUTES.PARTIAL_DELIVERIES.OPTIMIZE_ROUTE, { segments });
 	}
 
 	/**
@@ -412,6 +405,6 @@ export class PartialDeliveryService {
 			totalDeliveries: number;
 			distanceFromStart: number;
 			estimatedArrivalTime: number;
-		}[]>(`/segments/${segmentId}/available-livreurs`, { params });
+		}[]>(API_ROUTES.SEGMENTS.AVAILABLE_LIVREURS(segmentId), { params });
 	}
 }

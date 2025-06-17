@@ -13,13 +13,14 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { MapPin, Package, Users, MessageCircle, Clock, CheckCircle, AlertCircle, Send } from 'lucide-react';
+import { MapPin, Package, Users, MessageCircle, Clock, CheckCircle, AlertCircle, Send, Zap } from 'lucide-react';
 import { PartialDeliveryService } from '@/services/partial-delivery.service';
 import { livreurService } from '@/services/livreurService';
 import { usePartialDeliveryWebSocket } from '@/hooks/use-partial-delivery-websocket';
 import { toast } from 'sonner';
 import DeliverymanLayout from '@/components/deliveryman/layout';
 import { Livraison } from '@/types/api';
+import SmartPartialDeliveryLivreur from '@/components/deliveryman/smart-partial-delivery-livreur';
 
 interface PartialDelivery {
   id: number;
@@ -214,10 +215,10 @@ export default function PartialDeliveriesPage() {
       // Charger les livraisons assignées
       try {
         const assignedResponse = await livreurService.getMyLivraisons();
-        if (assignedResponse.success && assignedResponse.data) {
+        if (assignedResponse.success && assignedResponse.data && Array.isArray(assignedResponse.data)) {
           // Filtrer les livraisons en cours ou acceptées
           const activeLivraisons = assignedResponse.data.filter(
-            (livraison: any) => ['accepted', 'in_progress', 'picked_up'].includes(livraison.status)
+            (livraison: Livraison) => ['accepted', 'in_progress', 'picked_up'].includes(livraison.status || '')
           );
           setAssignedDeliveries(activeLivraisons);
         }
@@ -226,7 +227,7 @@ export default function PartialDeliveriesPage() {
         // Essayer avec la méthode alternative
         try {
           const availableResponse = await livreurService.getAvailableLivraisons();
-          if (availableResponse.success && availableResponse.data) {
+          if (availableResponse.success && availableResponse.data && Array.isArray(availableResponse.data)) {
             setAssignedDeliveries(availableResponse.data.slice(0, 5)); // Limiter à 5 pour test
           }
         } catch (fallbackError) {
@@ -392,6 +393,10 @@ export default function PartialDeliveriesPage() {
         <Tabs defaultValue="deliveries" className="space-y-4">
           <TabsList>
             <TabsTrigger value="deliveries">Mes Livraisons</TabsTrigger>
+            <TabsTrigger value="smart" className="flex items-center space-x-1">
+              <Zap className="h-4 w-4" />
+              <span>Smart</span>
+            </TabsTrigger>
             <TabsTrigger value="create">Créer</TabsTrigger>
             <TabsTrigger value="coordination">Coordination</TabsTrigger>
             <TabsTrigger value="tracking">Suivi GPS</TabsTrigger>
@@ -437,6 +442,10 @@ export default function PartialDeliveriesPage() {
                 )}
               </CardContent>
             </Card>
+          </TabsContent>
+
+          <TabsContent value="smart" className="space-y-4">
+            <SmartPartialDeliveryLivreur />
           </TabsContent>
 
           <TabsContent value="create" className="space-y-4">
